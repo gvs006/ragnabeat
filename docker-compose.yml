@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  db:
+    image: mariadb:10.5
+    container_name: ragnabeat_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ragnarok
+      MYSQL_USER: ragnarok
+      MYSQL_PASSWORD: ragnarok
+      MYSQL_DATABASE: ragnarok
+    volumes:
+      - ragnabeat_data:/var/lib/mysql
+      # O MariaDB criará o banco automaticamente na primeira vez usando seus arquivos locais
+      - ./sql-files/main.sql:/docker-entrypoint-initdb.d/1-main.sql
+      - ./sql-files/logs.sql:/docker-entrypoint-initdb.d/2-logs.sql
+    ports:
+      - "3307:3306"
+    restart: always
+
+  rathena:
+    build: .
+    container_name: ragnabeat_server
+    depends_on:
+      - db
+    volumes:
+      - .:/server
+    ports:
+      - "6900:6900"
+      - "6121:6121"
+      - "5121:5121"
+    restart: always
+    command: /bin/bash -c "./login-server & ./char-server & ./map-server & ./web-server & wait"
+
+volumes:
+  ragnabeat_data:
