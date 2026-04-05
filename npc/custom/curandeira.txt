@@ -1,0 +1,61 @@
+//===== rAthena Script =======================================
+//= Curandeira Custom
+//===== Description: =========================================
+//= NPC Curandeira com opções de cura, buffs e etc.
+//============================================================
+
+prontera,150,187,4	script	Curandeira	909,{
+	mes "[Curandeira]";
+	mes "Olá, aventureiro! Como posso ajudá-lo hoje?";
+	next;
+	switch(select("Cura Normal:Cura e Buffs Básicos:Cura e Buffs Full:Cancelar")) {
+		case 1:
+			percentheal 100,100;
+			specialeffect2 EF_HEAL2;
+			mes "[Curandeira]";
+			mes "Pronto! Sua vida e SP foram completamente restaurados.";
+			close;
+
+		case 2:
+			percentheal 100,100;
+			specialeffect2 EF_HEAL2;
+			
+			specialeffect2 EF_INCAGILITY;
+			sc_start SC_INCREASEAGI,240000,10;
+			
+			specialeffect2 EF_BLESSING;
+			sc_start SC_BLESSING,240000,10;
+			
+			mes "[Curandeira]";
+			mes "Pronto! Você está curado e abençoado.";
+			close;
+
+		case 3:
+			percentheal 100,100;
+			specialeffect2 EF_HEAL2;
+			
+			specialeffect2 EF_INCAGILITY;
+			sc_start SC_INCREASEAGI,240000,10;
+			
+			specialeffect2 EF_BLESSING;
+			sc_start SC_BLESSING,240000,10;
+			
+			sc_start SC_ASSUMPTIO,240000,5;
+			sc_start SC_MAGNIFICAT,240000,5;
+			sc_start SC_GLORIA,240000,5;
+			sc_start SC_IMPOSITIO,240000,5;
+			sc_start SC_WINDWALK,240000,10;
+			sc_start SC_ADRENALINE,240000,5;
+			sc_start SC_WEAPONPERFECTION,240000,5;
+			sc_start SC_OVERTHRUST,240000,5;
+			
+			mes "[Curandeira]";
+			mes "Pronto! Você recebeu nossa bênção máxima!";
+			close;
+
+		case 4:
+			mes "[Curandeira]";
+			mes "Estarei aqui se precisar. Boa sorte em suas aventuras!";
+			close;
+	}
+}

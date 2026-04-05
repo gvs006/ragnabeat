@@ -1,0 +1,150 @@
+//===== rAthena Script =======================================
+//= Mercado Negro Elite (Complex)
+//===== Description: =========================================
+//= Portal para Sala Secreta com Vendedores de MVP Cards por Slot
+//= Moeda: Mithril Coin (ID: 674)
+//============================================================
+
+// Portal em Prontera
+prontera,156,187,4	script	Contrabandista	114,{
+	mes "[Contrabandista]";
+	mes "Psiu... Você parece alguém que procura por poder real.";
+	mes "Tenho um esconderijo onde o mercado de elite acontece.";
+	mes "Quer que eu te leve até lá?";
+	next;
+	if (select("Sim, me leve.:Não, obrigado.") == 2) {
+		mes "[Contrabandista]";
+		mes "Tsc. Então não me faça perder tempo.";
+		close;
+	}
+	mes "[Contrabandista]";
+	mes "Cuidado lá dentro... as sombras têm olhos.";
+	close2;
+	warp "prt_in",163,169;
+	end;
+}
+
+// Sala Secreta (prt_in) - NPCs de Venda
+//============================================================
+
+prt_in,167,169,4	script	Mestre do Câmbio	111,{
+	.@coin = 674; // Mithril Coin
+	.@price = 100000; // 100k cada moeda
+	
+	mes "[Mestre do Câmbio]";
+	mes "Aqui nós não aceitamos papel sujo do reino.";
+	mes "Se quiser comprar algo, vai precisar de ^FF0000Mithril Coins^000000.";
+	mes "Eu vendo cada uma por ^00AA00" + .@price + " Zeny^000000.";
+	next;
+	mes "[Mestre do Câmbio]";
+	mes "Quantas você quer?";
+	input .@amount;
+	
+	if (.@amount <= 0) {
+		mes "[Mestre do Câmbio]";
+		mes "Cai fora, não brinque com meu tempo.";
+		close;
+	}
+	
+	.@total = .@amount * .@price;
+	
+	if (Zeny < .@total) {
+		mes "[Mestre do Câmbio]";
+		mes "Você não tem Zeny suficiente para isso.";
+		close;
+	}
+	
+	Zeny -= .@total;
+	getitem .@coin, .@amount;
+	mes "[Mestre do Câmbio]";
+	mes "Aqui estão suas " + .@amount + " moedas. Agora vá gastar.";
+	close;
+}
+
+prt_in,159,169,4	script	Portal de Saída	114,{
+	mes "[Portal]";
+	mes "Deseja retornar para Prontera?";
+	next;
+	if (select("Sim:Não") == 1) {
+		warp "prontera",156,191;
+	}
+	close;
+}
+
+// --- NPCs de Cartas MVP por Slot ---
+
+// Headgear
+prt_in,153,164,4	script	Elite HG Cards	112,{
+	callfunc "F_EliteShop", "Headgear", 4144,4121,4168,4143,4276,4403;
+}
+
+// Weapon
+prt_in,158,164,4	script	Elite Weapon Cards	112,{
+	callfunc "F_EliteShop", "Arma", 4232,4147,4152,4263,4137,4241,4361,4376;
+}
+
+// Armor
+prt_in,163,164,4	script	Elite Armor Cards	112,{
+	callfunc "F_EliteShop", "Armadura", 4302,4282,4146,4151,4399;
+}
+
+// Shield
+prt_in,168,164,4	script	Elite Shield Cards	112,{
+	callfunc "F_EliteShop", "Escudo", 4123,4132;
+}
+
+// Garment
+prt_in,153,174,6	script	Elite Garment Cards	113,{
+	callfunc "F_EliteShop", "Capa", 4174,4202;
+}
+
+// Footgear
+prt_in,158,174,6	script	Elite Footgear Cards	113,{
+	callfunc "F_EliteShop", "Calçado", 4148,4211,4135,4128,4324;
+}
+
+// Accessory
+prt_in,163,174,6	script	Elite Accessory Cards	113,{
+	callfunc "F_EliteShop", "Acessório", 4145,4392,4407;
+}
+
+// Função de Loja Customizada
+function	script	F_EliteShop	{
+	.@slot$ = getarg(0);
+	.@coin = 674;
+	.@price = 100; // Preço padrão: 100 moedas
+	
+	mes "[Vendedor de Elite - " + .@slot$ + "]";
+	mes "Escolha a carta MVP que deseja para seu slot de " + .@slot$ + ".";
+	mes "Cada uma custa ^FF0000" + .@price + " Mithril Coins^000000.";
+	next;
+	
+	// Construir menu dinâmico
+	.@menu$ = "";
+	for (.@i = 1; .@i < getargcount(); .@i++) {
+		.@menu$ += getitemname(getarg(.@i)) + ":";
+	}
+	
+	.@sel = select(.@menu$) + 1; // +1 porque pulei o arg 0 (slot$)
+	.@itemID = getarg(.@sel - 1);
+	
+	mes "[Vendedor de Elite]";
+	mes "Tem certeza que deseja comprar a carta ^0000FF" + getitemname(.@itemID) + "^000000?";
+	next;
+	if (select("Sim, comprar.:Não.") == 2) {
+		close;
+	}
+	
+	if (countitem(.@coin) < .@price) {
+		mes "[Vendedor de Elite]";
+		mes "Você não tem moedas suficientes! Vá falar com o Mestre do Câmbio.";
+		close;
+	}
+	
+	delitem .@coin, .@price;
+	getitem .@itemID, 1;
+	specialeffect2 EF_LEVELUP;
+	mes "[Vendedor de Elite]";
+	mes "Excelente escolha! Aqui está sua carta.";
+	close;
+}
