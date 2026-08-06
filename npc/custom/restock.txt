@@ -1,0 +1,328 @@
+//===== rAthena Script =======================================
+//= @restock — Reabastecimento automático
+//===== Por: =================================================
+//= Base: Mastagoon (rAthena topic 127084)
+//=       v1.2 hannahhaven621 · loop automático coiselves
+//= Adaptação Ragnabeat
+//===== Descrição: ===========================================
+//= O jogador monta uma lista de itens com quantidade-alvo.
+//= O sistema puxa do armazém o que estiver faltando, sem
+//= precisar abrir o armazém e sem sair do lugar.
+//=
+//= Modo automático: verifica sozinho a cada .Interval ms,
+//= em qualquer mapa, inclusive em combate.
+//===== ATENÇÃO — VIP: =======================================
+//= Esta feature é EXCLUSIVA DE VIP por decisão de projeto
+//= (ver ROADMAP.md, seções 2.1 e 3.1).
+//=
+//= O gate já está escrito e é controlado por .VipMode no
+//= OnInit. Enquanto o sistema VIP não existir, deixe
+//= .VipMode = 0 para testar. Quando a fase 3.1 entrar,
+//= troque para 1 ou 2 — nada mais precisa mudar.
+//===== Correções sobre a versão publicada: ==================
+//= 1. Vazamento de timer — no original o addtimer vinha ANTES
+//=    da checagem de RestockAuto, então desligar o auto não
+//=    matava a cadeia (ela ticava para sempre) e cada religada
+//=    criava uma cadeia nova. Com MAX_EVENTTIMER = 32, umas
+//=    poucas alternâncias enchiam a fila de timers do jogador.
+//= 2. Flood de erro no console — sem checkweight, o getitem
+//=    falhava por peso e emitia ShowError a cada tick, por
+//=    jogador.
+//= 3. Cap de quantidade e tipos — o original permitia até
+//=    30000 por item e aceitava pet egg / pet armor / shadow
+//=    gear na lista.
+//============================================================
+
+-	script	restock_atcmd	-1,{
+
+// ---------------------------------------------------------
+// Gate de VIP. Retorna 1 se o jogador pode usar o sistema.
+// ---------------------------------------------------------
+function	isVip	{
+	switch (.VipMode) {
+		// 0 = liberado para todos (fase de testes)
+		case 0:
+			return 1;
+		// 1 = variável de conta com timestamp unix de expiração.
+		//     Use enquanto o VIP for por script (ver ROADMAP 3.1).
+		case 1:
+			return (#vip_expire > gettimetick(2));
+		// 2 = VIP nativo. Exige VIP_ENABLE em src/config/core.hpp;
+		//     com o define desligado vip_status() devolve 0 sempre.
+		case 2:
+			return vip_status(VIP_STATUS_ACTIVE);
+	}
+	return 0;
+}
+
+function	addSpace	{
+	.@s$ = "";
+	for (.@i = 1; .@i <= getarg(0); .@i++)
+		.@s$ = .@s$ + " ";
+	return .@s$;
+}
+
+function	showHelp	{
+	dispbottom "=== @restock ===";
+	dispbottom "@restock                        - puxa os itens agora";
+	dispbottom "@restock auto                   - liga/desliga o modo automático";
+	dispbottom "@restock add <ID> <qtd>         - adiciona item à lista";
+	dispbottom "@restock remove <ID>            - remove item da lista";
+	dispbottom "@restock list                   - mostra sua lista";
+	dispbottom "@restock reset                  - apaga a lista";
+	dispbottom "@restock help                   - mostra esta ajuda";
+}
+
+// ---------------------------------------------------------
+// Núcleo do reabastecimento.
+// getarg(0): 1 = silencioso (modo automático), 0 = com mensagens
+// Retorna 1 se puxou alguma coisa.
+// ---------------------------------------------------------
+function	doRestock	{
+	.@silent = getarg(0,0);
+	.@n = getarraysize(RestockList);
+	if (!.@n)
+		return 0;
+
+	.@did = 0;
+	for (.@i = 0; .@i < .@n; .@i++) {
+		.@id = RestockList[.@i];
+		.@falta = RestockAmountList[.@i] - countitem(.@id);
+		if (.@falta <= 0)
+			continue;
+
+		// storagecountitem devolve -1 se o armazém estiver aberto
+		.@tem = storagecountitem(.@id);
+		if (.@tem < 0) {
+			if (!.@silent)
+				dispbottom "[Restock] Feche o armazém para usar o comando.";
+			return 0;
+		}
+		if (.@tem == 0) {
+			if (!.@silent)
+				dispbottom "[Restock] " + getitemname(.@id) + ": nada no armazém.";
+			continue;
+		}
+		if (.@tem < .@falta)
+			.@falta = .@tem;
+
+		// Sem esta checagem o getitem falha por peso, aborta o script e
+		// emite ShowError no console a cada tick.
+		if (!checkweight(.@id, .@falta)) {
+			if (!.@silent)
+				dispbottom "[Restock] " + getitemname(.@id) + ": peso insuficiente.";
+			continue;
+		}
+
+		getitem .@id, .@falta;
+		storagedelitem .@id, .@falta;
+		.@did = 1;
+
+		if (!.@silent)
+			dispbottom "[Restock] +" + .@falta + "x " + getitemname(.@id) + ".";
+	}
+	return .@did;
+}
+
+OnInit:
+	// --- Gate de VIP: 0 = todos, 1 = #vip_expire, 2 = vip_status() nativo
+	.VipMode = 0;
+
+	// --- Item consumido a cada uso manual. 0 = de graça.
+	//     Não é cobrado no modo automático.
+	.TicketID = 0;
+
+	// --- Intervalo do modo automático, em ms.
+	//     1 timer por jogador: com 200 online e lista de 10 itens dá ~200
+	//     varreduras a cada ciclo. Meça antes de baixar de 10s.
+	.Interval = 10000;
+
+	// --- Limites da lista
+	.MaxQty = 500;
+	.MaxItens = 10;
+
+	// --- 1 = comando manual só funciona em cidade (o automático ignora isto)
+	.TownOnly = 0;
+
+	// --- Tipos permitidos na lista.
+	//     A versão original incluía 7/8 (pet egg/armor) e 12 (shadow gear).
+	setarray .AllowedTypes[0], IT_HEALING, IT_USABLE, IT_ETC, IT_AMMO, IT_DELAYCONSUME;
+
+	bindatcmd "restock", strnpcinfo(3) + "::OnAtcommand";
+	end;
+
+OnPCLoginEvent:
+	if (RestockAuto) {
+		if (!isVip()) {
+			// VIP expirou enquanto estava offline
+			RestockAuto = 0;
+			end;
+		}
+		addtimer .Interval, strnpcinfo(3) + "::OnAutoRestockTick";
+	}
+	end;
+
+// ---------------------------------------------------------
+// Loop do modo automático.
+// A reagenda vem DEPOIS da checagem, de propósito: assim
+// desligar o auto (ou o VIP expirar) mata a cadeia de vez.
+// ---------------------------------------------------------
+OnAutoRestockTick:
+	if (!RestockAuto)
+		end;
+
+	if (!isVip()) {
+		RestockAuto = 0;
+		dispbottom "[Restock] Seu VIP expirou. O reabastecimento automático foi desligado.";
+		end;
+	}
+
+	doRestock(1);
+
+	addtimer .Interval, strnpcinfo(3) + "::OnAutoRestockTick";
+	end;
+
+OnAtcommand:
+	if (!isVip()) {
+		dispbottom "[Restock] Comando exclusivo para jogadores VIP.";
+		end;
+	}
+
+	switch (.@atcmd_numparameters) {
+
+	// ----- @restock -----------------------------------------
+	case 0:
+		if (!getarraysize(RestockList)) {
+			dispbottom "[Restock] Sua lista está vazia. Use @restock help.";
+			end;
+		}
+		if (.TownOnly && !getmapflag(strcharinfo(3), mf_town)) {
+			dispbottom "[Restock] Só funciona dentro de cidades.";
+			end;
+		}
+		if (.TicketID && !countitem(.TicketID)) {
+			dispbottom "[Restock] Você precisa de 1x " + getitemname(.TicketID) + ".";
+			end;
+		}
+		if (doRestock(0)) {
+			if (.TicketID)
+				delitem .TicketID, 1;
+		} else {
+			dispbottom "[Restock] Nada a reabastecer.";
+		}
+		break;
+
+	// ----- @restock <sub> -----------------------------------
+	case 1:
+		.@sub$ = strtolower(.@atcmd_parameters$[0]);
+
+		if (.@sub$ == "auto") {
+			// Sempre mata a cadeia antiga antes de criar outra: sem isto,
+			// religar dentro do intervalo deixa dois timers rodando.
+			deltimer strnpcinfo(3) + "::OnAutoRestockTick";
+
+			if (RestockAuto) {
+				RestockAuto = 0;
+				dispbottom "[Restock] Modo automático DESLIGADO.";
+			} else {
+				RestockAuto = 1;
+				addtimer 1000, strnpcinfo(3) + "::OnAutoRestockTick";
+				dispbottom "[Restock] Modo automático LIGADO (a cada " + (.Interval / 1000) + "s).";
+			}
+
+		} else if (.@sub$ == "list") {
+			.@n = getarraysize(RestockList);
+			if (!.@n) {
+				dispbottom "[Restock] Sua lista está vazia.";
+				end;
+			}
+			dispbottom "ID" + addSpace(12) + "Item" + addSpace(30) + "Qtd";
+			dispbottom "============================================";
+			for (.@i = 0; .@i < .@n; .@i++) {
+				.@id = RestockList[.@i];
+				.@nome$ = getitemname(.@id);
+				dispbottom .@id + addSpace(14 - getstrlen(.@id + "")) + .@nome$ +
+				           addSpace(34 - getstrlen(.@nome$)) + RestockAmountList[.@i];
+			}
+			dispbottom "Modo automático: " + (RestockAuto ? "LIGADO" : "desligado");
+
+		} else if (.@sub$ == "reset") {
+			deletearray RestockList[0], getarraysize(RestockList);
+			deletearray RestockAmountList[0], getarraysize(RestockAmountList);
+			dispbottom "[Restock] Lista apagada.";
+
+		} else if (.@sub$ == "help" || .@sub$ == "h") {
+			showHelp();
+
+		} else {
+			showHelp();
+		}
+		break;
+
+	// ----- @restock remove <ID> -----------------------------
+	case 2:
+		if (strtolower(.@atcmd_parameters$[0]) != "remove") {
+			showHelp();
+			end;
+		}
+		.@id = atoi(.@atcmd_parameters$[1]);
+		if (getitemname(.@id) == "null") {
+			dispbottom "[Restock] Item inexistente (ID " + .@id + ").";
+			end;
+		}
+		.@idx = inarray(RestockList, .@id);
+		if (.@idx == -1) {
+			dispbottom "[Restock] Este item não está na sua lista.";
+			end;
+		}
+		deletearray RestockList[.@idx], 1;
+		deletearray RestockAmountList[.@idx], 1;
+		dispbottom "[Restock] " + getitemname(.@id) + " removido da lista.";
+		break;
+
+	// ----- @restock add <ID> <qtd> --------------------------
+	case 3:
+		if (strtolower(.@atcmd_parameters$[0]) != "add") {
+			showHelp();
+			end;
+		}
+		.@id  = atoi(.@atcmd_parameters$[1]);
+		.@qtd = atoi(.@atcmd_parameters$[2]);
+
+		if (!.@id || !.@qtd) {
+			dispbottom "[Restock] Parâmetros inválidos.";
+			showHelp();
+			end;
+		}
+		if (getitemname(.@id) == "null") {
+			dispbottom "[Restock] Item inexistente (ID " + .@id + ").";
+			end;
+		}
+		if (inarray(.AllowedTypes[0], getiteminfo(.@id, ITEMINFO_TYPE)) == -1) {
+			dispbottom "[Restock] Este tipo de item não pode ser reabastecido.";
+			end;
+		}
+		if (inarray(RestockList[0], .@id) >= 0) {
+			dispbottom "[Restock] " + getitemname(.@id) + " já está na sua lista.";
+			end;
+		}
+		if (getarraysize(RestockList) >= .MaxItens) {
+			dispbottom "[Restock] Limite de " + .MaxItens + " itens na lista.";
+			end;
+		}
+		if (.@qtd < 1 || .@qtd > .MaxQty) {
+			dispbottom "[Restock] Quantidade deve ser entre 1 e " + .MaxQty + ".";
+			end;
+		}
+
+		setarray RestockList[getarraysize(RestockList)], .@id;
+		setarray RestockAmountList[getarraysize(RestockAmountList)], .@qtd;
+		dispbottom "[Restock] " + getitemname(.@id) + " x" + .@qtd + " adicionado à lista.";
+		break;
+
+	default:
+		showHelp();
+		break;
+	}
+	end;
+}

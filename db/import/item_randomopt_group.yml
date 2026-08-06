@@ -1,0 +1,360 @@
+###########################################################################
+# Item Random Option Group Database — Ragnabeat (pre-renewal)
+###########################################################################
+#
+# Tres tiers, escolhidos automaticamente pelo nivel de uso do equipamento
+# dropado (ver conf/import/battle_conf.txt -> randopt_drop_*).
+#
+#   Id 1  RAGNABEAT_T1  equip comum      1 a 2 bonus
+#   Id 2  RAGNABEAT_T2  equip intermed.  1 a 3 bonus
+#   Id 3  RAGNABEAT_T3  equip alto/MVP   2 a 4 bonus
+#
+# ---------------------------------------------------------------------------
+# ARMADILHA DO PARSER — leia antes de mexer em MaxRandom
+# ---------------------------------------------------------------------------
+# O cabecalho do arquivo oficial diz que MaxRandom e uma *quantidade* limitada
+# a (5 - total de Slots). O CODIGO NAO FAZ ISSO.
+#
+# s_random_opt_group::apply() percorre os INDICES 0 .. MaxRandom-1 e pula os ja
+# ocupados pelos Slots garantidos. O parser so limita MaxRandom a
+# MAX_ITEM_RDM_OPT (5), sem descontar os Slots.
+#
+# Ou seja: MaxRandom e um TETO DE INDICE, nao uma contagem.
+#   total possivel = max(nº de Slots, MaxRandom)
+#
+#   1 Slot + MaxRandom 2 -> 1 a 2 bonus
+#   1 Slot + MaxRandom 4 -> 1 a 4 bonus
+#   2 Slots + MaxRandom 4 -> 2 a 4 bonus
+#
+# O teto absoluto e 5 e vem do PROTOCOLO: o pacote de item carrega
+# { <option id>.W <option value>.W <option param>.B }*5 fixo. Nao da para
+# passar de 5 sem alterar o client.
+# ---------------------------------------------------------------------------
+#
+# Slots  = garantidos. Sai sempre um, mesmo que a rolagem de Chance falhe
+#          (apply() tem fallback que aplica uma opcao a forca).
+#          Com Chance 10000 em todas, o sorteio vira uniforme na lista.
+# Random = extras. Cada slot sorteia UMA opcao da lista e rola a Chance dela;
+#          se falhar, o slot fica vazio. A Chance media da lista e, na pratica,
+#          a taxa de preenchimento de cada slot extra.
+#
+# Ao final apply() compacta os buracos ("Fix any gaps, the client cannot handle
+# this"), entao Chance que falhou nao deixa espaco vazio no meio.
+#
+###########################################################################
+
+Header:
+  Type: RANDOM_OPTION_GROUP
+  Version: 1
+
+Body:
+
+# ===========================================================================
+# TIER 1 — equipamento comum (1 a 2 bonus)
+# Taxa de preenchimento do slot extra: ~35%
+# ===========================================================================
+  - Id: 1
+    Group: RAGNABEAT_T1
+    Slots:
+      - Slot: 1
+        Options:
+          - Option: VAR_STRAMOUNT
+            MinValue: 1
+            MaxValue: 2
+            Chance: 10000
+          - Option: VAR_AGIAMOUNT
+            MinValue: 1
+            MaxValue: 2
+            Chance: 10000
+          - Option: VAR_VITAMOUNT
+            MinValue: 1
+            MaxValue: 2
+            Chance: 10000
+          - Option: VAR_INTAMOUNT
+            MinValue: 1
+            MaxValue: 2
+            Chance: 10000
+          - Option: VAR_DEXAMOUNT
+            MinValue: 1
+            MaxValue: 2
+            Chance: 10000
+          - Option: VAR_LUKAMOUNT
+            MinValue: 1
+            MaxValue: 2
+            Chance: 10000
+          - Option: VAR_MAXHPAMOUNT
+            MinValue: 50
+            MaxValue: 150
+            Chance: 10000
+          - Option: VAR_MAXSPAMOUNT
+            MinValue: 10
+            MaxValue: 30
+            Chance: 10000
+          - Option: VAR_ATTPOWER
+            MinValue: 2
+            MaxValue: 6
+            Chance: 10000
+          - Option: VAR_ITEMDEFPOWER
+            MinValue: 1
+            MaxValue: 3
+            Chance: 10000
+    MaxRandom: 2
+    Random:
+      - Option: VAR_HITSUCCESSVALUE
+        MinValue: 1
+        MaxValue: 4
+        Chance: 3500
+      - Option: VAR_AVOIDSUCCESSVALUE
+        MinValue: 1
+        MaxValue: 4
+        Chance: 3500
+      - Option: VAR_CRITICALSUCCESSVALUE
+        MinValue: 1
+        MaxValue: 2
+        Chance: 3500
+      - Option: VAR_MDEFPOWER
+        MinValue: 1
+        MaxValue: 2
+        Chance: 3500
+      - Option: VAR_HPACCELERATION
+        MinValue: 3
+        MaxValue: 8
+        Chance: 3500
+      - Option: VAR_SPACCELERATION
+        MinValue: 3
+        MaxValue: 8
+        Chance: 3500
+
+# ===========================================================================
+# TIER 2 — equipamento intermediario (1 a 3 bonus)
+# Taxa de preenchimento dos slots extras: ~40%
+# ===========================================================================
+  - Id: 2
+    Group: RAGNABEAT_T2
+    Slots:
+      - Slot: 1
+        Options:
+          - Option: VAR_STRAMOUNT
+            MinValue: 2
+            MaxValue: 4
+            Chance: 10000
+          - Option: VAR_AGIAMOUNT
+            MinValue: 2
+            MaxValue: 4
+            Chance: 10000
+          - Option: VAR_VITAMOUNT
+            MinValue: 2
+            MaxValue: 4
+            Chance: 10000
+          - Option: VAR_INTAMOUNT
+            MinValue: 2
+            MaxValue: 4
+            Chance: 10000
+          - Option: VAR_DEXAMOUNT
+            MinValue: 2
+            MaxValue: 4
+            Chance: 10000
+          - Option: VAR_LUKAMOUNT
+            MinValue: 2
+            MaxValue: 4
+            Chance: 10000
+          - Option: VAR_MAXHPAMOUNT
+            MinValue: 150
+            MaxValue: 350
+            Chance: 10000
+          - Option: VAR_ATTPOWER
+            MinValue: 5
+            MaxValue: 12
+            Chance: 10000
+          - Option: VAR_ATTMPOWER
+            MinValue: 5
+            MaxValue: 12
+            Chance: 10000
+          - Option: VAR_ITEMDEFPOWER
+            MinValue: 3
+            MaxValue: 6
+            Chance: 10000
+    MaxRandom: 3
+    Random:
+      - Option: VAR_ATKPERCENT
+        MinValue: 1
+        MaxValue: 2
+        Chance: 2000
+      - Option: VAR_MAGICATKPERCENT
+        MinValue: 1
+        MaxValue: 2
+        Chance: 2000
+      - Option: VAR_PLUSASPD
+        MinValue: 1
+        MaxValue: 1
+        Chance: 1500
+      - Option: VAR_HITSUCCESSVALUE
+        MinValue: 3
+        MaxValue: 8
+        Chance: 4000
+      - Option: VAR_AVOIDSUCCESSVALUE
+        MinValue: 3
+        MaxValue: 8
+        Chance: 4000
+      - Option: VAR_CRITICALSUCCESSVALUE
+        MinValue: 2
+        MaxValue: 5
+        Chance: 4000
+      - Option: VAR_PLUSAVOIDSUCCESSVALUE
+        MinValue: 1
+        MaxValue: 3
+        Chance: 4000
+      - Option: VAR_MDEFPOWER
+        MinValue: 2
+        MaxValue: 5
+        Chance: 4000
+      - Option: VAR_MAXSPPERCENT
+        MinValue: 1
+        MaxValue: 3
+        Chance: 4000
+      - Option: ATTR_TOLERACE_NOTHING
+        MinValue: 1
+        MaxValue: 3
+        Chance: 4000
+      - Option: ATTR_TOLERACE_FIRE
+        MinValue: 2
+        MaxValue: 5
+        Chance: 4000
+      - Option: ATTR_TOLERACE_WATER
+        MinValue: 2
+        MaxValue: 5
+        Chance: 4000
+      - Option: ATTR_TOLERACE_WIND
+        MinValue: 2
+        MaxValue: 5
+        Chance: 4000
+      - Option: ATTR_TOLERACE_GROUND
+        MinValue: 2
+        MaxValue: 5
+        Chance: 4000
+
+# ===========================================================================
+# TIER 3 — equipamento de alto nivel / MVP (2 a 4 bonus)
+# Taxa de preenchimento dos slots extras: ~50%
+# ===========================================================================
+  - Id: 3
+    Group: RAGNABEAT_T3
+    Slots:
+      - Slot: 1
+        Options:
+          - Option: VAR_STRAMOUNT
+            MinValue: 3
+            MaxValue: 6
+            Chance: 10000
+          - Option: VAR_AGIAMOUNT
+            MinValue: 3
+            MaxValue: 6
+            Chance: 10000
+          - Option: VAR_VITAMOUNT
+            MinValue: 3
+            MaxValue: 6
+            Chance: 10000
+          - Option: VAR_INTAMOUNT
+            MinValue: 3
+            MaxValue: 6
+            Chance: 10000
+          - Option: VAR_DEXAMOUNT
+            MinValue: 3
+            MaxValue: 6
+            Chance: 10000
+          - Option: VAR_LUKAMOUNT
+            MinValue: 3
+            MaxValue: 6
+            Chance: 10000
+      - Slot: 2
+        Options:
+          - Option: VAR_ATTPOWER
+            MinValue: 10
+            MaxValue: 20
+            Chance: 10000
+          - Option: VAR_ATTMPOWER
+            MinValue: 10
+            MaxValue: 20
+            Chance: 10000
+          - Option: VAR_MAXHPAMOUNT
+            MinValue: 300
+            MaxValue: 600
+            Chance: 10000
+          - Option: VAR_MAXHPPERCENT
+            MinValue: 1
+            MaxValue: 3
+            Chance: 10000
+          - Option: VAR_ITEMDEFPOWER
+            MinValue: 5
+            MaxValue: 10
+            Chance: 10000
+    MaxRandom: 4
+    Random:
+      - Option: VAR_ATKPERCENT
+        MinValue: 2
+        MaxValue: 4
+        Chance: 2500
+      - Option: VAR_MAGICATKPERCENT
+        MinValue: 2
+        MaxValue: 4
+        Chance: 2500
+      - Option: VAR_PLUSASPD
+        MinValue: 1
+        MaxValue: 2
+        Chance: 2000
+      - Option: VAR_PLUSASPDPERCENT
+        MinValue: 1
+        MaxValue: 3
+        Chance: 2000
+      - Option: VAR_CRITICALSUCCESSVALUE
+        MinValue: 4
+        MaxValue: 8
+        Chance: 5000
+      - Option: VAR_HITSUCCESSVALUE
+        MinValue: 5
+        MaxValue: 12
+        Chance: 5000
+      - Option: VAR_AVOIDSUCCESSVALUE
+        MinValue: 5
+        MaxValue: 12
+        Chance: 5000
+      - Option: VAR_PLUSAVOIDSUCCESSVALUE
+        MinValue: 2
+        MaxValue: 5
+        Chance: 5000
+      - Option: VAR_MDEFPOWER
+        MinValue: 4
+        MaxValue: 8
+        Chance: 5000
+      - Option: VAR_MAXSPPERCENT
+        MinValue: 2
+        MaxValue: 5
+        Chance: 5000
+      - Option: DAMAGE_PROPERTY_SAINT_TARGET
+        MinValue: 2
+        MaxValue: 5
+        Chance: 3000
+      - Option: DAMAGE_PROPERTY_DARKNESS_TARGET
+        MinValue: 2
+        MaxValue: 5
+        Chance: 3000
+      - Option: DAMAGE_PROPERTY_UNDEAD_TARGET
+        MinValue: 2
+        MaxValue: 5
+        Chance: 3000
+      - Option: ATTR_TOLERACE_NOTHING
+        MinValue: 3
+        MaxValue: 6
+        Chance: 5000
+      - Option: ATTR_TOLERACE_SAINT
+        MinValue: 3
+        MaxValue: 8
+        Chance: 5000
+      - Option: ATTR_TOLERACE_DARKNESS
+        MinValue: 3
+        MaxValue: 8
+        Chance: 5000
+      - Option: ATTR_TOLERACE_UNDEAD
+        MinValue: 3
+        MaxValue: 8
+        Chance: 5000

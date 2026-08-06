@@ -1,0 +1,57 @@
+//--------------------------------------------------------------
+// Ragnabeat — battle config custom
+// Importado por conf/battle_athena.conf (linha 64).
+// Sobrescreve o que estiver em conf/battle/*.conf.
+//--------------------------------------------------------------
+
+//--------------------------------------------------------------
+// Random Options automaticos em equipamento dropado
+//--------------------------------------------------------------
+// Aplica um grupo de random option a TODO equipamento que dropar, sem precisar
+// anotar RandomOptionGroup em milhares de linhas do mob_db.
+//
+// Implementado em mob_getdefault_optgroup() (src/map/mob.cpp), chamado como
+// fallback dentro de mob_setdropitem_option(). Cobre os 3 caminhos de drop:
+//   - drop normal de mob
+//   - drop de MVP
+//   - item roubado (se skill_steal_random_options estiver ligado)
+//
+// NAO cobre: item de loja, quest, craft e MVP room. Para esses use o comando
+// de script randomoptgroup() no NPC.
+//
+// Os grupos estao em db/import/item_randomopt_group.yml.
+// As opcoes estao em db/import/item_randomopt_db.yml.
+
+// Liga o sistema. (0 = desligado, 1 = ligado)
+// Default: 0
+randopt_drop_enable: 1
+
+// Id do grupo aplicado a cada faixa de nivel do equipamento.
+// 0 desliga aquela faixa (o item dropa sem bonus).
+// Precisa bater com os Ids de db/import/item_randomopt_group.yml.
+randopt_drop_group_t1: 1
+randopt_drop_group_t2: 2
+randopt_drop_group_t3: 3
+
+// Faixas de nivel. O criterio e o equip_level_min do ITEM (nao o level do mob),
+// entao o tier acompanha o poder do equipamento independente de quem dropou.
+//
+//   equip_level_min <  randopt_drop_t2_minlevel                -> tier 1
+//   randopt_drop_t2_minlevel <= elv < randopt_drop_t3_minlevel -> tier 2
+//   equip_level_min >= randopt_drop_t3_minlevel                -> tier 3
+//
+// Atencao: muito equipamento pre-re tem equip_level_min 0, entao cai em tier 1.
+// Se quiser que equips sem nivel definido subam de tier, ajuste o item_db.
+randopt_drop_t2_minlevel: 40
+randopt_drop_t3_minlevel: 75
+
+// Capacete (head top/mid/low) e acessorio recebem bonus?
+// 0 = nao (recomendado — sao os slots mais faceis de farmar e trocar, e viram
+//          empilhamento de porcentagem)
+// 1 = sim
+// Costume nunca recebe, independente deste valor.
+randopt_drop_helm_acc: 0
+
+// Nota: item roubado so recebe bonus se o config abaixo (nativo, em
+// conf/battle/skill.conf) estiver ligado.
+//skill_steal_random_options: yes

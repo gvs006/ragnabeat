@@ -64,10 +64,13 @@ Thumbs.db
 /3rdparty/httplib/obj
 
 # /db/
-/db/import
+# Ragnabeat: era `/db/import` (diretorio inteiro). O git nao re-inclui arquivo
+# cujo diretorio pai esta excluido, entao a forma `/*` e o que permite as
+# excecoes no fim deste arquivo.
+/db/import/*
 
 # /conf/
-/conf/import
+/conf/import/*
 /conf/msg_conf/import
 
 # /lib
@@ -153,3 +156,19 @@ Thumbs.db
 # generated files
 generated
 /gh-devtools
+/BG-ANALISAR
+
+# ---------------------------------------------------------------------------
+# Ragnabeat: conteudo custom do servidor
+#
+# O rAthena ignora db/import e conf/import por tratar como config local de cada
+# instalacao. Para este projeto e o oposto: import/ e onde vive TODA a
+# customizacao, justamente para nao conflitar no merge com o upstream. Se ficar
+# ignorado, um clone novo sobe um servidor sem nada do que nos escrevemos.
+#
+# Excecao por arquivo, e nao pasta inteira, de proposito: arquivo custom novo
+# precisa ser adicionado aqui conscientemente.
+# ---------------------------------------------------------------------------
+!/db/import/item_randomopt_db.yml
+!/db/import/item_randomopt_group.yml
+!/conf/import/battle_conf.txt

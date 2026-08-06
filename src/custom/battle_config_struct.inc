@@ -12,3 +12,13 @@
  *	 <datatype> name;
  **/
 
+// Ragnabeat: random option automatico em equipamento dropado.
+// Ver mob_getdefault_optgroup() em src/map/mob.cpp e conf/import/battle_conf.txt
+int32 randopt_drop_enable;
+int32 randopt_drop_group_t1;
+int32 randopt_drop_group_t2;
+int32 randopt_drop_group_t3;
+int32 randopt_drop_t2_minlevel;
+int32 randopt_drop_t3_minlevel;
+int32 randopt_drop_helm_acc;
+

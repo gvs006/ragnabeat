@@ -1,0 +1,184 @@
+###########################################################################
+# Item Random Option Database — Ragnabeat (pre-renewal)
+###########################################################################
+#
+# O db/item_randomopt_db.yml da raiz importa db/re/... apenas com "Mode: Renewal",
+# que e ignorado no build PRERE. Este arquivo e importado SEM condicao, entao e
+# aqui que as opcoes do servidor sao definidas.
+#
+# IMPORTANTE: os Ids abaixo sao os OFICIAIS. O client traduz o Id para o texto
+# da descricao usando enumvar.lub — mudar um Id faz a linha aparecer errada ou
+# em branco. Adicione opcoes novas a partir do Id 100 para nao colidir.
+#
+# O campo "Option" e um nome livre (o parser nao valida contra constante alguma);
+# ele so serve de rotulo para referenciar a opcao em item_randomopt_group.yml.
+#
+# getrandomoptinfo(ROA_VALUE) devolve o valor sorteado entre MinValue e MaxValue
+# definidos no grupo.
+#
+###########################################################################
+
+Header:
+  Type: RANDOM_OPTION_DB
+  Version: 1
+
+Body:
+# --- Atributos primarios ---------------------------------------------------
+  - Id: 3
+    Option: VAR_STRAMOUNT
+    Script: |
+      bonus bStr,getrandomoptinfo(ROA_VALUE);
+  - Id: 4
+    Option: VAR_AGIAMOUNT
+    Script: |
+      bonus bAgi,getrandomoptinfo(ROA_VALUE);
+  - Id: 5
+    Option: VAR_VITAMOUNT
+    Script: |
+      bonus bVit,getrandomoptinfo(ROA_VALUE);
+  - Id: 6
+    Option: VAR_INTAMOUNT
+    Script: |
+      bonus bInt,getrandomoptinfo(ROA_VALUE);
+  - Id: 7
+    Option: VAR_DEXAMOUNT
+    Script: |
+      bonus bDex,getrandomoptinfo(ROA_VALUE);
+  - Id: 8
+    Option: VAR_LUKAMOUNT
+    Script: |
+      bonus bLuk,getrandomoptinfo(ROA_VALUE);
+
+# --- HP / SP ---------------------------------------------------------------
+  - Id: 1
+    Option: VAR_MAXHPAMOUNT
+    Script: |
+      bonus bMaxHP,getrandomoptinfo(ROA_VALUE);
+  - Id: 2
+    Option: VAR_MAXSPAMOUNT
+    Script: |
+      bonus bMaxSP,getrandomoptinfo(ROA_VALUE);
+  - Id: 9
+    Option: VAR_MAXHPPERCENT
+    Script: |
+      bonus bMaxHPrate,getrandomoptinfo(ROA_VALUE);
+  - Id: 10
+    Option: VAR_MAXSPPERCENT
+    Script: |
+      bonus bMaxSPrate,getrandomoptinfo(ROA_VALUE);
+  - Id: 11
+    Option: VAR_HPACCELERATION
+    Script: |
+      bonus bHPrecovRate,getrandomoptinfo(ROA_VALUE);
+  - Id: 12
+    Option: VAR_SPACCELERATION
+    Script: |
+      bonus bSPrecovRate,getrandomoptinfo(ROA_VALUE);
+
+# --- Ataque ----------------------------------------------------------------
+  - Id: 17
+    Option: VAR_ATTPOWER
+    Script: |
+      bonus bAtk,getrandomoptinfo(ROA_VALUE);
+  - Id: 13
+    Option: VAR_ATKPERCENT
+    Script: |
+      bonus bAtkRate,getrandomoptinfo(ROA_VALUE);
+  - Id: 19
+    Option: VAR_ATTMPOWER
+    Script: |
+      bonus bMatk,getrandomoptinfo(ROA_VALUE);
+  - Id: 14
+    Option: VAR_MAGICATKPERCENT
+    Script: |
+      bonus bMatkRate,getrandomoptinfo(ROA_VALUE);
+  - Id: 15
+    Option: VAR_PLUSASPD
+    Script: |
+      bonus bAspd,getrandomoptinfo(ROA_VALUE);
+  - Id: 16
+    Option: VAR_PLUSASPDPERCENT
+    Script: |
+      bonus bAspdRate,getrandomoptinfo(ROA_VALUE);
+  - Id: 18
+    Option: VAR_HITSUCCESSVALUE
+    Script: |
+      bonus bHit,getrandomoptinfo(ROA_VALUE);
+  - Id: 24
+    Option: VAR_CRITICALSUCCESSVALUE
+    Script: |
+      bonus bCritical,getrandomoptinfo(ROA_VALUE);
+
+# --- Defesa ----------------------------------------------------------------
+  - Id: 20
+    Option: VAR_ITEMDEFPOWER
+    Script: |
+      bonus bDef,getrandomoptinfo(ROA_VALUE);
+  - Id: 21
+    Option: VAR_MDEFPOWER
+    Script: |
+      bonus bMdef,getrandomoptinfo(ROA_VALUE);
+  - Id: 22
+    Option: VAR_AVOIDSUCCESSVALUE
+    Script: |
+      bonus bFlee,getrandomoptinfo(ROA_VALUE);
+  - Id: 23
+    Option: VAR_PLUSAVOIDSUCCESSVALUE
+    Script: |
+      bonus bFlee2,getrandomoptinfo(ROA_VALUE);
+
+# --- Resistencia elemental -------------------------------------------------
+  - Id: 25
+    Option: ATTR_TOLERACE_NOTHING
+    Script: |
+      bonus2 bSubEle,Ele_Neutral,getrandomoptinfo(ROA_VALUE);
+  - Id: 26
+    Option: ATTR_TOLERACE_WATER
+    Script: |
+      bonus2 bSubEle,Ele_Water,getrandomoptinfo(ROA_VALUE);
+  - Id: 27
+    Option: ATTR_TOLERACE_GROUND
+    Script: |
+      bonus2 bSubEle,Ele_Earth,getrandomoptinfo(ROA_VALUE);
+  - Id: 28
+    Option: ATTR_TOLERACE_FIRE
+    Script: |
+      bonus2 bSubEle,Ele_Fire,getrandomoptinfo(ROA_VALUE);
+  - Id: 29
+    Option: ATTR_TOLERACE_WIND
+    Script: |
+      bonus2 bSubEle,Ele_Wind,getrandomoptinfo(ROA_VALUE);
+  - Id: 30
+    Option: ATTR_TOLERACE_POISON
+    Script: |
+      bonus2 bSubEle,Ele_Poison,getrandomoptinfo(ROA_VALUE);
+  - Id: 31
+    Option: ATTR_TOLERACE_SAINT
+    Script: |
+      bonus2 bSubEle,Ele_Holy,getrandomoptinfo(ROA_VALUE);
+  - Id: 32
+    Option: ATTR_TOLERACE_DARKNESS
+    Script: |
+      bonus2 bSubEle,Ele_Dark,getrandomoptinfo(ROA_VALUE);
+  - Id: 33
+    Option: ATTR_TOLERACE_TELEKINESIS
+    Script: |
+      bonus2 bSubEle,Ele_Ghost,getrandomoptinfo(ROA_VALUE);
+  - Id: 34
+    Option: ATTR_TOLERACE_UNDEAD
+    Script: |
+      bonus2 bSubEle,Ele_Undead,getrandomoptinfo(ROA_VALUE);
+
+# --- Dano fisico contra elemento -------------------------------------------
+  - Id: 49
+    Option: DAMAGE_PROPERTY_SAINT_TARGET
+    Script: |
+      bonus2 bAddEle,Ele_Holy,getrandomoptinfo(ROA_VALUE);
+  - Id: 51
+    Option: DAMAGE_PROPERTY_DARKNESS_TARGET
+    Script: |
+      bonus2 bAddEle,Ele_Dark,getrandomoptinfo(ROA_VALUE);
+  - Id: 55
+    Option: DAMAGE_PROPERTY_UNDEAD_TARGET
+    Script: |
+      bonus2 bAddEle,Ele_Undead,getrandomoptinfo(ROA_VALUE);

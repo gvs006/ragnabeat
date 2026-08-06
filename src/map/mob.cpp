@@ -2476,6 +2476,58 @@ static TIMER_FUNC(mob_ai_hard){
 }
 
 /**
+ * Ragnabeat: escolhe o grupo de random option padrao de um item dropado.
+ *
+ * Usado como fallback quando o drop nao tem RandomOptionGroup definido no mob_db,
+ * para que todo equipamento venha com bonus sem precisar anotar milhares de linhas
+ * de drop. O tier sai do nivel de uso do proprio item, entao mapa inicial dropa T1
+ * e equip de fim de jogo dropa T3 sem depender de qual mob dropou.
+ *
+ * Configuravel em conf/import/battle_conf.txt (randopt_drop_*).
+ *
+ * @param nameid: item dropado
+ * @return grupo a aplicar, ou nullptr se o item nao se qualifica
+ **/
+static std::shared_ptr<s_random_opt_group> mob_getdefault_optgroup( t_itemid nameid ){
+	std::shared_ptr<item_data> id = item_db.find( nameid );
+
+	if( id == nullptr ){
+		return nullptr;
+	}
+
+	// Somente equipamento recebe bonus
+	if( id->type != IT_ARMOR && id->type != IT_WEAPON ){
+		return nullptr;
+	}
+
+	// Costume nunca recebe: nao concede status
+	if( id->equip & EQP_COSTUME ){
+		return nullptr;
+	}
+
+	// Capacete e acessorio entram apenas se habilitado
+	if( !battle_config.randopt_drop_helm_acc && ( id->equip & ( EQP_HELM | EQP_ACC ) ) ){
+		return nullptr;
+	}
+
+	int32 group_id;
+
+	if( id->elv >= battle_config.randopt_drop_t3_minlevel ){
+		group_id = battle_config.randopt_drop_group_t3;
+	}else if( id->elv >= battle_config.randopt_drop_t2_minlevel ){
+		group_id = battle_config.randopt_drop_group_t2;
+	}else{
+		group_id = battle_config.randopt_drop_group_t1;
+	}
+
+	if( group_id <= 0 ){
+		return nullptr;
+	}
+
+	return random_option_group.find( static_cast<uint16>( group_id ) );
+}
+
+/**
  * Set random option for item when dropped from monster
  * @param item: Item data
  * @param mobdrop: Drop data
@@ -2483,6 +2535,11 @@ static TIMER_FUNC(mob_ai_hard){
  **/
 void mob_setdropitem_option( item& item, const std::shared_ptr<s_mob_drop>& mobdrop ){
 	std::shared_ptr<s_random_opt_group> group = random_option_group.find( mobdrop->randomopt_group );
+
+	// Ragnabeat: fallback global quando o drop nao define um grupo no mob_db
+	if( group == nullptr && battle_config.randopt_drop_enable ){
+		group = mob_getdefault_optgroup( item.nameid );
+	}
 
 	if (group != nullptr) {
 		group->apply( item );
