@@ -66,7 +66,7 @@ Por isso o override do `import/` vence.
 |---|---|
 | [src/login/login.cpp:426](../src/login/login.cpp#L426) | `if( login_config.use_web_auth_token )` → copia para a sessão |
 | [src/login/loginclif.cpp:127](../src/login/loginclif.cpp#L127) | grava no campo `token` do `PACKET_AC_ACCEPT_LOGIN`, sob `#if PACKETVER >= 20170315` |
-| [src/common/packets.hpp:187](../src/common/packets.hpp#L187) | struct do pacote `0xac4` |
+| [src/common/packets.hpp:195](../src/common/packets.hpp#L195) | o campo `char token[WEB_AUTH_TOKEN_LENGTH]` no struct do pacote `0xac4` |
 
 Nosso `PACKETVER` é **20250416** (`src/custom/defines_pre.hpp`), então o campo existe e
 o cliente o espera.

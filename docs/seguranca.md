@@ -176,7 +176,7 @@ local em `src/custom/` custaria mais em conflito de merge do que o risco justifi
 
 O SHA2-256 é truncado em 16 caracteres hex ≈ 64 bits. Não é adivinhável por força bruta
 online, e o campo é ditado pelo tamanho fixo no pacote `AC_ACCEPT_LOGIN`
-([src/common/packets.hpp:187](../src/common/packets.hpp#L187)) — mudar quebraria o
+([src/common/packets.hpp:195](../src/common/packets.hpp#L195)) — mudar quebraria o
 protocolo com o cliente.
 
 **Correção:** nenhuma viável. Registrar e seguir.
