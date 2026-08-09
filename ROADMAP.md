@@ -1,7 +1,10 @@
 # Ragnabeat — Roadmap de Features
 
-Servidor **pre-renewal** (`PRERE` definido em [src/config/renewal.hpp:8](src/config/renewal.hpp#L8)), `PACKETVER 20211103`,
-rates 500x/20x, limites 99/70, stack Docker + MariaDB.
+Servidor **pre-renewal** (`PRERE` definido em [src/config/renewal.hpp:8](src/config/renewal.hpp#L8)), `PACKETVER 20250416`
+(em [src/custom/defines_pre.hpp](src/custom/defines_pre.hpp)), rates 500x/20x, limites 99/70, stack Docker + MariaDB.
+
+> Este arquivo cobre **o que construir**. Para como o que já existe funciona — infra,
+> portas, auth token, segurança, cliente — ver **[docs/](docs/README.md)**.
 
 Legenda de origem:
 - 🟢 **Nativo** — já está no rAthena, só configurar/popular dados

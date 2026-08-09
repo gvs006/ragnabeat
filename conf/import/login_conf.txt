@@ -1,0 +1,13 @@
+// Override local de conf/login_athena.conf.
+// Esta pasta esta no .gitignore - e config por instalacao e sobrevive a merges.
+
+// Desliga o web auth token.
+//
+// Motivo: o cliente 2025-04-16 busca o token via HTTP no web-server. A porta 8888
+// do host esta ocupada pelo OpenTelemetry Collector, entao o web-server do rAthena
+// foi publicado na 8889 - e o cliente nao sabe disso. O login travava logo apos
+// "request connect", com "Web Auth Token ... was disabled" e sem "Char load request".
+//
+// Para religar: liberar a 8888 no host, publicar "8888:8888" no docker-compose,
+// e apagar esta linha.
+use_web_auth_token: no

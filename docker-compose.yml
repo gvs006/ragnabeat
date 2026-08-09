@@ -28,6 +28,16 @@ services:
       - "6900:6900"
       - "6121:6121"
       - "5121:5121"
+      # O cliente 2025-04-16 conecta no login pela 6951 (porta derivada em codigo,
+      # nao vem do clientinfo.xml). Encaminhamos para a 6900 do login-server em vez
+      # de mexer na config do rAthena.
+      - "6951:6900"
+      # web-server: o cliente 2025 usa web auth token (o log mostra
+      # "Web Auth Token for account ... was disabled" no logout). Sem esta porta
+      # publicada ele fica preso no "Please wait" ao renovar o token.
+      # ATENCAO: a 8888 do host esta ocupada pelo OpenTelemetry Collector, entao
+      # publicamos na 8889. O endereco do web-server vai no clientinfo.xml.
+      - "8889:8888"
     restart: always
     command: /bin/bash -c "./login-server & ./char-server & ./map-server & ./web-server & wait"
 
