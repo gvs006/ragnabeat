@@ -50,6 +50,20 @@ O preset "select recommended" **não** marca estes. Marque na mão:
 | `DataFolderFirst` | Faz a pasta `data\` vencer os GRFs. Necessário para os overrides de lua e para o `clientinfo.xml`. |
 | `CustomItemInfoLub` | Aponta o itemInfo para a tradução. Valor: `SystemEN\itemInfo.lua` — **com contrabarra**. Com barra normal o cliente dá `Invalid argument`. |
 
+### Ícone do cliente
+
+O grupo **ENABLE ICON** é `mutex` — só um dos dois pode estar marcado:
+
+| Patch | O que faz |
+|---|---|
+| `Restore Inbuilt App icon` | usa o ícone **embutido no exe**. É `recommend: yes`, então entra sozinho no "select recommended" |
+| `Customize App icon` | usa um `.ico` seu, gravando-o dentro do exe |
+
+Um `.ico` solto na pasta do cliente **não faz nada** — nada o lê em runtime. Para um
+ícone próprio, desmarque o `Restore Inbuilt` e marque o `Customize`. Para Win7+ o
+patch recomenda um `.ico` com **256x256 32bit mais um 16x16**; só com 32x32 o ícone
+sai borrado na barra de tarefas.
+
 ### Patches que NÃO devem ser marcados
 
 | Patch | O que acontece |
@@ -148,6 +162,20 @@ SystemEN\             tradução inglesa
 | `_exes_antigos\` | descartados, incluindo o 2025-06-04 |
 
 ---
+
+## Features do cliente sem suporte no servidor
+
+O cliente 2025 traz features do kRO que **o rAthena não implementa**. A UI abre e
+parece funcionar, mas nada acontece ao aplicar, porque o pacote não tem tratador
+do outro lado.
+
+| Feature | Evidência |
+|---|---|
+| **Damage Skin** (Alt+Q, muda o visual dos números de dano) | O exe procura `Lua Files\DamageSkin\DamageSkinInfo` e `DamageSkinList`, e tem `GetDamageSkinName`, `DamageSkinSize`, `Damage_Property`, `Damage_CRI`. No rAthena: **zero ocorrências** de `damageskin`/`damage_skin` em `src/`. Sem port conhecido na comunidade (verificado em 10/ago/2026) |
+
+Implementar exigiria os pacotes em C++, uma forma de conceder a skin à conta e
+persistência no banco — é feature, não configuração. Antes de tentar, confirme que
+vale: no kRO isso é item de cash shop.
 
 ## Pendente
 

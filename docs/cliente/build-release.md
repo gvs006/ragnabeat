@@ -67,6 +67,7 @@ excluído. Resultado atual: **3.043 arquivos, 570 MB** copiados dos 4,7 GB da pa
 | Excluído | Motivo |
 |---|---|
 | `savedata/`, `Replay/`, `memo/` | **criadas vazias.** O `savedata/` tem a UI, os atalhos e as janelas de chat **do desenvolvedor** |
+| `DEVTOOLS/` | WARP, patchers, decompiladores, exes candidatos — 602 MB. Mora dentro da pasta de desenvolvimento desde 10/ago |
 | `_tmpEmblem/` | emblemas de guilda baixados na sessão do desenvolvedor |
 | `BASE_*.exe` | a fonte de todo rebuild. Entregar isso é entregar o cliente sem nenhum patch |
 | `*.epi`, `*.secure.txt`, `*PROFILE.yml` | artefatos do WARP — **revelam exatamente quais patches foram aplicados** |
@@ -114,8 +115,8 @@ O builder e o `pos-warp.py` são imunes. Estes **não** são, porque guardam cam
 | `<pasta>/BASE_*_PROFILE.yml` | idem |
 | WARP, campos Source/Target na tela | e clicar em **recarregar** |
 
-O `DEVTOOLS/PTBR/gen_item_ptbr.py` foi tornado imune: ele procura a única subpasta
-de `C:\RagnaClient` que tenha `DATA.ini` e `SystemEN/`, em vez de fixar o nome.
+O `DEVTOOLS/PTBR/gen_item_ptbr.py` foi tornado imune: ele sobe a partir do próprio
+arquivo até achar a pasta que tem `DATA.ini` e `SystemEN/`, em vez de fixar o nome.
 
 ---
 

@@ -42,6 +42,7 @@ POR_HARDLINK = ['*.grf']
 # Pastas que nao vao para o jogador.
 PASTAS_FORA = {
     'builds',          # os proprios builds
+    'DEVTOOLS',        # WARP, patchers, decompiladores, exes candidatos - 600 MB
     '_exes_antigos',   # exes descartados
     'GameGuard',       # anticheat desativado pelo patch NoGGuard
     'PatchClient',     # recursos do patcher oficial kRO, nao usamos
