@@ -171,11 +171,13 @@ do outro lado.
 
 | Feature | Evidência |
 |---|---|
-| **Damage Skin** (Alt+Q, muda o visual dos números de dano) | O exe procura `Lua Files\DamageSkin\DamageSkinInfo` e `DamageSkinList`, e tem `GetDamageSkinName`, `DamageSkinSize`, `Damage_Property`, `Damage_CRI`. No rAthena: **zero ocorrências** de `damageskin`/`damage_skin` em `src/`. Sem port conhecido na comunidade (verificado em 10/ago/2026) |
+| **Damage Skin** de cash shop | O exe procura `Lua Files\DamageSkin\DamageSkinInfo` e `DamageSkinList`, e tem `GetDamageSkinName`, `DamageSkinSize`. No rAthena: **zero ocorrências** de `damageskin`/`damage_skin` em `src/`. Sem port conhecido (verificado em 10/ago/2026). Implementar exige pacotes em C++, concessão à conta e persistência — é feature, não configuração |
 
-Implementar exigiria os pacotes em C++, uma forma de conceder a skin à conta e
-persistência no banco — é feature, não configuração. Antes de tentar, confirme que
-vale: no kRO isso é item de cash shop.
+> **Não confundir com a aba "Damage Info"** da janela de Equipamento (Alt+Q), que
+> escolhe o estilo dos números — Normal / Colorido / Palavras / Nada, e a posição.
+> Essa é preferência de exibição, não item de cash shop, e o ThanatosRO a tem
+> funcionando. Ela grava via web-server, que estava quebrado por dois motivos
+> independentes — ver [auth-token.md](../auth-token.md).
 
 ## Pendente
 

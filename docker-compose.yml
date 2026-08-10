@@ -13,6 +13,11 @@ services:
       # O MariaDB criará o banco automaticamente na primeira vez usando seus arquivos locais
       - ./sql-files/main.sql:/docker-entrypoint-initdb.d/1-main.sql
       - ./sql-files/logs.sql:/docker-entrypoint-initdb.d/2-logs.sql
+      # Tabelas do web-server: guild_emblems, user_configs, char_configs,
+      # merchant_configs. Ficaram de fora ate 10/ago/2026 - sem elas o cliente
+      # nao consegue salvar emblema de guilda nem preferencia de UI (ex.: a aba
+      # "Damage Info" do Alt+Q). Ver docs/auth-token.md.
+      - ./sql-files/web.sql:/docker-entrypoint-initdb.d/3-web.sql
     ports:
       - "3307:3306"
     restart: always

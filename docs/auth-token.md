@@ -144,6 +144,38 @@ Na prática: emblema de guild não sobe, e as preferências de interface do joga
 sobrevivem a uma troca de máquina. Aceitável enquanto o servidor não tem guildas ativas —
 **revisitar antes de abrir para jogadores**.
 
+### Havia uma segunda causa, independente: as tabelas não existiam
+
+Descoberto em 10/ago/2026, investigando por que a aba **Damage Info** da janela de
+Equipamento (Alt+Q) não guardava a escolha.
+
+As quatro tabelas que o web-server usa moram em
+[sql-files/web.sql](../sql-files/web.sql) — **um arquivo separado do `main.sql`**:
+
+| Tabela | Para quê |
+|---|---|
+| `char_configs` | JSON livre de preferências por personagem — provável lar da escolha da aba Damage Info |
+| `user_configs` | idem, por conta |
+| `guild_emblems` | emblema de guilda |
+| `merchant_configs` | configuração de loja de mercador |
+
+O `docker-compose.yml` montava só o `main.sql` e o `logs.sql` em
+`/docker-entrypoint-initdb.d/`. O `web.sql` **nunca foi carregado**, e o banco subiu
+sem essas quatro tabelas — 66 tabelas, nenhuma delas. Corrigido: o compose agora
+monta também o `3-web.sql`.
+
+> ⚠ O `docker-entrypoint-initdb.d` só roda com o volume **vazio**. Em instalação que
+> já existe, aplique à mão:
+> ```
+> docker exec -i ragnabeat_db mysql -uragnarok -pragnarok ragnarok < sql-files/web.sql
+> ```
+> É `CREATE TABLE IF NOT EXISTS` puro — aditivo e seguro de repetir.
+
+Ou seja, o web-server tinha **duas** paredes independentes: a autenticação sempre
+falhava, e mesmo que passasse, o `REPLACE INTO` bateria numa tabela inexistente.
+Corrigir uma sem a outra não mudaria nada — o que explica por que o sintoma parecia
+"a feature não existe" em vez de "está mal configurada".
+
 ## Como religar
 
 1. Liberar a **8888** no host — remapear o OpenTelemetry Collector para outra porta,
