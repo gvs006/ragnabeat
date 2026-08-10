@@ -1,0 +1,11 @@
+# Configuracao do builder de release (build.py).
+#
+# Lido por um parser minimo de 'chave: valor' - nao use listas, aninhamento
+# nem YAML avancado aqui.
+
+# Nome do servidor. Compoe o nome da pasta de build.
+servidor: RagnaBeat
+
+# Padrao do nome da pasta gerada em builds/.
+# Placeholders disponiveis: {servidor} e {versao}.
+padrao_pasta: {servidor}ProdV{versao}

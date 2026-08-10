@@ -11,11 +11,13 @@ O que ele faz:
      (o cliente 2025 ignora o clientinfo.xml para o endereco de login)
   2. Corrige o separador do caminho do itemInfo para contrabarra
      (o WARP grava com '/', o cliente Windows precisa de '\')
-  3. Troca as constantes de codepage cp949 -> cp1252
+  3. Troca o codepage do decoder de texto, cp949 -> cp1252
      E ISTO QUE FAZ OS ACENTOS FUNCIONAREM. Descoberto em 10/ago/2026.
      O cliente converte texto para Unicode ele mesmo, com 949 compilado no
      binario. Nenhum patch do WARP alcanca isso - nem charset de fonte,
      nem servicetype, nem AlwaysAscii. Ver docs/cliente/acentuacao.md.
+     So o par do decoder e trocado; as outras 5 constantes 949 do binario
+     ficam como estao, senao os sprites dos itens quebram.
 
 O script e idempotente: se nada precisar mudar, ele nao grava nada.
 FECHE O CLIENTE antes de rodar - o Windows nao deixa sobrescrever exe em uso.
@@ -33,13 +35,32 @@ REDIRECIONAR = [
 ]
 
 # 949 = cp949 (coreano, duplo-byte)  ->  1252 (latino, byte unico)
-# Os 7 sites saiam do build do WARP com 949. Trocar todos foi o que fez os
-# acentos renderizarem. Se algum dia um deles quebrar sprite ou nome de
-# arquivo, o suspeito e o _setmbcp em ~0x4CC3DC - da para excluir so ele.
-CODEPAGE = [
-    (b'\x68\xb5\x03\x00\x00', b'\x68\xe4\x04\x00\x00', 'push 949'),
-    (b'\xb8\xb5\x03\x00\x00', b'\xb8\xe4\x04\x00\x00', 'mov eax, 949'),
-]
+#
+# O binario tem 7 constantes 949. Trocamos 6; a excecao e o _setmbcp, que
+# configura o codepage multibyte de TODO o CRT. Deixamos ele em 949 por
+# precaucao com nome de arquivo dentro do GRF (resourceName de item e cp949).
+#
+# Como distinguir o _setmbcp dos outros sem depender de offset fixo: e o unico
+# 'push 949' seguido de FF 15 (call indireto pela IAT). Os outros sao seguidos
+# de E8 (call rel32) ou E9 (jmp).
+#
+#   0x0022807D  push 949 + E8     -> troca
+#   0x0022EDF9  push 949 + E8     -> troca
+#   0x0095226A  push 949 + E8     -> troca
+#   0x00978155  push 949 + E9     -> troca
+#   0x004CC3DC  push 949 + FF 15  -> NAO troca (_setmbcp)
+#   0x00654EE3  mov eax, 949      -> troca
+#   0x0065501B  mov eax, 949      -> troca
+#
+# Historico: trocar so 2 sites (o par 0x22807D/0x22EDF9) NAO faz os acentos
+# funcionarem - foi testado. Trocar os 7 tambem funciona; ficamos em 6 porque
+# nao ha ganho em mexer no CRT inteiro.
+CP949  = b'\xb5\x03\x00\x00'
+CP1252 = b'\xe4\x04\x00\x00'
+SIG_949  = re.compile(rb'(?:\x68' + re.escape(CP949)  + rb'(?!\xff\x15)|\xb8' + re.escape(CP949)  + rb')')
+# O _setmbcp tem que continuar em 949 - e o unico 'push 949' seguido de FF 15.
+SIG_SETMBCP = re.compile(rb'\x68' + re.escape(CP949) + rb'\xff\x15')
+CODEPAGE_ESPERADO = 6
 
 
 def cliente_rodando(exe):
@@ -89,20 +110,17 @@ def main():
 
     print()
     print('=== 3. codepage cp949 -> cp1252 (acentuacao) ===')
-    c = 0
-    for antigo, novo, nome in CODEPAGE:
-        i = 0
-        while True:
-            i = bytes(d).find(antigo, i)
-            if i < 0:
-                break
-            d[i:i + len(antigo)] = novo
-            print('  0x%08X  %-12s -> 1252' % (i, nome))
-            c += 1
-            i += len(antigo)
-            mudou = True
-    if c == 0:
+    achados = [x.start() for x in SIG_949.finditer(bytes(d))]
+    for off in achados:
+        ins = 'push 949' if d[off] == 0x68 else 'mov eax, 949'
+        d[off + 1:off + 5] = CP1252
+        print('  0x%08X  %-12s -> 1252' % (off, ins))
+        mudou = True
+    if not achados:
         print('  ja esta em cp1252, nada a fazer')
+    elif len(achados) != CODEPAGE_ESPERADO:
+        print('  !! esperava %d sites, encontrei %d - conferir antes de usar'
+              % (CODEPAGE_ESPERADO, len(achados)))
 
     if mudou:
         if cliente_rodando(exe):
@@ -129,8 +147,9 @@ def main():
     ok_kro = len(re.findall(rb'kro-[a-z0-9-]+\.ragnarok\.co\.kr', d2)) == 0
     cam = re.search(rb'SystemEN[\\/][A-Za-z0-9_.]+', d2)
     ok_cam = bool(cam) and b'/' not in cam.group(0)
-    n949 = sum(d2.count(a) for a, _, _ in CODEPAGE)
-    ok_cp = n949 == 0
+    n949 = len(SIG_949.findall(d2))
+    n_setmbcp = len(SIG_SETMBCP.findall(d2))
+    ok_cp = n949 == 0 and n_setmbcp == 1
 
     print()
     print('=== verificacao ===')
@@ -139,7 +158,8 @@ def main():
           len(re.findall(rb'kro-[a-z0-9-]+\.ragnarok\.co\.kr', d2))))
     print('  [%s] caminho do itemInfo     : %s' % ('OK' if ok_cam else '!!',
           cam.group(0).decode() if cam else 'nao patcheado no WARP'))
-    print('  [%s] codepage cp949 restante : %d (tem que ser 0)' % ('OK' if ok_cp else '!!', n949))
+    print('  [%s] constantes cp949 abertas : %d (tem que ser 0)' % ('OK' if n949 == 0 else '!!', n949))
+    print('  [%s] _setmbcp preservado em 949: %d (tem que ser 1)' % ('OK' if n_setmbcp == 1 else '!!', n_setmbcp))
     print('       tamanho                 : %d' % len(d2))
     print()
     if ok_ip and ok_kro and ok_cam and ok_cp:

@@ -11,7 +11,7 @@ Cliente conecta, entra no jogo, sem erro de lua, com itens em português.
 
 | Componente | Estado |
 |---|---|
-| Cliente | `C:\RagnaClient\KRO-NEW\RagnaBeat.exe` — Ragexe 2025-04-16 (build 2025-04-10) |
+| Cliente | `RagnaBeat.exe` na pasta de desenvolvimento (hoje `C:\RagnaClient\RagnaBeat.Dev`, era `KRO-NEW`) — Ragexe 2025-04-16 (build 2025-04-10) |
 | Base para rebuild | `BASE_2025-04-16_limpo.exe` (14.987.776 bytes após patch) |
 | Patcher | `C:\RagnaClient\DEVTOOLS\WARP-2025` |
 | `data.grf` | 4024 MB, v2, full client 2025-04-16 |
@@ -224,6 +224,6 @@ técnica dos itens.
 ## 7. Backups e o que pode ser descartado
 
 - `C:\RagnaClient` (7,3 GB) — setup antigo de 2021, intocado, serve de referência
-- `KRO-NEW\_exes_antigos\` — descartáveis
-- `KRO-NEW\RagnaBeat2.exe` — primeira versão que conectou; rede de segurança
+- `_exes_antigos\` na pasta de desenvolvimento — descartáveis
+- `RagnaBeat-BKP.exe` — rede de segurança do cliente que funciona
 - `C:\RagnaClient\_removed_20260806\` — backups dos experimentos
