@@ -1,13 +1,24 @@
 // Override local de conf/login_athena.conf.
-// Esta pasta esta no .gitignore - e config por instalacao e sobrevive a merges.
+// Esta pasta esta no .gitignore, com excecao por arquivo no fim do .gitignore -
+// e config por instalacao, mas esta versionada de proposito.
 
-// Desliga o web auth token.
+// HISTORICO
 //
-// Motivo: o cliente 2025-04-16 busca o token via HTTP no web-server. A porta 8888
-// do host esta ocupada pelo OpenTelemetry Collector, entao o web-server do rAthena
-// foi publicado na 8889 - e o cliente nao sabe disso. O login travava logo apos
-// "request connect", com "Web Auth Token ... was disabled" e sem "Char load request".
+// De 08 a 10/ago/2026 este arquivo trazia "use_web_auth_token: no". O login
+// travava em "Please wait" porque o cliente busca o token via HTTP no
+// web-server, e a porta 8888 do host estava ocupada pelo OpenTelemetry
+// Collector - o rAthena foi publicado na 8889 e o cliente nao sabe disso.
 //
-// Para religar: liberar a 8888 no host, publicar "8888:8888" no docker-compose,
-// e apagar esta linha.
-use_web_auth_token: no
+// Em 10/ago/2026 o coletor foi movido para a 8890 (as metricas internas dele),
+// a 8888 voltou a ser do rAthena, e o token foi religado. O desligamento
+// custava caro: sem ele o cliente nao chama /charconfig/save, /userconfig/save
+// nem /emblem/upload, entao emblema de guilda e preferencias de UI nao
+// funcionavam.
+//
+// Se o login voltar a travar em "Please wait", confirme nesta ordem:
+//   1. a 8888 do host esta livre para o Docker
+//   2. o compose publica "8888:8888"
+//   3. as tabelas de sql-files/web.sql existem no banco
+// Detalhes em docs/auth-token.md.
+
+// Nenhum override ativo no momento - o default de conf/login_athena.conf vale.

@@ -2,8 +2,13 @@
 
 Escrito em 09/ago/2026. Registra a correção do bloqueio de login e o que ela custa.
 
-> **Estado atual: `use_web_auth_token: no`**, definido em [conf/import/login_conf.txt](../conf/import/login_conf.txt).
-> É um contorno, não uma solução. Ver [Como religar](#como-religar) e o item 1 de [seguranca.md](seguranca.md).
+> **Estado atual: LIGADO** desde 10/ago/2026. O default de
+> [conf/login_athena.conf:174](../conf/login_athena.conf#L174) (`yes`) vale, sem override.
+>
+> De 08 a 10/ago o token esteve **desligado** como contorno. O que destravou:
+> o OpenTelemetry Collector foi movido para a porta 8890, a 8888 voltou a ser do
+> rAthena, e as tabelas de `sql-files/web.sql` — que **nunca tinham sido carregadas** —
+> foram criadas. O histórico abaixo fica porque explica o sintoma e o custo.
 
 ---
 
@@ -176,21 +181,44 @@ falhava, e mesmo que passasse, o `REPLACE INTO` bateria numa tabela inexistente.
 Corrigir uma sem a outra não mudaria nada — o que explica por que o sintoma parecia
 "a feature não existe" em vez de "está mal configurada".
 
-## Como religar
+## Como foi religado — 10/ago/2026
 
-1. Liberar a **8888** no host — remapear o OpenTelemetry Collector para outra porta,
-   ou desligá-lo se não estiver em uso
-2. Em [docker-compose.yml](../docker-compose.yml), trocar `"8889:8888"` por `"8888:8888"`
-3. Remover a linha `use_web_auth_token: no` de [conf/import/login_conf.txt](../conf/import/login_conf.txt)
-   (o default volta a ser `yes`, por [conf/login_athena.conf:174](../conf/login_athena.conf#L174))
-4. `docker compose up -d --force-recreate`
-5. Testar: logar, entrar com um personagem, e conferir que **não** aparece
-   `Request with AID ... unverified` no log do web-server
+1. **OpenTelemetry Collector movido da 8888 para a 8890.** A 8888 dele é só o endpoint
+   de métricas internas. Em `C:\Program Files\OpenTelemetry Collector\config.yaml`,
+   sob `service.telemetry.metrics.readers` (na versão 0.147 o antigo
+   `metrics.address` já não vale). Validado com `otelcol-contrib validate --config`
+   antes de aplicar; backup em `config.yaml.antes-porta-8890`
+2. `docker-compose.yml` passou a publicar `"8888:8888"`
+3. O override `use_web_auth_token: no` saiu do
+   [conf/import/login_conf.txt](../conf/import/login_conf.txt)
+4. As tabelas de `sql-files/web.sql` foram criadas (ver a seção anterior)
+5. `docker compose up -d --force-recreate`
 
-Alternativa, se a 8888 não puder ser liberada: descobrir se o cliente aceita um endereço
-de web-server configurável (via `clientinfo.xml` ou patch no WARP). **Não investigado** —
-o cliente 2025 já ignora o `clientinfo.xml` para o endereço do login
-(ver [cliente/leia-me.md](cliente/leia-me.md)), então é provável que ignore aqui também.
+> **Não existe campo de endereço de web-server no `clientinfo.xml`.** Verificado no
+> binário: o cliente tem os caminhos `/charconfig/save`, `/userconfig/save` e
+> `/emblem/upload`, mas nenhuma tag de URL configurável. Ele monta o endereço a partir
+> do servidor mais a porta 8888, fixa em código. Por isso liberar a 8888 era a única
+> saída — publicar em outra porta nunca funcionaria.
+
+### A race condition que apareceu junto
+
+Ao recriar os containers, os quatro servidores morreram com
+`Can't connect to MySQL server on 'db:3306' (111)`: o `depends_on` sozinho espera o
+container do banco **iniciar**, não o MySQL ficar pronto — e na primeira subida o
+MariaDB ainda está carregando os `.sql` do `initdb.d`.
+
+Corrigido com `healthcheck` no serviço `db` (`mysqladmin ping`) e
+`depends_on: db: condition: service_healthy` no `rathena`. Confirmado com
+`docker compose up -d --force-recreate`: o compose espera o `Healthy`, e os quatro
+servidores sobem com zero erros de conexão.
+
+## Como verificar que está funcionando
+
+- `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8888/` → **404** (o
+  web-server responde; `/` não é rota válida). `000` significa que ele não subiu
+- `docker exec ragnabeat_server sh -c "ps aux | grep '[-]server'"` → os **quatro**
+- Logar e conferir que **não** aparece `Request with AID ... unverified` no log
+- `SELECT COUNT(*) FROM char_configs;` → cresce conforme os jogadores mexem na UI
 
 ## Pendências de segurança
 

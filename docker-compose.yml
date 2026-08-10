@@ -21,12 +21,23 @@ services:
     ports:
       - "3307:3306"
     restart: always
+    # Sem isto o rathena sobe antes do MariaDB aceitar conexao e os quatro
+    # servidores morrem com "Can't connect to MySQL server on 'db:3306' (111)".
+    # O depends_on sozinho so espera o container iniciar, nao o banco ficar
+    # pronto - e na primeira subida o MariaDB ainda carrega os .sql do initdb.
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
   rathena:
     build: .
     container_name: ragnabeat_server
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - .:/server
     ports:
@@ -37,12 +48,14 @@ services:
       # nao vem do clientinfo.xml). Encaminhamos para a 6900 do login-server em vez
       # de mexer na config do rAthena.
       - "6951:6900"
-      # web-server: o cliente 2025 usa web auth token (o log mostra
-      # "Web Auth Token for account ... was disabled" no logout). Sem esta porta
-      # publicada ele fica preso no "Please wait" ao renovar o token.
-      # ATENCAO: a 8888 do host esta ocupada pelo OpenTelemetry Collector, entao
-      # publicamos na 8889. O endereco do web-server vai no clientinfo.xml.
-      - "8889:8888"
+      # web-server: o cliente 2025 monta a URL do web-server a partir do endereco
+      # do servidor mais a porta 8888, fixa em codigo - nao ha campo para ela no
+      # clientinfo.xml. Ele chama /charconfig/save, /userconfig/save e
+      # /emblem/upload por ali.
+      # Ate 10/ago/2026 publicavamos na 8889 porque a 8888 do host estava com o
+      # OpenTelemetry Collector; o coletor foi movido para a 8890 (metricas
+      # internas dele) e a 8888 voltou a ser nossa. Ver docs/auth-token.md.
+      - "8888:8888"
     restart: always
     command: /bin/bash -c "./login-server & ./char-server & ./map-server & ./web-server & wait"
 

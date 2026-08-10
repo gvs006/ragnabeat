@@ -11,7 +11,7 @@ na migração para VPS. É exatamente por isso que precisa estar escrito antes.
 
 | # | Item | Sev | Status |
 |---|---|---|---|
-| 1 | [Web auth token desligado](#1--web-auth-token-desligado) | média | mitigado / a reavaliar |
+| 1 | [~~Web auth token desligado~~](#1--web-auth-token-desligado) | — | **resolvido em 10/ago/2026** |
 | 2 | [MariaDB publicado no host](#2--mariadb-publicado-no-host) | alta | a analisar |
 | 3 | [Senhas default no compose versionado](#3--senhas-default-no-compose-versionado) | alta | a analisar |
 | 4 | [Credenciais inter-server `s1`/`p1`](#4--credenciais-inter-server-s1p1) | alta | a analisar |
@@ -29,7 +29,9 @@ Severidade é **para produção em VPS**, não para o ambiente atual.
 
 ### 1 — Web auth token desligado
 
-`use_web_auth_token: no` em [conf/import/login_conf.txt](../conf/import/login_conf.txt).
+> ✅ **Resolvido em 10/ago/2026.** O token está ligado, o web-server responde na 8888
+> e as tabelas do `web.sql` existem. Ver [auth-token.md](auth-token.md). O texto abaixo
+> descreve a situação anterior.
 
 Contorno para o bloqueio de login causado pelo conflito de porta. É *fail-closed*:
 `isAuthorized()` ([src/web/auth.cpp:35](../src/web/auth.cpp#L35)) exige
