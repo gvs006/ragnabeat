@@ -21,4 +21,15 @@
 //   3. as tabelas de sql-files/web.sql existem no banco
 // Detalhes em docs/auth-token.md.
 
-// Nenhum override ativo no momento - o default de conf/login_athena.conf vale.
+// REVERTIDO em 10/ago/2026, mesmo dia.
+//
+// Religar o token trouxe o "Please wait" de volta. Medido: o servidor aceita o
+// login e gera o token (teste com pacote CA_LOGIN cru devolveu AC_ACCEPT_LOGIN
+// 0x0AC4, e o token foi gravado no banco), mas o cliente TRAVA depois disso - o
+// web-server nao registrou uma unica requisicao vinda dele, so o curl de teste.
+//
+// Ou seja, liberar a 8888 nao bastou. Falta descobrir para onde o cliente
+// realmente tenta ir ao buscar o token. O que ja foi eliminado: porta ocupada
+// (8888 esta livre e nossa), tabelas ausentes (web.sql carregado), servidor fora
+// do ar (os quatro rodando).
+use_web_auth_token: no
