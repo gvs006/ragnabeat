@@ -12,6 +12,7 @@ stack Docker + MariaDB. Cliente próprio baseado no Ragexe 2025-04-16.
 | [auth-token.md](auth-token.md) | login travando em "Please wait", ou antes de religar o web-server |
 | [seguranca.md](seguranca.md) | antes de expor qualquer porta fora do localhost |
 | [cliente/leia-me.md](cliente/leia-me.md) | rebuild do `.exe` no WARP, patches obrigatórios e proibidos |
+| [cliente/acentuacao.md](cliente/acentuacao.md) | acentos PT-BR: as 7 constantes cp949 e o que já foi descartado |
 | [cliente/estado-e-plano.md](cliente/estado-e-plano.md) | estado da tradução PT-BR e o que fazer em seguida |
 
 O `ROADMAP.md` fica na raiz de propósito — é o documento que se lê primeiro, e cobre

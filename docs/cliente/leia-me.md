@@ -29,7 +29,8 @@ Documentação do cliente e dos problemas resolvidos até aqui. Escrita em 08/ag
 4. **Feche o cliente** se estiver aberto.
 5. **Rode `pos-warp.bat`** (ou `python pos-warp.py RagnaBeat.exe`).
 
-O passo 5 é obrigatório. Sem ele o cliente volta a travar em "Please wait".
+O passo 5 é obrigatório. Sem ele o cliente volta a travar em "Please wait" **e os
+acentos param de renderizar** — o `pos-warp.py` reaplica as duas coisas.
 
 O script termina com `>>> PRONTO PARA USAR` quando está tudo certo. Se algum item
 aparecer marcado com `!!`, ele diz qual.
@@ -99,6 +100,11 @@ eliminados, com medição direta no binário e na memória do processo: charset 
 `AlwaysAscii`, `FixFontsCharset`, `CustomFontCharset`, `CallKoreaClientInfo`,
 `_setmbcp(949→1252)`, langtype e servicetype.
 
+> ⚠ **A conclusão abaixo estava errada.** Em 10/ago/2026 descobriu-se que a acentuação
+> não depende da origem do build: são 7 constantes cp949 no `.text`, trocadas para 1252
+> pelo `pos-warp.py`. Ver [acentuacao.md](acentuacao.md). O critério regional × kRO
+> continua útil para *outras* coisas, mas não decide acentuação.
+
 A diferença real está na **origem do build**. Clientes regionais importam
 `basesdk.dll` e `iapsdk.dll` do `.rdata` com dezenas de funções — os kRO não têm.
 O ThanatosRO usa um build assim, e é por isso que exibe acentos.
@@ -148,6 +154,7 @@ SystemEN\             tradução inglesa
 - Tradução PT-BR dos itens. O material está em `C:\RagnaClient\DEVTOOLS\PTBR\`:
   `iteminfo_ptBR.lua` (16.731 itens do LATAM, decompilados), `unluac.jar` e os scripts
   de cruzamento. **5.298 dos 6.169 itens do `db/pre-re` (85,9%) já mapeados.**
-- Verificar se a acentuação realmente funciona neste cliente — motivo original da
-  migração, ainda não confirmado in-game.
+- ~~Verificar se a acentuação realmente funciona neste cliente~~ — **confirmada in-game
+  em 10/ago/2026**, ver [acentuacao.md](acentuacao.md). Falta determinar o conjunto
+  mínimo de constantes e checar se os sprites de itens continuam carregando.
 - Reavaliar o `rdata.grf` (abr/2021), hoje fora do `DATA.ini`.

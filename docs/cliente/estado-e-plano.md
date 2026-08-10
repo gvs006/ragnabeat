@@ -20,7 +20,22 @@ Cliente conecta, entra no jogo, sem erro de lua, com itens em português.
 | Docker | portas 6900, 6121, 5121 **e 6951→6900** |
 | Itens PT-BR | **5.296 gerados** em `SystemEN\itemInfo_C.lua` (85,8% do `db/pre-re`) |
 
-## ⚠ ACENTUAÇÃO: NÃO FUNCIONA NESTE CLIENTE (medido em 08/ago 18:40)
+## ✅ ACENTUAÇÃO: RESOLVIDA em 10/ago/2026
+
+Eram **7 constantes cp949 compiladas no binário** — o cliente converte texto para
+Unicode ele mesmo, e o codepage estava fixo em 949. Trocadas para 1252 pelo passo 3
+do `pos-warp.py`. Causa, offsets e o que foi descartado no caminho:
+**[acentuacao.md](acentuacao.md)**.
+
+O diagnóstico abaixo, de 08/ago, está **superado** — fica registrado porque descreve
+corretamente o *sintoma* e porque a conclusão a que levou ("é o build, pergunte à
+comunidade") era errada por um motivo instrutivo: nenhum patch do WARP alcança essas
+constantes.
+
+<details>
+<summary>Diagnóstico original de 08/ago (superado)</summary>
+
+### ⚠ ACENTUAÇÃO: NÃO FUNCIONA NESTE CLIENTE (medido em 08/ago 18:40)
 
 Teste conclusivo com os dois encodings no mesmo arquivo, itens 501 e 502:
 
@@ -58,6 +73,8 @@ configuração que não conseguimos observar (GRFs deles são encriptados).
 **Recomendação**: perguntar na comunidade BR. A pergunta agora é precisa —
 *"como fazer o Ragexe 2025 renderizar acentos?"* — e alguém que roda servidor BR
 responde de cabeça.
+
+</details>
 
 ## ⚠ BLOQUEIO ATUAL: login intermitente
 
