@@ -22,6 +22,7 @@ na migração para VPS. É exatamente por isso que precisa estar escrito antes.
 | 9 | [Token de 16 chars](#9--token-de-16-chars) | baixa | provavelmente aceitar |
 | 10 | [`allowed_origin_cors` vazio](#10--allowed_origin_cors-vazio) | info | a analisar |
 | 11 | [Login publicado em duas portas](#11--login-publicado-em-duas-portas) | baixa | a analisar |
+| 12 | [Proteção anti-DDoS desligada — o Docker colapsa todos os IPs](#12--proteção-anti-ddos-desligada--o-docker-colapsa-todos-os-ips) | alta | **aceito por ora** |
 
 Severidade é **para produção em VPS**, não para o ambiente atual.
 
@@ -207,6 +208,38 @@ mais usada por ninguém.
 **Correção:** verificar se algum cliente ainda usa a 6900; se não, remover a publicação
 e deixar só a 6951.
 **Prazo:** limpeza, sem urgência.
+
+### 12 — Proteção anti-DDoS desligada — o Docker colapsa todos os IPs
+
+[conf/import/packet_conf.txt](../conf/import/packet_conf.txt) → `allow: 172.18.0.0/16`.
+
+Foi o que corrigiu o **login intermitente** de 08 a 11/ago/2026. Medido antes: 30
+tentativas de login davam 6 sucessos na porta 6900 e **zero** na 6951. Depois:
+**30/30 nas duas**. O servidor aceitava o TCP e fechava sem responder — assinatura da
+proteção anti-DDoS, não de recusa de login.
+
+Duas coisas nossas estouravam o limite de `ddos_count: 5` em `ddos_interval: 3000`:
+
+1. O `pos-warp.py` redireciona os **7 endereços da Gravity** para o mesmo
+   `127.0.0.1:6900`; o cliente tenta vários em rajada ao abrir
+2. **O Docker faz NAT**: todo cliente chega ao container como `172.18.0.1`, o gateway
+   da rede do compose
+
+O item 2 é o problema real e não tem a ver com o nosso cliente. Como o rAthena só
+enxerga um IP, a proteção por IP **não distingue jogador nenhum** — ela só consegue
+punir todo mundo junto. Cinco jogadores logando em 3 segundos trancariam o servidor
+inteiro por 10 minutos (`ddos_autoreset: 600000`).
+
+Ou seja: manter ligado não protegia e derrubava; desligar não perde proteção real.
+O `allow` faz o `connect_check_` devolver `connect_ok = 2`, *"Unconditional Accept
+(accepts even if flagged as DDoS)"* ([src/common/socket.cpp:1149](../src/common/socket.cpp#L1149)).
+
+**Correção antes da VPS**, uma das duas:
+- proteção numa camada que enxerga o IP real (firewall, reverse proxy, Cloudflare)
+- ou fazer o Docker preservar o IP de origem — difícil no Windows, viável no Linux
+  com `network_mode: host`
+
+**Prazo:** antes de abrir para jogadores. Enquanto roda em localhost, é inofensivo.
 
 ---
 

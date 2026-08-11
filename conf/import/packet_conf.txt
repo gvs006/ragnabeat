@@ -1,0 +1,35 @@
+// Override local de conf/packet_athena.conf.
+// Versionado de proposito - ver a excecao por arquivo no fim do .gitignore.
+
+// PROBLEMA: login intermitente ("Please wait", espera um pouco e conecta).
+//
+// Medido em 11/ago/2026: 30 tentativas de login seguidas deram 6 sucessos na
+// porta 6900 e ZERO na 6951. O servidor aceitava o TCP e fechava sem responder
+// nada - comportamento da protecao anti-DDoS, nao de recusa de login.
+//
+// CAUSA: conf/packet_athena.conf traz ddos_count 5 / ddos_interval 3000, ou
+// seja, 5 conexoes em 3 segundos ja marcam o IP como ataque - e o
+// ddos_autoreset e de 600000 ms, DEZ MINUTOS ate liberar.
+//
+// Dois fatores nossos estouram esse limite sozinhos:
+//
+//   1. O pos-warp.py redireciona os 7 enderecos da Gravity para o mesmo
+//      127.0.0.1:6900. O cliente tenta varios em rajada ao abrir.
+//   2. O Docker faz NAT: TODO cliente chega ao container como 172.18.0.1, o
+//      gateway da rede do compose. Nao existe distincao de IP entre jogadores.
+//
+// O ponto 2 e o mais serio: por causa dele a protecao por IP nao protege nada
+// e ainda derruba todo mundo junto. Cinco jogadores logando em 3 segundos
+// trancariam o servidor inteiro por dez minutos.
+//
+// SOLUCAO: allow para a rede do compose. No socket.cpp, um allow que casa sem
+// deny correspondente devolve connect_ok = 2, "Unconditional Accept (accepts
+// even if flagged as DDoS)" - ou seja, ignora a marcacao.
+allow: 172.18.0.0/16
+allow: 127.0.0.1
+
+// ATENCAO: isto desliga a protecao anti-DDoS na pratica, porque todo mundo
+// chega pela faixa acima. Aceitavel enquanto a stack roda em localhost.
+// Antes de expor numa VPS, a protecao tem que voltar em outra camada
+// (firewall, reverse proxy) OU o Docker tem que preservar o IP de origem.
+// Registrado em docs/seguranca.md.

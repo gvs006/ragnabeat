@@ -173,3 +173,4 @@ generated
 !/db/import/item_randomopt_group.yml
 !/conf/import/battle_conf.txt
 !/conf/import/login_conf.txt
+!/conf/import/packet_conf.txt

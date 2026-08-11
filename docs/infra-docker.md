@@ -13,17 +13,63 @@ Dois serviços em [docker-compose.yml](../docker-compose.yml):
 | `db` | `ragnabeat_db` | `mariadb:10.5` |
 | `rathena` | `ragnabeat_server` | build local do [Dockerfile](../Dockerfile) (Ubuntu 22.04 + toolchain) |
 
-O `rathena` roda os **quatro** servidores num container só
-([docker-compose.yml:42](../docker-compose.yml#L42)):
+O `rathena` roda os **quatro** servidores num container só:
 
 ```
-./login-server & ./char-server & ./map-server & ./web-server & wait
+until (echo > /dev/tcp/db/3306) 2>/dev/null; do sleep 2; done
+./login-server & ./char-server & ./map-server & ./web-server & wait -n; exit 1
 ```
+
+As duas linhas parecem ruído e não são — cada uma existe por causa de uma falha
+que já aconteceu. Ver [Boot: as duas travas](#boot-as-duas-travas).
 
 O repositório inteiro é montado em `/server` (`.:/server`,
 [docker-compose.yml:26](../docker-compose.yml#L26)). Consequência prática: **editar conf,
 db ou npc no host altera o que o container lê** — sem rebuild de imagem. Só mudança em
 `src/` exige recompilar.
+
+## Boot: as duas travas
+
+### 1. Esperar o MariaDB — o `depends_on` não cobre o boot do Windows
+
+`login-server`, `char-server` e `web-server` chamam `Sql_Connect` no início e
+**saem se falhar**. Não há retentativa. O `map-server` demora mais para chegar
+no banco (carrega 13 mil NPCs antes), então ele sobrevive — e fica sozinho,
+tentando a 6121 para sempre:
+
+```
+[Error]: Couldn't connect with uname='ragnarok',host='db',port='3306'
+...
+[Status]: Connecting to 127.0.0.1:6121
+[Error]: make_connection: connect failed (socket #7, error 111: Connection refused)!
+```
+
+O compose tem `depends_on: db: condition: service_healthy`, e ainda assim isso
+aconteceu em 10/ago/2026, depois de reiniciar o PC. O motivo:
+
+> **`depends_on` só vale quando *você* roda `docker compose up`.** Quando o
+> Docker Desktop religa os containers sozinho — boot do Windows, `restart:
+> always` —, quem sobe é o daemon, e o daemon não conhece `depends_on`. Ele
+> reinicia os dois em paralelo, e num boot frio o MariaDB ainda está em
+> recuperação.
+
+Por isso a espera vive **dentro do container**, no `command`: é o único ponto
+que funciona nos dois caminhos. O `/dev/tcp` é do próprio bash — não exige
+`mysql-client` na imagem.
+
+### 2. `wait -n` — para a stack não ficar meio morta em silêncio
+
+Com o `wait` seco, o bash só retorna quando **todos** os filhos acabam. Com um
+único servidor vivo o container seguia `Up`, o `restart: always` nunca
+disparava, e o servidor ficava inacessível sem nada indicar problema.
+
+Com `wait -n` o bash volta assim que **qualquer** um sai; o `exit 1` derruba o
+container de propósito e o `restart: always` sobe os quatro de novo. Testado:
+matar o `char-server` derruba e recompõe a stack em menos de um minuto.
+
+Efeito colateral aceito: se um servidor não conseguir subir por erro de config,
+o container entra em ciclo de restart. É barulhento — e é melhor que meio morto
+em silêncio.
 
 ## Portas
 
@@ -34,7 +80,13 @@ db ou npc no host altera o que o container lê** — sem rebuild de imagem. Só 
 | `6951:6900` | login-server | **o cliente 2025-04-16 conecta aqui.** A porta é derivada em código, não vem do `clientinfo.xml`. Encaminhamos para a 6900 em vez de mexer na config do rAthena |
 | `6121:6121` | char-server | |
 | `5121:5121` | map-server | |
-| `8889:8888` | web-server | **a 8888 do host está ocupada pelo OpenTelemetry Collector.** É a origem do bloqueio de login — ver [auth-token.md](auth-token.md) |
+| `8888:8888` | web-server | o cliente monta a URL a partir do endereço do servidor mais a **porta 8888, fixa em código** — não há campo para ela no `clientinfo.xml`. A 8888 do host estava com o OpenTelemetry Collector, movido para a 8890 em 10/ago — ver [auth-token.md](auth-token.md) |
+
+> ⚠ **Todos os clientes chegam ao container como `172.18.0.1`** (gateway da rede do
+> compose), porque o Docker faz NAT. Isso quebrou a proteção anti-DDoS do rAthena e
+> causou o login intermitente — ver [seguranca.md item 12](seguranca.md#12--proteção-anti-ddos-desligada--o-docker-colapsa-todos-os-ips).
+> Qualquer coisa que dependa de distinguir jogadores por IP (antifraude, cooldown por
+> IP do Vote4Points) **não vai funcionar** enquanto isso valer.
 
 O `bind_ip: 0.0.0.0` está ativo em [conf/char_athena.conf:31](../conf/char_athena.conf#L31)
 e [conf/map_athena.conf:27](../conf/map_athena.conf#L27) — necessário dentro do container,
