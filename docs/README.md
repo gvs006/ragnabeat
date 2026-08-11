@@ -11,6 +11,7 @@ stack Docker + MariaDB. Cliente próprio baseado no Ragexe 2025-04-16.
 | [infra-docker.md](infra-docker.md) | subir/derrubar a stack, entender as portas, mexer no banco |
 | [auth-token.md](auth-token.md) | login travando em "Please wait", ou antes de religar o web-server |
 | [seguranca.md](seguranca.md) | antes de expor qualquer porta fora do localhost |
+| [encoding.md](encoding.md) | **antes de criar qualquer arquivo com acento** — a regra do cp1252 |
 | [cliente/leia-me.md](cliente/leia-me.md) | rebuild do `.exe` no WARP, patches obrigatórios e proibidos |
 | [cliente/acentuacao.md](cliente/acentuacao.md) | acentos PT-BR: as constantes cp949 e o que já foi descartado |
 | [cliente/build-release.md](cliente/build-release.md) | gerar a pasta entregue aos jogadores, e o endurecimento possível no futuro |

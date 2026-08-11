@@ -1,0 +1,39 @@
+//===== rAthena Script =======================================
+//= Gate de VIP — função global
+//===== Descrição: ===========================================
+//= Fonte única de verdade para "este jogador é VIP?".
+//=
+//= Todo NPC ou comando com benefício de VIP deve chamar
+//= callfunc("F_EhVip") em vez de reimplementar a checagem.
+//= Assim, quando o sistema VIP entrar (ROADMAP fase 3.1),
+//= existe UM número para trocar — e não um por NPC.
+//=
+//= Em uso hoje:
+//=   npc/custom/curandeira.txt
+//=   npc/custom/restock.txt
+//============================================================
+
+//	Modo do gate — o ÚNICO lugar para mexer.
+//
+//	  0 = liberado para todos      (fase de testes, atual)
+//	  1 = variável de conta        #vip_expire com timestamp unix
+//	                               (VIP por script — a rota recomendada
+//	                                no ROADMAP 3.1)
+//	  2 = VIP nativo do rAthena    vip_status(), exige VIP_ENABLE
+//	                               descomentado em src/config/core.hpp.
+//	                               Com o define desligado a função
+//	                               devolve 0 sempre, então NINGUÉM passa
+//	                               no gate — não use antes de recompilar.
+function	script	F_EhVip	{
+	.@modo = 0;
+
+	switch (.@modo) {
+		case 0:
+			return 1;
+		case 1:
+			return (#vip_expire > gettimetick(2));
+		case 2:
+			return vip_status(VIP_STATUS_ACTIVE);
+	}
+	return 0;
+}

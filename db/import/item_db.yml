@@ -1,0 +1,11 @@
+# PROVA DE CONCEITO - 11/ago/2026
+# Testa se o rapidyaml aceita bytes cp1252 no nome do item, que e o que o
+# cliente precisa receber para o @ii mostrar acento.
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  - Id: 2301
+    AegisName: Cotton_Shirt
+    Name: Camisa de Algodão

@@ -24,14 +24,14 @@ function	Require_Level	{
 	if (BaseLevel < getarg(0) || JobLevel < getarg(1)) {
 		.@blvl = getarg(0) - BaseLevel;
 		.@jlvl = getarg(1) - JobLevel;
-		mes "Requisito de NÃ­vel:";
+		mes "Requisito de Nível:";
 		mes ((getarg(0)>1)? 
 			"^bb0000"+getarg(0)+"^000000 (^bb0000Base^000000) / ":"")+"^00bb00"+
 			getarg(1)+"^000000 (^00bb00Classe^000000)";
-		mes "VocÃª precisa de " +
-			((.@blvl > 0) ? "^bb0000"+.@blvl+"^000000 mais nÃ­veis de base " + 
+		mes "Você precisa de " +
+			((.@blvl > 0) ? "^bb0000"+.@blvl+"^000000 mais níveis de base " + 
 				((.@jlvl > 0) ? "e " : "") : "") +
-			((.@jlvl > 0) ? "^00bb00"+.@jlvl+"^000000 mais nÃ­veis de classe " : "") +
+			((.@jlvl > 0) ? "^00bb00"+.@jlvl+"^000000 mais níveis de classe " : "") +
 			"para continuar.";
 		close;
 	}
@@ -109,7 +109,7 @@ function	Check_Riding	{
 	// those special cases.
 	if (checkfalcon() || checkcart() || checkriding() || ismounting()) {
 		mes "Por favor, remova seu " +
-			((checkfalcon()) ? "falcÃ£o" : "") +
+			((checkfalcon()) ? "falcão" : "") +
 			((checkcart()) ? "carrinho" : "") +
 			((checkriding()) ? "Peco" : "") +
 			((ismounting()) ? "montaria" : "") +
@@ -297,7 +297,7 @@ function	Job_Menu	{
 	while(true) {
 		.@opt_cnt =  getarraysize(getarg(0));
 		if( .@opt_cnt <= 0 ) {
-			mes "NÃ£o hÃ¡ mais classes disponÃ­veis.";
+			mes "Não há mais classes disponíveis.";
 			close;
 		}
 
@@ -328,8 +328,8 @@ function	Job_Menu	{
 			// Super Baby can both be selected in one of the first class
 			// changes. That's why the Level Requirement is after and not before
 			// the selection.
-			mes "Um nÃ­vel de base de " + .SNovice +
-				" Ã© necessÃ¡rio para se tornar um(a) " + jobname(.@class) + ".";
+			mes "Um nível de base de " + .SNovice +
+				" é necessário para se tornar um(a) " + jobname(.@class) + ".";
 			return;
 		}
 		// Confirm the Class
@@ -347,7 +347,7 @@ function	Job_Change	{
 	.@to_cls = getarg(0);
 	next;
 	mes .NPCName$;
-	mes "VocÃª agora Ã© um(a) " + jobname(.@to_cls) + "!";
+	mes "Você agora é um(a) " + jobname(.@to_cls) + "!";
 	if (.@to_cls == Job_Novice_High && .LastJob)
 		lastJob = Class; // Saves the lastJob for rebirth
 	jobchange .@to_cls;

@@ -1,61 +1,52 @@
 //===== rAthena Script =======================================
 //= Curandeira Custom
-//===== Description: =========================================
-//= NPC Curandeira com opÃ§Ãµes de cura, buffs e etc.
+//===== Descrição: ===========================================
+//= Cura e aplica os buffs NO CLIQUE, sem diálogo nenhum.
+//=
+//= Em servidor de rate alta o jogador passa aqui dezenas de
+//= vezes por sessão. Cada menu é um clique a mais entre ele e
+//= voltar a jogar — por isso não existe nem "next" nem
+//= "select": clicou, recebeu.
+//=
+//= Jogador comum: Bênção e Agilidade.
+//= VIP: o pacote completo.
+//=
+//= O gate de VIP é o F_EhVip de npc/custom/vip.txt — não
+//= duplique a checagem aqui.
 //============================================================
 
 prontera,150,187,4	script	Curandeira	909,{
-	mes "[Curandeira]";
-	mes "OlÃ¡, aventureiro! Como posso ajudÃ¡-lo hoje?";
-	next;
-	switch(select("Cura Normal:Cura e Buffs BÃ¡sicos:Cura e Buffs Full:Cancelar")) {
-		case 1:
-			percentheal 100,100;
-			specialeffect2 EF_HEAL2;
-			mes "[Curandeira]";
-			mes "Pronto! Sua vida e SP foram completamente restaurados.";
-			close;
+	percentheal 100, 100;
+	specialeffect2 EF_HEAL2;
 
-		case 2:
-			percentheal 100,100;
-			specialeffect2 EF_HEAL2;
-			
-			specialeffect2 EF_INCAGILITY;
-			sc_start SC_INCREASEAGI,240000,10;
-			
-			specialeffect2 EF_BLESSING;
-			sc_start SC_BLESSING,240000,10;
-			
-			mes "[Curandeira]";
-			mes "Pronto! VocÃª estÃ¡ curado e abenÃ§oado.";
-			close;
+	// --- Buffs de todo mundo ---
+	specialeffect2 EF_BLESSING;
+	sc_start SC_BLESSING, .Duracao, 10;
 
-		case 3:
-			percentheal 100,100;
-			specialeffect2 EF_HEAL2;
-			
-			specialeffect2 EF_INCAGILITY;
-			sc_start SC_INCREASEAGI,240000,10;
-			
-			specialeffect2 EF_BLESSING;
-			sc_start SC_BLESSING,240000,10;
-			
-			sc_start SC_ASSUMPTIO,240000,5;
-			sc_start SC_MAGNIFICAT,240000,5;
-			sc_start SC_GLORIA,240000,5;
-			sc_start SC_IMPOSITIO,240000,5;
-			sc_start SC_WINDWALK,240000,10;
-			sc_start SC_ADRENALINE,240000,5;
-			sc_start SC_WEAPONPERFECTION,240000,5;
-			sc_start SC_OVERTHRUST,240000,5;
-			
-			mes "[Curandeira]";
-			mes "Pronto! VocÃª recebeu nossa bÃªnÃ§Ã£o mÃ¡xima!";
-			close;
+	specialeffect2 EF_INCAGILITY;
+	sc_start SC_INCREASEAGI, .Duracao, 10;
 
-		case 4:
-			mes "[Curandeira]";
-			mes "Estarei aqui se precisar. Boa sorte em suas aventuras!";
-			close;
+	if (!callfunc("F_EhVip")) {
+		dispbottom "[Curandeira] Vida e SP restaurados. Bênção e Agilidade aplicadas.";
+		dispbottom "[Curandeira] Jogadores VIP recebem o pacote completo de bênçãos.";
+		end;
 	}
+
+	// --- Exclusivo VIP ---
+	sc_start SC_ASSUMPTIO, .Duracao, 5;
+	sc_start SC_MAGNIFICAT, .Duracao, 5;
+	sc_start SC_GLORIA, .Duracao, 5;
+	sc_start SC_IMPOSITIO, .Duracao, 5;
+	sc_start SC_WINDWALK, .Duracao, 10;
+	sc_start SC_ADRENALINE, .Duracao, 5;
+	sc_start SC_WEAPONPERFECTION, .Duracao, 5;
+	sc_start SC_OVERTHRUST, .Duracao, 5;
+
+	dispbottom "[Curandeira VIP] Vida e SP restaurados. Pacote completo de bênçãos aplicado.";
+	end;
+
+OnInit:
+	// Duração de todos os buffs, em ms. 240000 = 4 minutos.
+	.Duracao = 240000;
+	end;
 }

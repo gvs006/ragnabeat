@@ -8,17 +8,17 @@
 // Portal em Prontera
 prontera,156,187,4	script	Contrabandista	114,{
 	mes "[Contrabandista]";
-	mes "Psiu... VocÃª parece alguÃ©m que procura por poder real.";
+	mes "Psiu... Você parece alguém que procura por poder real.";
 	mes "Tenho um esconderijo onde o mercado de elite acontece.";
-	mes "Quer que eu te leve atÃ© lÃ¡?";
+	mes "Quer que eu te leve até lá?";
 	next;
-	if (select("Sim, me leve.:NÃ£o, obrigado.") == 2) {
+	if (select("Sim, me leve.:Não, obrigado.") == 2) {
 		mes "[Contrabandista]";
-		mes "Tsc. EntÃ£o nÃ£o me faÃ§a perder tempo.";
+		mes "Tsc. Então não me faça perder tempo.";
 		close;
 	}
 	mes "[Contrabandista]";
-	mes "Cuidado lÃ¡ dentro... as sombras tÃªm olhos.";
+	mes "Cuidado lá dentro... as sombras têm olhos.";
 	close2;
 	warp "prt_in",163,169;
 	end;
@@ -27,45 +27,45 @@ prontera,156,187,4	script	Contrabandista	114,{
 // Sala Secreta (prt_in) - NPCs de Venda
 //============================================================
 
-prt_in,167,169,4	script	Mestre do CÃ¢mbio	111,{
+prt_in,167,169,4	script	Mestre do Câmbio	111,{
 	.@coin = 674; // Mithril Coin
 	.@price = 100000; // 100k cada moeda
 	
-	mes "[Mestre do CÃ¢mbio]";
-	mes "Aqui nÃ³s nÃ£o aceitamos papel sujo do reino.";
+	mes "[Mestre do Câmbio]";
+	mes "Aqui nós não aceitamos papel sujo do reino.";
 	mes "Se quiser comprar algo, vai precisar de ^FF0000Mithril Coins^000000.";
 	mes "Eu vendo cada uma por ^00AA00" + .@price + " Zeny^000000.";
 	next;
-	mes "[Mestre do CÃ¢mbio]";
-	mes "Quantas vocÃª quer?";
+	mes "[Mestre do Câmbio]";
+	mes "Quantas você quer?";
 	input .@amount;
 	
 	if (.@amount <= 0) {
-		mes "[Mestre do CÃ¢mbio]";
-		mes "Cai fora, nÃ£o brinque com meu tempo.";
+		mes "[Mestre do Câmbio]";
+		mes "Cai fora, não brinque com meu tempo.";
 		close;
 	}
 	
 	.@total = .@amount * .@price;
 	
 	if (Zeny < .@total) {
-		mes "[Mestre do CÃ¢mbio]";
-		mes "VocÃª nÃ£o tem Zeny suficiente para isso.";
+		mes "[Mestre do Câmbio]";
+		mes "Você não tem Zeny suficiente para isso.";
 		close;
 	}
 	
 	Zeny -= .@total;
 	getitem .@coin, .@amount;
-	mes "[Mestre do CÃ¢mbio]";
-	mes "Aqui estÃ£o suas " + .@amount + " moedas. Agora vÃ¡ gastar.";
+	mes "[Mestre do Câmbio]";
+	mes "Aqui estão suas " + .@amount + " moedas. Agora vá gastar.";
 	close;
 }
 
-prt_in,159,169,4	script	Portal de SaÃ­da	114,{
+prt_in,159,169,4	script	Portal de Saída	114,{
 	mes "[Portal]";
 	mes "Deseja retornar para Prontera?";
 	next;
-	if (select("Sim:NÃ£o") == 1) {
+	if (select("Sim:Não") == 1) {
 		warp "prontera",156,191;
 	}
 	close;
@@ -100,26 +100,26 @@ prt_in,153,174,6	script	Elite Garment Cards	113,{
 
 // Footgear
 prt_in,158,174,6	script	Elite Footgear Cards	113,{
-	callfunc "F_EliteShop", "CalÃ§ado", 4148,4211,4135,4128,4324;
+	callfunc "F_EliteShop", "Calçado", 4148,4211,4135,4128,4324;
 }
 
 // Accessory
 prt_in,163,174,6	script	Elite Accessory Cards	113,{
-	callfunc "F_EliteShop", "AcessÃ³rio", 4145,4392,4407;
+	callfunc "F_EliteShop", "Acessório", 4145,4392,4407;
 }
 
-// FunÃ§Ã£o de Loja Customizada
+// Função de Loja Customizada
 function	script	F_EliteShop	{
 	.@slot$ = getarg(0);
 	.@coin = 674;
-	.@price = 100; // PreÃ§o padrÃ£o: 100 moedas
+	.@price = 100; // Preço padrão: 100 moedas
 	
 	mes "[Vendedor de Elite - " + .@slot$ + "]";
 	mes "Escolha a carta MVP que deseja para seu slot de " + .@slot$ + ".";
 	mes "Cada uma custa ^FF0000" + .@price + " Mithril Coins^000000.";
 	next;
 	
-	// Construir menu dinÃ¢mico
+	// Construir menu dinâmico
 	.@menu$ = "";
 	for (.@i = 1; .@i < getargcount(); .@i++) {
 		.@menu$ += getitemname(getarg(.@i)) + ":";
@@ -131,13 +131,13 @@ function	script	F_EliteShop	{
 	mes "[Vendedor de Elite]";
 	mes "Tem certeza que deseja comprar a carta ^0000FF" + getitemname(.@itemID) + "^000000?";
 	next;
-	if (select("Sim, comprar.:NÃ£o.") == 2) {
+	if (select("Sim, comprar.:Não.") == 2) {
 		close;
 	}
 	
 	if (countitem(.@coin) < .@price) {
 		mes "[Vendedor de Elite]";
-		mes "VocÃª nÃ£o tem moedas suficientes! VÃ¡ falar com o Mestre do CÃ¢mbio.";
+		mes "Você não tem moedas suficientes! Vá falar com o Mestre do Câmbio.";
 		close;
 	}
 	
@@ -145,6 +145,6 @@ function	script	F_EliteShop	{
 	getitem .@itemID, 1;
 	specialeffect2 EF_LEVELUP;
 	mes "[Vendedor de Elite]";
-	mes "Excelente escolha! Aqui estÃ¡ sua carta.";
+	mes "Excelente escolha! Aqui está sua carta.";
 	close;
 }
