@@ -196,3 +196,49 @@ adulterado.
 5. **Empacotar o exe** — só quando o cliente estabilizar, se é que vale
 
 Ver também [seguranca.md](../seguranca.md), que cobre o lado do servidor.
+
+---
+
+## Preferências padrão do jogador
+
+O `savedata\` vai **vazio** no build — o conteúdo é pessoal do desenvolvedor (UI,
+atalhos, resolução, `DX9DEVICEID`). Mas o jogador novo recebe as preferências que o
+servidor escolheu, de `savedata-padrao\` na pasta de desenvolvimento.
+
+O cliente lê o que estiver lá, completa o resto com os defaults dele, e **reescreve o
+arquivo inteiro ao fechar** — daí em diante o valor é do jogador.
+
+```lua
+CmdOnOffList["/showname"]     = 2   -- exibição de nome
+OptionInfoList["DamageSkin"]  = 1   -- números de dano: 1 = Colorido
+OptionInfoList["DamageDir"]   = 0   -- posição: 0 = Padrão
+```
+
+> ⚠ **Mantenha mínimo.** Nada de resolução, `DX9DEVICEID`, `DISPLAY1` ou volume — são
+> específicos do PC de quem gerou. É exatamente por isso que o `savedata\` do
+> desenvolvedor não é copiado.
+
+O `DamageSkin` usa os índices do `DSList` em
+`data\luafiles514\lua files\damageskin\damageskinlist.lub`: 0 `DT_Default` (Normal),
+1 `DT_NewNumber` (Colorido), 2 `DT_Han` (Palavras), 3 `DT_Invi` (Nada).
+
+A verificação do build conhece essa exceção: `savedata\` é pasta excluída, então os
+arquivos vindos de `savedata-padrao\` são comparados contra uma lista de esperados em
+vez de acusarem vazamento.
+
+## Fonte em uso
+
+O cliente **não** tem `CustomFontName` aplicado, então usa a tabela interna em
+`0x00BB121C`, indexada por servicetype na mesma ordem da tabela de charset:
+
+| Índice | servicetype | Fonte |
+|---|---|---|
+| 0 | korea | Gulim |
+| **1** | **america** ← o nosso | **Arial** |
+| 2 | japan | MS Gothic |
+| 3 | china | SimSun |
+| 4 | taiwan | MingLiU |
+| 5 | thai | Tahoma |
+
+Ou seja: **Arial**. É o valor a informar em patches do WARP que pedem o nome da fonte,
+como o `Enable Font Height Limits`.

@@ -42,6 +42,7 @@ POR_HARDLINK = ['*.grf']
 # Pastas que nao vao para o jogador.
 PASTAS_FORA = {
     'builds',          # os proprios builds
+    'savedata-padrao', # copiada para dentro de savedata\, nao vai como pasta
     'DEVTOOLS',        # WARP, patchers, decompiladores, exes candidatos - 600 MB
     '_exes_antigos',   # exes descartados
     'GameGuard',       # anticheat desativado pelo patch NoGGuard
@@ -172,8 +173,15 @@ def verificar(saida, cfg):
         elif o_.exists() and d_.stat().st_size != o_.stat().st_size:
             problemas.append('%s com tamanho diferente da origem' % g)
 
+    # As preferencias padrao sao postas de proposito dentro de savedata\, que de
+    # resto e uma pasta excluida - a checagem precisa conhecer a excecao.
+    padrao = RAIZ / 'savedata-padrao'
+    esperados = {Path('savedata') / f.name for f in padrao.iterdir() if f.is_file()} \
+        if padrao.is_dir() else set()
+
     vazados = [str(p.relative_to(saida)) for p in saida.rglob('*')
-               if p.is_file() and excluido(p.relative_to(saida))]
+               if p.is_file() and excluido(p.relative_to(saida))
+               and p.relative_to(saida) not in esperados]
     if vazados:
         problemas.append('arquivos de desenvolvimento vazaram: %s' % ', '.join(vazados[:5]))
 
@@ -255,6 +263,16 @@ def main():
 
     for p in PASTAS_VAZIAS:
         (saida / p).mkdir(parents=True, exist_ok=True)
+
+    # savedata\ sai vazia (o conteudo do desenvolvedor e pessoal), mas o jogador
+    # novo recebe as preferencias que o servidor escolheu. So os poucos valores
+    # de savedata-padrao\ - o cliente completa o resto e reescreve ao fechar.
+    padrao = RAIZ / 'savedata-padrao'
+    if padrao.is_dir():
+        for f in sorted(padrao.iterdir()):
+            if f.is_file():
+                shutil.copy2(f, saida / 'savedata' / f.name)
+                print('  padrao do jogador: savedata\\%s' % f.name)
 
     if caiu_para_copia:
         print('*** HARDLINK FALHOU - virou copia real ***')
