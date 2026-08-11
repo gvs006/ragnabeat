@@ -135,14 +135,32 @@ Em `C:\RagnaClient\DEVTOOLS\PTBR\`:
 
 ## 4. Fontes de tradução disponíveis
 
-| Camada | Fonte | Estado |
-|---|---|---|
-| Itens (cliente) | RO LATAM oficial, decompilado | **feito** — 5.296 |
-| NPCs (servidor) | brAthena, diálogos oficiais do bRO | a fazer |
-| Mensagens do servidor | brAthena `conf/msg_conf` | a fazer |
-| `msgstringtable` (cliente) | traduzir do inglês | a fazer |
-| Skills (cliente) | `skilldescript.lub` do LATAM | a fazer |
-| Nomes item/mob (servidor) | `db/pre-re/*.yml` | a fazer |
+| Camada | Arquivo que o cliente lê | Fonte | Estado |
+|---|---|---|---|
+| Itens | `SystemEN\itemInfo.lua` | LATAM decompilado | ✅ 5.296 |
+| Mensagens do servidor | — | `map_msg_por.conf` | ✅ 1.276 |
+| **Interface** | `Lua Files\MsgString_KR` | `msgstring_ptbr.lub` do LATAM | ✅ **11/ago** |
+| **Nome de mapa** | `system\mapInfo_true.lub` | `System\mapInfo.lub` do LATAM | ✅ **11/ago** — 959 mapas |
+| Skills | `Lua Files\SkillInfoz\SkillDescript` | `lua files/skillinfoz/` do LATAM | a fazer |
+| Placas de rua | `Lua Files\SignBoardList` | `signboardlist_ptbr.lub` do LATAM | a fazer — tamanhos divergem muito |
+| Quests / conquistas | `System\ongoingquestinfolist_true.lub`, `achievement_list.lub` | LATAM | a fazer — sensível a episódio |
+| NPCs (servidor) | — | brAthena | a fazer — ~16% viável |
+| Nomes item/mob (servidor) | `db/pre-re/*.yml` | — | a fazer |
+
+> **Os dois caminhos que o exe lê são os que valem.** Foi assim que se descobriu que
+> traduzir o `mapnametable.txt` era inútil: o cliente 2025 nunca o abre. Antes de
+> traduzir qualquer camada nova, confirme o caminho no binário —
+> `grep -ao 'padrao.\{0,30\}' RagnaBeat.exe`.
+
+### Fontes do LATAM
+
+O material fica em `DEVTOOLS/PTBR/latam/` (153 MB — só lua e texto). Os 16,7 GB de
+sprites e texturas extraídos foram apagados em 11/ago: são **recuperáveis** do
+`C:\Gravity\Ragnarok\data.grf` com o [grf_listar.py](grf_listar.py), que lê a tabela de
+arquivos sem percorrer os 4 GB.
+
+Tudo do LATAM já vem em **cp1252** — o mesmo encoding que o cliente passou a decodificar
+depois da [correção de acentuação](acentuacao.md). Nenhuma conversão é necessária.
 
 **brAthena**: github.com/brAthena/brAthena20180924 — base Hercules, pasta `npc/` toda em
 português (`cidades`, `classes`, `kafras`, `comerciantes`...), com "diálogos oficiais do bRO".
