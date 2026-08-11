@@ -33,3 +33,18 @@ allow: 127.0.0.1
 // Antes de expor numa VPS, a protecao tem que voltar em outra camada
 // (firewall, reverse proxy) OU o Docker tem que preservar o IP de origem.
 // Registrado em docs/seguranca.md.
+
+// ---------------------------------------------------------------------------
+// Para diagnosticar conexao no futuro, descomente a linha abaixo. Ela liga o
+// access_debug do socket.cpp, que registra cada decisao:
+//
+//   connect_check: Found match from allow list:172.18.0.1 IP:172.18.0.0 ...
+//   connect_check: Connection from 172.18.0.1 allowed.
+//
+// Foi o que confirmou, em 11/ago/2026, que o cliente NAO chegava ao servidor
+// quando travava no "Please wait" - o log ficava vazio enquanto o rastreio de
+// socket do lado do cliente mostrava SynSent na porta 6952, que nao estava
+// publicada. Ver docs/infra-docker.md.
+//
+// Deixar ligado enche o log com varios jogadores.
+//debug: yes

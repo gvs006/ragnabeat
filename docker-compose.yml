@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   db:
     image: mariadb:10.5
@@ -35,6 +34,11 @@ services:
   rathena:
     build: .
     container_name: ragnabeat_server
+    # ATENCAO: isto so vale quando VOCE roda `docker compose up`. Quando o Docker
+    # Desktop religa os containers sozinho (boot do Windows, restart: always), quem
+    # sobe eles e o daemon, e o daemon NAO conhece depends_on - ele reinicia os dois
+    # em paralelo. Por isso existe a espera dentro do command abaixo: ela e a unica
+    # que funciona nos dois caminhos.
     depends_on:
       db:
         condition: service_healthy
@@ -42,12 +46,40 @@ services:
       - .:/server
     ports:
       - "6900:6900"
+      # O cliente 2025 NAO usa uma porta fixa para o login: ele deriva uma do
+      # bloco de agency em runtime. Medido em 11/ago/2026 com rastreio de socket,
+      # numa tentativa que travou no "Please wait":
+      #
+      #   12:14:51  127.0.0.1  6952  SynSent     <- e o servidor nao viu nada
+      #
+      # SynSent = SYN enviado, ninguem respondendo. Publicavamos so 6900 e 6951,
+      # entao quando ele sorteava outra porta a conexao morria e o cliente ficava
+      # preso ate o TCP desistir. Era essa a origem do "abrir 2, 3, 4 vezes".
+      #
+      # Os enderecos originais da Gravity citavam 6900, 6951 e 6954, o que sugere
+      # um bloco de agency por volta de 695x. Publicamos a faixa inteira apontando
+      # para o login-server, em vez de adivinhar qual ele vai escolher.
+      #
+      # Uma por linha de proposito: "6950-6960:6900" e aceito pelo compose sem
+      # erro e depois SILENCIOSAMENTE ignorado - o docker port nao mostra nada e
+      # as portas ficam fechadas. Faixa no host so funciona com faixa do mesmo
+      # tamanho no container.
+      - "6950:6900"
+      - "6951:6900"
+      - "6952:6900"
+      - "6953:6900"
+      - "6954:6900"
+      - "6955:6900"
+      - "6956:6900"
+      - "6957:6900"
+      - "6958:6900"
+      - "6959:6900"
+      - "6960:6900"
       - "6121:6121"
       - "5121:5121"
       # O cliente 2025-04-16 conecta no login pela 6951 (porta derivada em codigo,
       # nao vem do clientinfo.xml). Encaminhamos para a 6900 do login-server em vez
       # de mexer na config do rAthena.
-      - "6951:6900"
       # web-server: o cliente 2025 monta a URL do web-server a partir do endereco
       # do servidor mais a porta 8888, fixa em codigo - nao ha campo para ela no
       # clientinfo.xml. Ele chama /charconfig/save, /userconfig/save e
@@ -57,7 +89,29 @@ services:
       # internas dele) e a 8888 voltou a ser nossa. Ver docs/auth-token.md.
       - "8888:8888"
     restart: always
-    command: /bin/bash -c "./login-server & ./char-server & ./map-server & ./web-server & wait"
+    # Duas travas, cada uma para uma falha que ja aconteceu:
+    #
+    # 1. ESPERA O BANCO. login/char/web chamam Sql_Connect no inicio e SAEM se
+    #    falhar - nao tentam de novo. Num boot frio o MariaDB ainda esta em
+    #    recuperacao, os tres morrem, e sobra so o map-server tentando a 6121
+    #    para sempre ("connect failed, error 111"). O /dev/tcp e do proprio bash,
+    #    nao precisa de mysql-client na imagem.
+    #
+    # 2. `wait -n` em vez de `wait`. O `wait` seco volta so quando TODOS acabam,
+    #    entao com um unico servidor vivo o container seguia "Up" e o restart:
+    #    always nunca disparava - stack meio morta, em silencio. Com `-n` o bash
+    #    volta assim que QUALQUER um sai, e ai derrubamos o container de proposito
+    #    para o Docker subir os quatro de novo.
+    command: >
+      /bin/bash -c "
+      until (echo > /dev/tcp/db/3306) 2>/dev/null; do
+        echo '[boot] aguardando o MariaDB em db:3306...'; sleep 2;
+      done;
+      echo '[boot] MariaDB aceitando conexao - subindo os quatro servidores.';
+      ./login-server & ./char-server & ./map-server & ./web-server &
+      wait -n;
+      echo '[boot] um dos servidores encerrou - derrubando o container para reiniciar a stack inteira.';
+      exit 1"
 
 volumes:
   ragnabeat_data:

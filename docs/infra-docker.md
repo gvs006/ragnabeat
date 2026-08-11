@@ -77,7 +77,7 @@ em silêncio.
 |---|---|---|
 | `3307:3306` | MariaDB | acesso de ferramenta externa. Não é necessário para o servidor funcionar — ver [seguranca.md item 2](seguranca.md#2--mariadb-publicado-no-host) |
 | `6900:6900` | login-server | porta padrão do rAthena |
-| `6951:6900` | login-server | **o cliente 2025-04-16 conecta aqui.** A porta é derivada em código, não vem do `clientinfo.xml`. Encaminhamos para a 6900 em vez de mexer na config do rAthena |
+| `6950:6900` … `6960:6900` | login-server | **o cliente não usa porta fixa** — ver abaixo |
 | `6121:6121` | char-server | |
 | `5121:5121` | map-server | |
 | `8888:8888` | web-server | o cliente monta a URL a partir do endereço do servidor mais a **porta 8888, fixa em código** — não há campo para ela no `clientinfo.xml`. A 8888 do host estava com o OpenTelemetry Collector, movido para a 8890 em 10/ago — ver [auth-token.md](auth-token.md) |
@@ -87,6 +87,39 @@ em silêncio.
 > causou o login intermitente — ver [seguranca.md item 12](seguranca.md#12--proteção-anti-ddos-desligada--o-docker-colapsa-todos-os-ips).
 > Qualquer coisa que dependa de distinguir jogadores por IP (antifraude, cooldown por
 > IP do Vote4Points) **não vai funcionar** enquanto isso valer.
+
+### A porta do login não é fixa — a causa do "Please wait"
+
+De 08 a 11/ago/2026 o login travava e exigia abrir o cliente 2 a 4 vezes. A captura
+que fechou o caso, com rastreio de socket do processo do cliente numa tentativa
+travada:
+
+```
+12:14:51.377  0.0.0.0     0     Bound
+12:14:51.380  127.0.0.1  6952   SynSent
+```
+
+`SynSent` = SYN enviado, ninguém respondeu. E o log do servidor, com `debug: yes`
+ligado, **não registrou conexão nenhuma** naquele minuto.
+
+**O cliente 2025 deriva a porta de login em runtime**, de um bloco de agency — não
+usa a do `clientinfo.xml` nem uma fixa. Publicávamos só a 6900 e a 6951, então era
+sorte: caindo numa dessas, entrava; caindo na 6952, travava até o TCP desistir.
+
+Por isso todas as medições anteriores davam 30/30 e mesmo assim o cliente falhava —
+testávamos as portas publicadas, e o cliente ia para outra.
+
+Correção: publicar **6950 a 6960** apontando para o login-server.
+
+> ⚠ **`"6950-6960:6900"` não funciona.** O compose aceita sem erro e depois ignora
+> em silêncio: `docker port` não mostra nada e as portas ficam fechadas. Faixa no
+> host exige faixa do mesmo tamanho no container. Por isso as onze estão listadas
+> uma a uma.
+
+Se um dia o sintoma voltar, o roteiro é este: ligar `debug: yes` em
+[conf/import/packet_conf.txt](../conf/import/packet_conf.txt), rastrear
+`Get-NetTCPConnection -OwningProcess <pid do cliente>` durante uma tentativa que
+falhe, e ver em que porta ele parou.
 
 O `bind_ip: 0.0.0.0` está ativo em [conf/char_athena.conf:31](../conf/char_athena.conf#L31)
 e [conf/map_athena.conf:27](../conf/map_athena.conf#L27) — necessário dentro do container,
