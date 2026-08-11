@@ -32,6 +32,15 @@ REDIRECIONAR = [
     (b'kro-qm-2a.ragnarok.co.kr:6900',    b'127.0.0.1:6900'),
     (b'kro-acc3.ragnarok.co.kr:6900',     b'127.0.0.1:6900'),
     (b'kro-agency-s.ragnarok.co.kr:6954', b'127.0.0.1:6900'),
+    # Dois IPs crus na MESMA tabela, logo depois dos sete hostnames (0x00C2860C e
+    # 0x00C2861C no build 2025-04-16). Passaram despercebidos ate 11/ago/2026
+    # porque nao tem "ragnarok.co.kr" no nome.
+    #
+    # 211.172.247.115 e um IP publico coreano da Gravity; 192.168.5.52 e uma LAN
+    # interna deles. Os dois sao inalcancaveis daqui - o cliente fica preso ate o
+    # TCP desistir, e e por isso que "esperar um pouco" fazia o login funcionar.
+    (b'192.168.5.52',    b'127.0.0.1'),
+    (b'211.172.247.115', b'127.0.0.1'),
 ]
 
 # 949 = cp949 (coreano, duplo-byte)  ->  1252 (latino, byte unico)

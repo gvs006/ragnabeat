@@ -32,6 +32,11 @@ patch válido mesmo se um build futuro do WARP deslocar os endereços.
 Aplicado automaticamente pelo passo 3 do `pos-warp.py`, na pasta de desenvolvimento.
 **É perdido a cada rebuild no WARP**, como os endereços da Gravity — por isso vive lá.
 
+> O passo 1 do mesmo script redireciona **9** endereços, não 7. Os dois últimos —
+> `192.168.5.52` e `211.172.247.115` — são IPs crus na mesma tabela, sem `ragnarok.co.kr`
+> no nome, e por isso passaram despercebidos até 11/ago/2026. São inalcançáveis daqui, e
+> o cliente ficava preso neles até o TCP desistir — a causa provável do login intermitente.
+
 ### Por que 6 e não 2, nem 7
 
 - **2 (só o par `0x22807D`/`0x22EDF9`) — testado, NÃO funciona.** Os acentos não aparecem.
