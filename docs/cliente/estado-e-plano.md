@@ -141,7 +141,9 @@ Em `C:\RagnaClient\DEVTOOLS\PTBR\`:
 | Mensagens do servidor | — | `map_msg_por.conf` | ✅ 1.276 |
 | **Interface** | `Lua Files\MsgString_KR` | `msgstring_ptbr.lub` do LATAM | ✅ **11/ago** |
 | **Nome de mapa** | `system\mapInfo_true.lub` | `System\mapInfo.lub` do LATAM | ✅ **11/ago** — 959 mapas |
-| Skills | `Lua Files\SkillInfoz\SkillDescript` | `lua files/skillinfoz/` do LATAM | a fazer |
+| **Skills** | `Lua Files\SkillInfoz\SkillDescript` e `...\SkillInfoList` | `skillinfoz/` do LATAM | ✅ **11/ago** |
+| **Interface (resto)** | `data\msgstringtable.csv` | ❌ sem fonte PT-BR | **gargalo** — 4.223 linhas, ver abaixo |
+| **Tela de login e ESC** | texturas BMP | ❌ trancadas no GRF v3 do LATAM | bloqueado — ver abaixo |
 | Placas de rua | `Lua Files\SignBoardList` | `signboardlist_ptbr.lub` do LATAM | a fazer — tamanhos divergem muito |
 | Quests / conquistas | `System\ongoingquestinfolist_true.lub`, `achievement_list.lub` | LATAM | a fazer — sensível a episódio |
 | NPCs (servidor) | — | brAthena | a fazer — ~16% viável |
@@ -161,6 +163,27 @@ arquivos sem percorrer os 4 GB.
 
 Tudo do LATAM já vem em **cp1252** — o mesmo encoding que o cliente passou a decodificar
 depois da [correção de acentuação](acentuacao.md). Nenhuma conversão é necessária.
+
+### O que ainda falta, e por quê
+
+**`msgstringtable.csv` — o gargalo.** O exe lê **duas** fontes de string: o
+`Lua Files\MsgString_KR` (465 chaves, já em PT-BR) e o `data\msgstringtable.csv`
+(4.223 linhas, coreano em base64) — são 4.321 ocorrências `MSI_` no binário. A maior parte
+do texto da tela de login e do HUD vem da CSV. **Não preservamos fonte PT-BR dela** ao
+limpar os 16,7 GB; só sobraram as versões inglesa e espanhola, e em formato `.txt` antigo
+(lista por linha), que não converte com segurança para o `.csv` (chave→valor).
+
+**Texturas de login e ESC.** O texto é *pintado dentro do BMP* — não há string para trocar.
+São 111 arquivos: 33 `esc_*.bmp` mais o `login_interface\`.
+
+**O bloqueio comum aos dois:** o `C:\Gravity\Ragnarok\data.grf` do LATAM é
+**GRF versão 0x300**, magic `Event Horizon` — não é o 0x200 que o
+[grf_listar.py](grf_listar.py) lê. Não é só o magic trocado: o cabeçalho tem outro layout
+(a tabela sai com tamanho comprimido 0 e o zlib falha). Escrever um leitor v3 foi
+considerado fora de escopo.
+
+A lista exata dos 112 arquivos a extrair com uma ferramenta que abra GRF v3 está em
+`DEVTOOLS/PTBR/_extraido/LISTA-PARA-EXTRAIR.txt`, gerada por `_gerar_lista.py`.
 
 **brAthena**: github.com/brAthena/brAthena20180924 — base Hercules, pasta `npc/` toda em
 português (`cidades`, `classes`, `kafras`, `comerciantes`...), com "diálogos oficiais do bRO".

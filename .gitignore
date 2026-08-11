@@ -174,3 +174,4 @@ generated
 !/conf/import/battle_conf.txt
 !/conf/import/login_conf.txt
 !/conf/import/packet_conf.txt
+!/conf/import/char_conf.txt

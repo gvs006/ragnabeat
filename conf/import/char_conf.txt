@@ -1,0 +1,19 @@
+// Override local de conf/char_athena.conf.
+// Versionado de proposito - ver a excecao por arquivo no fim do .gitignore.
+
+// Classes permitidas na criacao de personagem.
+//   1 = Novice     2 = Summoner (Doram)     3 = ambos
+//
+// Ja era o valor efetivo, mas por acidente: char.cpp:2814 escolhe o default
+// pelo #if defined(RENEWAL), e como PRERE esta ativo em src/config/renewal.hpp
+// o ramo do else (flag 1) vale. Se um dia alguem tirar o PRERE, o default vira
+// 3 e o Doram volta a ser criavel sem ninguem pedir.
+//
+// Deixando explicito, a regra passa a ser nossa e nao um efeito colateral.
+//
+// A barreira de verdade esta em char.cpp:1488: com a flag 1, JOB_SUMMONER cai
+// fora e o servidor devolve -2, que o cliente mostra como erro generico.
+// Do lado do cliente, MakeableRace = { Doram = false } nos ExternalSettings faz
+// o botao virar o painel "Coming Soon" e nem chegar a enviar o pacote.
+// Ver docs/cliente/doram.md.
+allowed_job_flag: 1
