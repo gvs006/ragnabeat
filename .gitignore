@@ -176,3 +176,6 @@ generated
 !/conf/import/packet_conf.txt
 !/conf/import/char_conf.txt
 !/db/import/item_db.yml
+
+# cache do Python
+__pycache__/
