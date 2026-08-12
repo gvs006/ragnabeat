@@ -194,6 +194,16 @@ Casamento por texto exato escala muito melhor que posicional.
 **1.729 dos 6.169** do servidor ficam em inglês — não existem no cliente LATAM (itens
 antigos de pre-renewal). Traduzir à mão ou buscar no brAthena.
 
+### 4b. Cuidado: o `db/import/item_db.yml` é gerado
+
+O `gen-nomes-servidor.py` **reescreve o arquivo inteiro**. Se você acrescentar algo
+à mão ali, some na próxima regeneração.
+
+A única exceção tratada é o `Footer:` — um `Imports:` escrito à mão é preservado.
+Foi o caso do `db/ragnabeat_items.yml`. Qualquer outra edição manual, não.
+
+Regra: conteúdo próprio vai em **outro** `.yml`, importado pelo `Footer`.
+
 ### 5. Nomes de mob no servidor
 
 Para `@mi Guardião` funcionar. O `itemInfo` só cobre itens; falta definir a fonte.
