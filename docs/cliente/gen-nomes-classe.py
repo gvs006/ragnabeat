@@ -84,6 +84,20 @@ for n, k in enumerate(itens):
     linhas.append('  [%s] = "%s"%s' % (k, valor, virg))
 linhas.append('}')
 
+# O arquivo original define a TABELA e tambem a FUNCAO que o cliente chama.
+# Gerar so a tabela deixa ReqPCJobName nil, e o cliente entra em laco com
+# "attempt to call a nil value" - foi o que aconteceu na primeira tentativa.
+# Reproduzido identico ao original decompilado.
+linhas += [
+    '',
+    'function ReqPCJobName(JobID)',
+    '  if nil == PCJobNameTable[JobID] then',
+    '    return ""',
+    '  end',
+    '  return PCJobNameTable[JobID]',
+    'end',
+]
+
 DESTINO.parent.mkdir(parents=True, exist_ok=True)
 DESTINO.write_bytes(('\n'.join(linhas) + '\n').encode('latin-1'))
 print()

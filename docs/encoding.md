@@ -94,6 +94,29 @@ ninguém perceber, porque o texto **parece certo no editor**. Só aparece no jog
 Ao criar arquivo novo com acento, confirme o encoding antes de commitar. O teste do
 `decode('utf-8')` acima leva um segundo.
 
+## A exceção: `msgstringtable.csv` é UTF-8
+
+A regra do cp1252 vale para tudo **menos** este arquivo. O payload base64 do
+`data\msgstringtable.csv` é **UTF-8** — conferido no próprio arquivo do nosso GRF,
+cujo texto coreano decodifica como UTF-8 e falha em cp949 e cp1252:
+
+```
+eb 8f 99 ec 9d 98  ->  UTF-8: 동의
+```
+
+Gerei a primeira versão convertendo para cp1252 e **todo acento virou `?`** na tela de
+login e na janela de configurações. O cliente decodifica como UTF-8, e byte cp1252
+isolado não é UTF-8 válido.
+
+Como o LATAM também usa UTF-8 nesse arquivo, o gerador copia o base64 **como está**, sem
+reconverter — menos conversão, menos chance de erro.
+
+| Arquivo | Encoding |
+|---|---|
+| `.lub` (skills, buffs, classes, mapas) | cp1252 |
+| `.txt` (cardprefix, NPC) | cp1252 |
+| **`msgstringtable.csv`** | **UTF-8** |
+
 ## Nomes de item traduzidos no servidor
 
 Gerados por [cliente/gen-nomes-servidor.py](cliente/gen-nomes-servidor.py) para
