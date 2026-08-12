@@ -174,3 +174,44 @@ Resultado aqui: **928 sequências convertidas**, e 109 mantidas — são 39 fras
 qualquer forma.
 
 O conversor aborta se a contagem de chaves mudar.
+
+---
+
+## Nome de classe abaixo do nick
+
+`data\luafiles514\lua files\datainfo\pcjobname.lub`, gerado por
+[gen-nomes-classe.py](gen-nomes-classe.py). **146 de 163 classes** em PT-BR —
+`Champion` → **Mestre**, `Lord Knight` → **Lorde**, `Assassin Cross` → **Algoz**,
+`Novice` → **Aprendiz**.
+
+As 17 que ficam em inglês são de 3ª e 4ª classe (`JT_RUNE_KNIGHT_2ND`,
+`JT_STAR2_EMPEROR`, `JT_MECHANIC_2ND`…) — não existem num pre-renewal 99/70.
+
+### As duas versões guardam isso em lugares diferentes
+
+| | Arquivo | Tabela |
+|---|---|---|
+| Nosso | `pcjobname.lub` (10 KB) | `PCJobNameTable` |
+| LATAM | `pcjobnamegender_ptbr.lub` (17 KB) | `PCJobNameTableMan` |
+
+O LATAM separa por gênero; nós não. As chaves `JOBID.*` são as mesmas, então o
+gerador casa por chave e escreve **no formato nosso com o texto deles** — é
+`Lua Files\DataInfo\PCJobName` que o exe abre.
+
+Copiar o arquivo do LATAM por cima **não funcionaria**: nome de tabela diferente,
+e o cliente não acharia nada. Falharia em silêncio, como quase aconteceu com o
+`EFSTIDs`.
+
+> **Acentos ficam como escape Lua** (`Novi\231o`), não como byte cru. É a forma
+> correta no fonte: o cliente resolve `\231` para `ç` ao carregar. Um arquivo com
+> zero bytes altos aqui está certo — não confunda com arquivo sem tradução.
+
+### Onde o `Champion` estava
+
+Não era óbvio: `datainfo` tem sete arquivos com cara de nome de classe. O que
+contém as strings exibidas é o `pcjobname.lub`; `jobname.lub` (373 KB) e
+`jobidentity.lub` (205 KB) são outra coisa.
+
+De passagem: o `pcjobnamegender_f.lub` do **nosso** GRF está **encriptado**
+(flags `0x03`) e o `grf_listar.py` não abre. Não atrapalhou aqui, mas é o
+primeiro arquivo encriptado que encontramos no nosso próprio GRF.
