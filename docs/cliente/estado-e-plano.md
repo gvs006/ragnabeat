@@ -1,4 +1,6 @@
-# Estado consolidado e plano de tradução
+# Estado do cliente
+
+> A tradução tem documento próprio: **[../traducao.md](../traducao.md)**.
 
 Atualizado em 08/ago/2026. Este arquivo é a fonte da verdade — se o contexto da
 conversa se perder, comece por aqui.
@@ -126,10 +128,7 @@ Em `C:\RagnaClient\DEVTOOLS\PTBR\`:
 
 | Arquivo | Uso |
 |---|---|
-| `iteminfo_ptBR.lua` | 16.731 itens do RO LATAM, decompilados (fonte da tradução) |
-| `unluac.jar` | decompilador Lua 5.1, funciona standalone |
-| `xref_cobertura.py` | cruza itens do LATAM com o `db/pre-re` |
-| `gen_item_ptbr.py` | gerador do itemInfo_C |
+| — | as ferramentas de tradução estão listadas em [../traducao.md](../traducao.md) |
 
 ---
 

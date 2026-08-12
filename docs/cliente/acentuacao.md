@@ -103,5 +103,5 @@ como "testado e descartado" quando nunca chegou a ser exercitado.
 ## O que isso destrava
 
 Com a renderização funcionando, os **5.296 itens PT-BR** já gerados exibem
-corretamente, e as fases 2 a 5 do plano de tradução
-([estado-e-plano.md](estado-e-plano.md)) deixam de ser especulativas.
+corretamente, e as demais camadas deixam de ser especulativas —
+ver [../traducao.md](../traducao.md).
