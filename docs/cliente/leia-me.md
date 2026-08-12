@@ -179,8 +179,65 @@ do outro lado.
 > funcionando. Ela grava via web-server, que estava quebrado por dois motivos
 > independentes — ver [auth-token.md](../auth-token.md).
 
+## Os dois `data.grf` não têm o mesmo conteúdo
+
+Descoberto em 11/ago/2026, investigando um `Cannot find File : sprite\...act`
+in-game:
+
+| GRF | Formato | Arquivos | Carregado por |
+|---|---|---|---|
+| `C:\RagnaClient\data.grf` | **v3** "Event Horizon", 4,2 GB | **268.764** | só o cliente antigo em `C:\RagnaClient` |
+| `C:\RagnaClient\RagnaBeat.Dev\data.grf` | v2 "Master of Magic", 4,0 GB | 214.224 | o dev **e o build entregue aos jogadores** |
+
+São **54 mil arquivos a menos** no que os jogadores recebem. O caso concreto
+foram os sprites das "Lendárias Asas de Demônio" (item 5376): existem no de
+produção, não existem no do build, e equipar o item abria uma caixa de erro do
+cliente na cara do jogador.
+
+**Antes de pôr qualquer item novo no servidor, rode:**
+
+```
+python docs/cliente/checar-sprite.py <id> [<id> ...]
+```
+
+Ele compara os dois GRFs e marca `<<< FALTA NO BUILD` no que quebraria.
+
+Sobre o formato v3: não é kRO padrão, é o que o GRF Editor gera quando o
+arquivo passa de 4 GB — o offset de cada entrada vira de 8 bytes (21 bytes de
+metadado em vez de 17) e a tabela é `tam_real(4) + zlib` em vez de
+`comprimido/real`. O `grf_listar.py` lê os dois formatos.
+
+### Como recuperar um arquivo que falta
+
+O `grf_listar.py` também **decifra** as entradas encriptadas (flags 0x02 e
+0x04) — o porte é direto de `src/common/des.cpp` e `src/common/grfio.cpp` do
+próprio rAthena deste repo, ou seja, a mesma lógica que o servidor usa. Não é
+DES de verdade: é uma versão mutilada, de uma rodada e sem chave.
+
+```
+python docs/cliente/grf_listar.py --grf C:/RagnaClient/data.grf --filtro <parte-do-nome>
+python docs/cliente/grf_listar.py --grf C:/RagnaClient/data.grf --extrair <caminho\completo>
+```
+
+O destino tem que usar **os mesmos bytes cp949** do nome dentro do GRF. Na
+prática isso significa gravar o nome como a sequência que o cp1252 mostra
+(`»çÅ¸´ÐÃ¼ÀÎ.spr`), porque o cliente abre o arquivo pela API ANSI e o Windows
+converte de volta para os mesmos bytes. Nome em coreano de verdade (Unicode)
+**não** casa.
+
+Feito assim em 12/ago/2026 para as "Lendárias Asas de Demônio" (item 5376): os
+6 arquivos foram para `RagnaBeat.Dev\data\sprite\`, que o `build.py` copia
+inteira para o jogador. Pasta solta é preferível a GRF aqui — é como o projeto
+já sobrescreve os `.lub`, e não exige tocar no `DATA.ini`.
+
 ## Pendente
 
+- **O `ragnabeat.grf` tem 953 arquivos e não é carregado por ninguém.** Está em
+  `C:\RagnaClient`, fora do `DATA.ini` e fora do `build.py`. O conteúdo é de
+  peso: `msgstringtable.txt`, `questid2display.txt` (1,4 MB), `itemmoveinfov5`,
+  `mapnametable`, textos de livro. Alguém montou e nunca ligou. Decidir se
+  entra — ligar 953 arquivos de uma vez muda texto e quest, então precisa de
+  teste, não de um `DATA.ini` no escuro.
 - Tradução PT-BR dos itens. O material está em `C:\RagnaClient\DEVTOOLS\PTBR\`:
   `iteminfo_ptBR.lua` (16.731 itens do LATAM, decompilados), `unluac.jar` e os scripts
   de cruzamento. **5.298 dos 6.169 itens do `db/pre-re` (85,9%) já mapeados.**

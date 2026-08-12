@@ -25,9 +25,16 @@ LIMITE = 49          # ITEM_NAME_LENGTH e 50, menos o terminador
 
 
 def achar_cliente():
+    # Enquanto este script morava em DEVTOOLS/PTBR/ bastava subir a arvore.
+    # Ele agora vive no repo do servidor, entao o caminho do cliente precisa
+    # ser dito - primeiro tenta subir (caso alguem copie de volta), depois
+    # cai nos locais conhecidos.
     for d in Path(__file__).resolve().parents:
         if (d / 'DATA.ini').exists() and (d / 'SystemEN').is_dir():
             return d
+    for base in (Path(r'C:/RagnaClient/RagnaBeat.Dev'), Path(r'C:/RagnaClient')):
+        if (base / 'SystemEN' / 'itemInfo_C.lua').exists():
+            return base
     raise SystemExit('nao achei a pasta do cliente')
 
 
@@ -123,6 +130,17 @@ for i in usar:
     linhas.append('  - Id: %d' % i)
     linhas.append('    AegisName: %s' % aegis)
     linhas.append('    Name: %s' % yaml_str(cli[i]))
+
+# Este arquivo e sobrescrito inteiro a cada regeracao, entao edicao a mao aqui
+# se perde. O rodape puxa db/ragnabeat_items.yml, que e mantido a mao e carrega
+# depois - e por isso ganha destes nomes. E la que ficam os itens custom, os
+# importados do renewal e qualquer override de peso/atributo.
+linhas += [
+    '',
+    'Footer:',
+    '  Imports:',
+    '  - Path: db/ragnabeat_items.yml',
+]
 
 destino = SERVIDOR / 'db' / 'import' / 'item_db.yml'
 destino.write_bytes(('\n'.join(linhas) + '\n').encode('cp1252'))

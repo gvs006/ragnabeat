@@ -29,7 +29,12 @@ VERSAO = RAIZ / 'version.txt'
 DESTINO = RAIZ / 'builds'
 
 TAM_EXE_ESPERADO = 14987776
-ITENS_ESPERADOS = 5296
+# Cresce a cada item trazido do renewal. Quem acrescenta e o
+# add-item-ptbr.py, que avisa o novo total no fim da execucao.
+#   5296 = os itens de db/pre-re
+#   +5    = Arco Elfico, Flecha Elfica, Mochila da Aventura,
+#           Amplificador de Som, Boina Charmosa (12/ago/2026)
+ITENS_ESPERADOS = 5301
 
 # Mesmas assinaturas do pos-warp.py - se mudarem la, mudam aqui.
 CP949 = b'\xb5\x03\x00\x00'

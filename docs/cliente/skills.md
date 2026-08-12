@@ -129,3 +129,48 @@ Dois cuidados:
   aborta se não baterem; o arquivo tem 1.427 pares e 1.426 entradas.
 
 O original do LATAM fica em `DEVTOOLS/PTBR/_extraido/skilldescript.LATAM-original.lub`.
+
+---
+
+## Ícones de estado (buffs) — e a descoberta do encoding misto
+
+Instalados em 11/ago/2026, em `data\luafiles514\lua files\stateicon\`:
+`stateiconinfo.lub` (204 KB, do LATAM) e `efstids.lub` (o nosso, decompilado, mais
+15 apelidos).
+
+Mesmo padrão das skills — os arquivos do LATAM indexam por constante `EFST_*`, e a nossa
+versão (kRO 2024) não define 15 delas. Diferente das skills, **nenhuma é erro de
+digitação**: são efeitos regionais (`HELM_*` das runas, `JPNONLY_*`, `OVERSEA_BUFF_*`) que
+só existem na build do LATAM. Recebem o valor de lá, depois de conferir que **nenhum
+colide** com efeito nosso.
+
+> A tabela chama-se **`EFST_IDs`**, com sublinhado. Escrevi `EFSTIDs` na primeira
+> tentativa e o override não teria efeito nenhum — sem erro, só silêncio.
+
+### Os arquivos do LATAM não têm encoding uniforme
+
+Esta é a descoberta que vale para todo o resto da tradução:
+
+| Arquivo | Bytes de `á` / `ã` | Encoding |
+|---|---|---|
+| `skilldescript.lub` | `e1` | **cp1252** |
+| `stateiconinfo.lub` | `c3 a3` | **UTF-8** |
+
+Instalar o segundo como veio produziria o mesmo mojibake da curandeira. **Não assuma o
+encoding — meça**, com o arquivo que você vai instalar.
+
+Como `.lub` é bytecode com strings de tamanho prefixado, não dá para trocar os bytes no
+lugar: encolher a string quebra o formato. O caminho é decompilar, converter, e gravar
+como texto:
+
+```
+java -jar unluac.jar <arquivo.lub> > fonte.lua
+python utf8-para-cp1252.py fonte.lua <destino.lub>
+python ver-perdidos.py fonte.lua        # o que não coube em cp1252
+```
+
+Resultado aqui: **928 sequências convertidas**, e 109 mantidas — são 39 frases em
+**coreano** que o próprio LATAM nunca traduziu. Sem equivalente em cp1252, e ilegíveis de
+qualquer forma.
+
+O conversor aborta se a contagem de chaves mudar.
