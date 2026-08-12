@@ -11,12 +11,14 @@ stack Docker + MariaDB. Cliente próprio baseado no Ragexe 2025-04-16.
 | [infra-docker.md](infra-docker.md) | subir/derrubar a stack, entender as portas, mexer no banco |
 | [auth-token.md](auth-token.md) | login travando em "Please wait", ou antes de religar o web-server |
 | [seguranca.md](seguranca.md) | antes de expor qualquer porta fora do localhost |
+| [traducao.md](traducao.md) | **tradução PT-BR** — estado, fontes, ferramentas, armadilhas e pendências |
 | [encoding.md](encoding.md) | **antes de criar qualquer arquivo com acento** — a regra do cp1252 |
 | [rebalance.md](rebalance.md) | itens trazidos do renewal e ajustes de classe — proposta e valores decididos |
 | [cliente/leia-me.md](cliente/leia-me.md) | rebuild do `.exe` no WARP, patches obrigatórios e proibidos |
 | [cliente/acentuacao.md](cliente/acentuacao.md) | acentos PT-BR: as constantes cp949 e o que já foi descartado |
+| [cliente/skills-prerenewal.md](cliente/skills-prerenewal.md) | descrições de skill que descrevem renewal e precisam ser corrigidas |
 | [cliente/build-release.md](cliente/build-release.md) | gerar a pasta entregue aos jogadores, e o endurecimento possível no futuro |
-| [cliente/estado-e-plano.md](cliente/estado-e-plano.md) | estado da tradução PT-BR e o que fazer em seguida |
+| [cliente/estado-e-plano.md](cliente/estado-e-plano.md) | estado do cliente: build, patches e histórico |
 
 O `ROADMAP.md` fica na raiz de propósito — é o documento que se lê primeiro, e cobre
 *o que construir*. Esta pasta cobre *como o que existe funciona*.

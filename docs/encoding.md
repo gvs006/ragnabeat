@@ -117,40 +117,7 @@ reconverter — menos conversão, menos chance de erro.
 | `.txt` (cardprefix, NPC) | cp1252 |
 | **`msgstringtable.csv`** | **UTF-8** |
 
-## Nomes de item traduzidos no servidor
+## Aplicações
 
-Gerados por [cliente/gen-nomes-servidor.py](cliente/gen-nomes-servidor.py) para
-`db/import/item_db.yml`. **Não edite à mão — regenere.**
-
-| | |
-|---|---|
-| Itens no servidor (pre-re) | 6.169 |
-| Com nome PT-BR no cliente | 4.440 |
-| Já idênticos (sem override) | 135 |
-| **Gravados** | **4.305** |
-| Sem tradução, ficam em inglês | 1.729 |
-
-A fonte é o `SystemEN/itemInfo_C.lua` do cliente, casado por **ID do item** — o mesmo
-critério que funcionou nas outras camadas.
-
-### Duas armadilhas do gerador
-
-**`unidentifiedDisplayName` contém `identifiedDisplayName` como substring.** Sem
-`(?<!un)` no regex, você lê o nome do item *não-identificado*, que em 856 itens é string
-vazia — e perde esses itens em silêncio. Foi o primeiro resultado, 4.437 em vez de 4.440,
-e os nomes estavam errados.
-
-**`ITEM_NAME_LENGTH` é 50** ([mmo.hpp:161](../src/common/mmo.hpp#L161)), então o limite
-útil é 49. O gerador pula o que passar disso em vez de truncar — hoje nenhum passa, mas a
-checagem fica.
-
-### Observação separada: 856 itens sem nome no `itemInfo_C.lua`
-
-O gerador antigo do cliente emitiu entradas-tronco com `identifiedDisplayName = ""` e
-descrição vazia, preservando só o `resourceName`. O item 556 (`Rice Cake Stick`) é um
-exemplo.
-
-Pelo `F_itemInfoMerge` com `state = false`, entrada custom só entra se o ID **ainda não
-existir** na tabela base — então esses vazios não deveriam apagar o nome inglês. Mas o
-comportamento observado in-game não bate com essa leitura, e o ponto merece ser
-investigado antes de regenerar o `itemInfo_C.lua`.
+Os arquivos concretos de cada camada, com o encoding de cada um e as
+armadilhas já pagas, estão em **[traducao.md](traducao.md)**.
