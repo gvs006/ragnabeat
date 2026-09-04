@@ -82,33 +82,47 @@ Os três em texto são porte mecânico. Os dois em bytecode dão trabalho.
 > caminho inverso (`Ã©`) é feio mas reversível. Abra o projeto pelo
 > `ragnabeat.code-workspace`, que trava `files.autoGuessEncoding`.
 
-### O caso não resolvido: acento nas mensagens automáticas
+### Acento: era a TABELA DE IDIOMA, não o arquivo
 
-Mensagens como *"Alimentação automática de mascote desligada"* aparecem
-**sem acento**, como `Alimentacao`.
+Resolvido em 04/set/2026. O cliente escolhe o codepage de conversão por uma
+tabela de idioma, e o ramo coreano gravava **949** num global
+(`0x0156F528`) usado como argumento em 53 pontos. Como cp949 não representa
+`ã` nem `ç`, o Windows fazia *best-fit* e devolvia a letra base.
 
-Já foi eliminado, com teste:
+`pos-warp.py` passo 7 troca esse ramo para 1252.
+
+**Não era o arquivo** — UTF-8 e cp1252 davam o mesmo resultado. **Não era o
+`_setmbcp`** — são codepages diferentes: um do CRT, outro do cliente.
+
+O método que achou, e que vale repetir: procurar o **valor** (`B5 03 00 00`) no
+binário inteiro, sem filtrar por opcode. As buscas antigas só cobriam
+`push 949` e `mov eax, 949`; a constante estava na forma `C7 05`.
+
+### Histórico do caso — o que foi descartado, e por que importa
+
+Antes de achar a tabela, isto tudo foi testado e **não era**:
 
 | tentativa | resultado |
 |---|---|
-| payload UTF-8 | `Alimentacao` |
-| payload cp1252 | `Alimentacao` |
+| payload do CSV em UTF-8 | `Alimentacao` |
+| payload do CSV em cp1252 | `Alimentacao` |
 | `_setmbcp` em 949 | `Alimentacao` |
 | `_setmbcp` em 1252 (`--setmbcp`) | `Alimentacao` |
-| texto na origem | **tem acento** — verificado nos bytes |
+| texto na origem | **tinha acento** — conferido nos bytes |
 
-Nome de item e o que o jogador digita **saem com acento** — três caminhos
-distintos no cliente, e só o do `msgstringtable` perde.
+Guarde a lição mais do que a lista: gastamos horas mexendo no **arquivo**
+(gerando duas GRFs, uma em cada codificação) quando o problema estava no
+**binário**. O sinal que apontava para lá estava visível desde o começo:
 
-**O achado que estreita o problema:** antes de trocarmos as 6 constantes de
-codepage para 1252, cp1252 produzia `Alimenta??o` (interrogações). Agora
-produz `Alimentacao` (limpo). Ou seja, **a leitura foi consertada** e sobra só
-a conversão de saída, que faz *best-fit* para um codepage sem acentos latinos.
+- o texto saia em português → a tabela traduzida **estava sendo lida**
+- o acento sumia **limpo** (`Alimentacao`), não corrompido (`AlimentaÃ§Ã£o`)
 
-Quem retomar: o codepage de destino **não** é o do `_setmbcp` (testado). Sobra
-achar a oitava fonte de 949 — as sete conhecidas estão listadas no
-`pos-warp.py` e seis já foram trocadas. Use `docs/cliente/sonda-acento.py`,
-que põe a mesma palavra em três codificações lado a lado.
+Sumiço limpo é assinatura de *best-fit* na conversão, não de arquivo mal
+codificado. Se a origem tem o caractere e a tela não, **o problema é o destino
+da conversão** — vá direto ao binário.
+
+Nome de item e o que o jogador digita saem com acento: são caminhos diferentes
+no cliente, e comparar os três teria estreitado o problema mais cedo.
 
 ---
 

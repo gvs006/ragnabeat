@@ -12,11 +12,6 @@ O que ele faz:
      (o cliente 2025 ignora o clientinfo.xml para o endereco de login)
   2. Corrige o separador do caminho do itemInfo para contrabarra
      (o WARP grava com '/', o cliente Windows precisa de '\')
-  4. Troca o manifesto de requireAdministrator para asInvoker - sem isso o
-     botao START do Thor Patcher falha EM SILENCIO (CreateProcess nao eleva).
-  5. Anula o JZ do g_readFolderFirst - o patch DataFolderFirst do WARP NAO
-     funciona em cliente 2025 e nunca escreveu nada. Sem isto, todo arquivo
-     solto que conflita com a GRF perde.
   3. Troca o codepage do decoder de texto, cp949 -> cp1252
      Com --setmbcp troca tambem a 7a constante, o que faz acento
      funcionar nas mensagens do msgstringtable. Leia o risco e o
@@ -27,6 +22,16 @@ O que ele faz:
      nem servicetype, nem AlwaysAscii. Ver docs/cliente/acentuacao.md.
      So o par do decoder e trocado; as outras 5 constantes 949 do binario
      ficam como estao, senao os sprites dos itens quebram.
+  4. Manifesto requireAdministrator -> asInvoker. Sem isso o botao START do
+     Thor Patcher falha EM SILENCIO: CreateProcess nao consegue elevar.
+  5. Data folder first - DESLIGADO por padrao (--folderfirst para ligar). O
+     patch do WARP nao funciona em cliente 2025, e o conserto obvio pula o
+     fallback. Leia o bloco antes de mexer.
+  6. Rotulos compilados no exe: Peso, Base, Classe, e o formato "%s [%s]" do
+     nome de guilda. Esses textos NAO vem do msgstringtable.
+  7. Codepage da tabela de idioma, o ramo coreano. E ISTO que faz as mensagens
+     automaticas sairem COM acento - achado em 04/set/2026, depois de o
+     --setmbcp nao resolver. Sao codepages diferentes.
 
 O script e idempotente: se nada precisar mudar, ele nao grava nada.
 FECHE O CLIENTE antes de rodar - o Windows nao deixa sobrescrever exe em uso.
@@ -256,6 +261,52 @@ ROTULOS = [
 ]
 
 
+# A TABELA DE IDIOMA - a oitava constante 949, invisivel ate 04/set/2026
+#
+# Esta e a que faz as mensagens automaticas sairem SEM ACENTO
+# ("Alimentacao automatica de mascote desligada"), e ela ficou escondida por
+# meses porque a busca so cobria 'push 949' (68) e 'mov eax, 949' (B8).
+#
+# O cliente tem uma tabela que escolhe o codepage pelo idioma do servico:
+#
+#   0x006582D2  mov [0156F528], 949    coreano   <- o ramo que usamos
+#   0x006582E8  mov [0156F528], 932    japones
+#   0x00658303  mov [0156F528], 936    chines simplificado
+#   0x0065831E  mov [0156F528], 950    chines tradicional
+#   0x00658339  mov [0156F528], 874    tailandes
+#   0x0065838B  mov [0156F528], 1252   latino ocidental
+#   0x006583A8  mov [0156F528], 1251   cirilico
+#
+# O global 0156F528 e referenciado 53 vezes, a maioria como 'push [global]' -
+# ou seja, entregue como ARGUMENTO de conversao. Com 949 ali, o Windows nao
+# consegue representar 'a-til' nem 'c-cedilha' no destino, aplica best-fit e
+# devolve a letra base em silencio. Dai "Alimentacao".
+#
+# POR QUE O --setmbcp NAO RESOLVIA: e outro codepage. O _setmbcp configura o
+# CRT; este aqui e do proprio cliente. Trocar um nao mexe no outro, e por isso
+# o teste com --setmbcp deu o mesmo resultado nos dois valores.
+#
+# COMO FOI ACHADO, para repetir o metodo: procurar o dword 949 (B5 03 00 00) no
+# binario INTEIRO, sem filtrar por opcode. Deu 9 ocorrencias - cinco eram
+# deslocamento de jmp/call/jne (coincidencia, 0x3B5) e quatro eram atribuicao
+# real na forma C7, que nenhuma busca anterior cobria.
+#
+# Sobram tres nao tocadas, todas gravando em variavel local. Ficam como
+# candidatas se aparecer outro texto sem acento:
+#
+#   0x006B6798  mov [ebp-4], 949
+#   0x006DFAF0  mov [ebp-4], 949
+#   0x0077CF7B  mov [ebp-0EECh], 949
+#
+# So o ramo COREANO e trocado. Os outros idiomas ficam como estao - nao usamos,
+# e mexer no que nao se testa e como este arquivo acumula armadilha.
+CP_TABELA_GLOBAL = bytes([0x28, 0xF5, 0x56, 0x01])   # 0x0156F528, little-endian
+SIG_CP_TABELA = re.compile(
+    b'\xc7\x05' + re.escape(CP_TABELA_GLOBAL) + re.escape(CP949), re.S)
+SIG_CP_TABELA_OK = re.compile(
+    b'\xc7\x05' + re.escape(CP_TABELA_GLOBAL) + re.escape(CP1252), re.S)
+
+
 def cliente_rodando(exe):
     nome = os.path.basename(exe)
     try:
@@ -429,6 +480,21 @@ def main():
     if n_rot == 0:
         print('  ja estao traduzidos, nada a fazer')
 
+    print()
+    print('=== 7. codepage da tabela de idioma (o ramo coreano) ===')
+    n_tab = 0
+    for x in list(SIG_CP_TABELA.finditer(bytes(d))):
+        off = x.start() + 6
+        d[off:off + 4] = CP1252
+        print('  0x%08X  mov [0156F528], 949 -> 1252' % x.start())
+        n_tab += 1
+        mudou = True
+    if n_tab == 0:
+        if SIG_CP_TABELA_OK.search(bytes(d)):
+            print('  ja esta em 1252, nada a fazer')
+        else:
+            print('  !! padrao nao encontrado - o build mudou? conferir a mao')
+
     if mudou:
         if cliente_rodando(exe):
             print()
@@ -491,9 +557,13 @@ def main():
     ok_rot = not faltam
     print('  [%s] rotulos traduzidos      : %d ainda em ingles'
           % ('OK' if ok_rot else '!!', len(faltam)))
+    ok_tab = SIG_CP_TABELA.search(d2) is None
+    print('  [%s] tabela de idioma        : %s'
+          % ('OK' if ok_tab else '!!',
+             'ramo coreano em 1252' if ok_tab else 'AINDA EM 949 - texto sai sem acento'))
     print('       tamanho                 : %d' % len(d2))
     print()
-    if ok_ip and ok_kro and ok_cam and ok_cp and ok_mbcp and ok_man and ok_ff and ok_rot:
+    if ok_ip and ok_kro and ok_cam and ok_cp and ok_mbcp and ok_man and ok_ff and ok_rot and ok_tab:
         print('>>> PRONTO PARA USAR')
         return 0
     print('>>> ATENCAO: algo acima esta marcado com !!')

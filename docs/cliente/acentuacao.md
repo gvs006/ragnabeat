@@ -179,7 +179,63 @@ Ou seja: **o lado da LEITURA foi consertado**. Os bytes cp1252 agora são
 decodificados corretamente. O que sobra é a conversão de **saída**, que faz
 *best-fit* para um codepage que não representa acento latino.
 
-### Onde procurar a partir daqui
+### RESOLVIDO em 04/set/2026 — era a tabela de idioma
+
+O culpado era uma **oitava constante 949**, que nenhuma busca anterior via.
+
+O cliente tem uma tabela que escolhe o codepage pelo idioma do serviço:
+
+```
+0x006582D2  mov [0156F528], 949     coreano   <- o ramo que usamos
+0x006582E8  mov [0156F528], 932     japonês
+0x00658303  mov [0156F528], 936     chinês simplificado
+0x0065831E  mov [0156F528], 950     chinês tradicional
+0x00658339  mov [0156F528], 874     tailandês
+0x0065838B  mov [0156F528], 1252    latino ocidental
+0x006583A8  mov [0156F528], 1251    cirílico
+```
+
+O global `0x0156F528` é referenciado **53 vezes**, a maioria como
+`push [global]` — ou seja, entregue como **argumento de conversão**. Com 949
+ali, o Windows não representa `ã` nem `ç` no destino, aplica *best-fit* e
+devolve a letra base em silêncio. Daí `Alimentacao`.
+
+Trocar o ramo coreano para **1252** resolve. Está no `pos-warp.py`, passo 7.
+
+#### Por que o `--setmbcp` não resolvia
+
+**São codepages diferentes.** O `_setmbcp` configura o CRT; este é do próprio
+cliente. Trocar um não mexe no outro — por isso o teste com `--setmbcp` deu o
+mesmo resultado nos dois valores, e por isso mexer no arquivo (UTF-8 ou cp1252)
+também não mudava nada.
+
+#### Como foi achado — o método, para repetir
+
+Procurar o dword 949 (`B5 03 00 00`) no binário **inteiro, sem filtrar por
+opcode**. Deram 9 ocorrências:
+
+- **5 eram coincidência**: deslocamento `0x3B5` de `jmp`, `call` e `jne`
+- **4 eram atribuição real** na forma `C7`, que as buscas anteriores
+  (`push 949` = `68`, `mov eax, 949` = `B8`) não cobriam
+
+A lição: buscar por **valor**, não por instrução. Filtrar por opcode escondeu
+essa constante por meses.
+
+#### As três que sobraram
+
+Não foram tocadas — gravam em variável local, e mexer no que não se testa é
+como este arquivo acumula armadilha. Ficam como candidatas se aparecer outro
+texto sem acento:
+
+```
+0x006B6798  mov [ebp-4], 949
+0x006DFAF0  mov [ebp-4], 949
+0x0077CF7B  mov [ebp-0EECh], 949
+```
+
+---
+
+### Histórico: onde se procurou antes
 
 O codepage de destino **não é o do `_setmbcp`** — testado nos dois valores,
 mesmo resultado. Sobra achar uma oitava fonte de 949 que não está entre as
