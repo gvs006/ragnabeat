@@ -1,0 +1,314 @@
+//===== rAthena Script =======================================
+//= ROTD - Race of the Day (Raca do Dia)
+//===== Origem: ==============================================
+//= Script da comunidade rAthena (Race Of The Day, area de
+//= Utilities do forum), traduzido e corrigido em 03/set/2026.
+//=
+//= O que ele faz: todo dia as 00:00 uma raca de monstro e
+//= sorteada e ganha bonus de EXP. Matar monstro dessa raca da
+//= EXP extra, e pode dar zeny e item.
+//=
+//===== O QUE FOI CORRIGIDO DO ORIGINAL ======================
+//= 1. "Boss" e "Non-Boss" na lista de racas.
+//=
+//=    A lista original tinha 12 entradas e o indice era usado
+//=    direto contra getmonsterinfo(MOB_RACE). Mas os indices
+//=    10 e 11 sao RC_PLAYER_HUMAN e RC_PLAYER_DORAM
+//=    (src/map/map.hpp:326-338) - racas que monstro nenhum
+//=    tem. Boss/Non-Boss nem sao raca, sao modo (MOB_MODE).
+//=
+//=    Como o sorteio era rand(12), em 2 de cada 12 dias o
+//=    ROTD ficava ligado e sem efeito nenhum, sem erro no log.
+//=    A lista agora tem so as 10 racas reais.
+//=
+//= 2. getitem com quantidade zero.
+//=
+//=    Era rand(.rotd_item_amount), que devolve 0 a n-1. Com 0
+//=    o getitem falha. Virou rand(1, n).
+//=
+//= 3. O estado virou variavel GLOBAL ($ROTD_*).
+//=
+//=    No original a raca do dia ficava em variavel de NPC (.).
+//=    Essas se perdem em @reloadscript - e aqui a gente usa
+//=    reload o tempo todo. Na pratica a raca do dia mudava
+//=    varias vezes por dia, sem ninguem entender por que.
+//=    Com $ ela sobrevive a reload e a restart.
+//=
+//= 4. O OnInit CAIA dentro do OnClock0000 por falta de end;.
+//=    Funcionava por acidente (era assim que a raca era
+//=    sorteada no boot). Agora o sorteio e uma funcao chamada
+//=    pelos dois, e so sorteia no boot se ainda nao houver
+//=    raca do dia.
+//=
+//===== O QUE ESTE SCRIPT NAO TEM ============================
+//= A tela de referencia (ThanatosRO) tem votacao e
+//= investimento de zeny numa raca. Isso NAO existe no script
+//= do forum - e uma modificacao propria deles. Aqui ficou de
+//= fora; se quiser, e um ciclo a parte.
+//============================================================
+
+prontera,141,177,5	script	ROTD	436,{
+	.@n$ = "[Sistema ROTD]";
+	.@gm = getgmlevel();
+
+	// Tela de abertura: raca e bonus antes de qualquer menu. E a mesma
+	// informacao da sala de chat, para quem clicou sem ler o balao.
+	mes .@n$;
+	mes "Bem-vindo ao sistema ^0055FFRace of the Day (ROTD)^000000!";
+	mes "A raça atual é: ^FF0000" + .Raca$[$ROTD_Raca] + "^000000";
+	mes "Bônus de EXP atual: ^0000FF+" + $ROTD_Exp + "%^000000";
+	.@falta = 86400 - (gettime(DT_HOUR) * 3600 + gettime(DT_MINUTE) * 60 + gettime(DT_SECOND));
+	mes "Troca em: ^FF0000" + (.@falta / 3600) + "h " + ((.@falta % 3600) / 60) + "min "
+		+ (.@falta % 60) + "s^000000";
+	next;
+
+	while (1) {
+		.@menu = select(
+			"^4EEE94O que é o ROTD?^000000",
+			(.@gm < .GmMinimo) ? "" : "^FF0000[GM]^000000 Trocar a raça do dia",
+			(.@gm < .GmMinimo) ? "" : "^FF0000[GM]^000000 Ajustar o bônus de EXP",
+			(.@gm < .GmMinimo) ? "" : "^FF0000[GM]^000000 Ajustar item e zeny",
+			"Sair");
+
+		switch (.@menu) {
+
+		case 1:
+			mes .@n$;
+			mes "^FF0000ROTD^000000 é ^0000FFRace of the Day^000000 - a raça do dia.";
+			mes "Todo dia uma raça de monstro é sorteada. Derrotar";
+			mes "monstro dessa raça rende ^FF0000EXP extra^000000, e às vezes";
+			mes "zeny e item.";
+			next;
+			mes .@n$;
+			mes "[ ^FF0000Raça de hoje^000000 ]";
+			mes "^0000FF" + .Raca$[$ROTD_Raca] + "^000000";
+			if ($ROTD_Exp)
+				mes " ~ ^777777+" + $ROTD_Exp + "% de EXP^000000";
+			if (($ROTD_ItemQtd && $ROTD_Taxa) || $ROTD_Zeny) {
+				mes " ";
+				mes "Extras, com ^777777" + $ROTD_Taxa + "%^000000 de chance:";
+				if ($ROTD_ItemQtd && $ROTD_Taxa)
+					mes " ~ ^777777até " + $ROTD_ItemQtd + "x " + getitemname($ROTD_ItemId) + "^000000";
+				if ($ROTD_Zeny)
+					mes " ~ ^777777até " + $ROTD_Zeny + " zeny^000000";
+			}
+			mes " ";
+			mes "Em grupo, todo mundo no mesmo mapa e dentro de";
+			mes "^0000FF" + .FaixaNivel + "^000000 níveis recebe o bônus.";
+			break;
+
+		case 2:
+			mes .@n$;
+			mes "Qual raça?";
+			.@nova = select(.Menu$) - 1;
+			if (.@nova >= .Total)
+				.@nova = rand(.Total);
+			callsub S_Definir, .@nova, $ROTD_Exp;
+			mes "Raça do dia: ^777777" + .Raca$[$ROTD_Raca] + "^000000";
+			break;
+
+		case 3:
+			mes .@n$;
+			mes "Bônus de EXP, em %.";
+			input .@pct, 0, 1000;
+			callsub S_Definir, $ROTD_Raca, .@pct;
+			mes "Bônus: ^777777" + $ROTD_Exp + "%^000000";
+			break;
+
+		case 4:
+			mes .@n$;
+			mes "Zeny máximo por abate (0 desliga):";
+			input .@zeny, 0, 1000000;
+			mes "ID do item (0 desliga):";
+			.@item = 0;
+			while (1) {
+				input .@item, 0, 32767;
+				if (!.@item)
+					break;
+				if (getitemname(.@item) != "null")
+					break;
+				mes "Esse ID não existe. Tente de novo.";
+			}
+			.@qtd = 0;
+			if (.@item) {
+				mes "Quantidade máxima por abate:";
+				input .@qtd, 1, 30000;
+			}
+			// A chance vale para zeny E item, e por isso e perguntada mesmo sem
+			// item. No original ela so era pedida dentro do if do item: quem
+			// configurasse so zeny deixava a taxa em 0 e o zeny nunca saia.
+			mes "Chance de sair o extra, em % (vale para zeny e item):";
+			input .@taxa, 0, 100;
+			next;
+			mes .@n$;
+			mes "Confirma?";
+			mes "^777777" + .@zeny + " zeny^000000";
+			if (.@item)
+				mes "^777777até " + .@qtd + "x " + getitemname(.@item) + " a " + .@taxa + "%^000000";
+			next;
+			if (select("Confirmar:Cancelar") == 1) {
+				$ROTD_Zeny = .@zeny;
+				$ROTD_ItemId = .@item;
+				$ROTD_ItemQtd = .@qtd;
+				$ROTD_Taxa = .@taxa;
+				mes .@n$;
+				mes "Atualizado.";
+			}
+			break;
+
+		default:
+			close;
+		}
+		next;
+	}
+	close;
+
+// Troca a raca e o bonus, e refaz o rotulo flutuante.
+S_Definir:
+	$ROTD_Raca = getarg(0);
+	$ROTD_Exp = getarg(1);
+	donpcevent strnpcinfo(3) + "::OnAtualizarIcone";
+	callsub S_Rotulo;
+	return;
+
+// O titulo da sala de chat e o painel do ROTD: quem passa perto le a raca, o
+// bonus E quanto falta, sem clicar. Refeito do zero toda vez porque
+// waitingroom nao aceita alteracao - so delwaitingroom e criar de novo.
+//
+// O tempo e recalculado a cada minuto pelo OnTimer60000, senao o painel
+// mostraria o valor congelado da ultima troca de raca.
+S_Rotulo:
+	.@falta = 86400 - (gettime(DT_HOUR) * 3600 + gettime(DT_MINUTE) * 60 + gettime(DT_SECOND));
+	delwaitingroom;
+	waitingroom "[ROTD] " + .Raca$[$ROTD_Raca] + "  +" + $ROTD_Exp + "% EXP  -  faltam "
+		+ (.@falta / 3600) + "h" + ((.@falta % 3600) / 60) + "m", 0;
+	return;
+
+// Icone na barra de status da direita. E o SC_TIME_ACCESSORY, um status
+// cosmetico de renewal que nao faz nada, com o Icon reapontado em
+// db/import/status.yml para o EFST_AID_PERIOD_PLUSEXP ("Bonus de EXP").
+//
+// O balao NAO mostra a porcentagem: o stateiconinfo.lub deste cliente nao tem
+// campo numerico, so o relogio. A porcentagem viva fica no titulo da sala de
+// chat, que e onde o servidor de referencia tambem a mostra.
+//
+// A duracao e o que falta para a meia-noite, que e quando o OnClock0000 troca
+// a raca - assim o icone morre junto com o bonus que ele anuncia.
+S_Icone:
+	if ($ROTD_Exp <= 0) {
+		sc_end .Icone;
+		return;
+	}
+	.@falta = 86400 - (gettime(DT_HOUR) * 3600 + gettime(DT_MINUTE) * 60 + gettime(DT_SECOND));
+	sc_start .Icone, .@falta * 1000, 1;
+	return;
+
+OnPCLoginEvent:
+	callsub S_Icone;
+	end;
+
+// Um minuto. So refaz o rotulo - e barato (duas chamadas) e mantem o tempo
+// do painel honesto sem depender de ninguem clicar no NPC.
+OnTimer60000:
+	callsub S_Rotulo;
+	setnpctimer 0;
+	end;
+
+// addrid(0) anexa TODO jogador online e roda o RESTO deste rotulo uma vez para
+// cada um. Por isso o rotulo nao faz mais nada: qualquer linha depois dele
+// rodaria N vezes.
+OnAtualizarIcone:
+	addrid(0);
+	callsub S_Icone;
+	end;
+
+OnClock0000:
+	callsub S_Definir, rand(.Total), rand(.ExpMin, .ExpMax);
+	announce "[ROTD] A raça do dia agora é " + .Raca$[$ROTD_Raca]
+		+ " (+" + $ROTD_Exp + "% de EXP).", BC_ALL | BC_BLUE;
+	end;
+
+OnNPCKillEvent:
+	if (getmonsterinfo(killedrid, MOB_RACE) != $ROTD_Raca)
+		end;
+
+	.@base = (getmonsterinfo(killedrid, MOB_BASEEXP) / 100) * $ROTD_Exp;
+	.@job = (getmonsterinfo(killedrid, MOB_JOBEXP) / 100) * $ROTD_Exp;
+	.@aid = getcharid(3);
+	.@grupo = getcharid(1);
+
+	if (.@grupo) {
+		.@nivel = BaseLevel;
+		.@mapa$ = strcharinfo(3);
+		getpartymember .@grupo, 1;
+		getpartymember .@grupo, 2;
+		.@i = 0;
+		while (.@i < $@partymembercount) {
+			if (isloggedin($@partymemberaid[.@i], $@partymembercid[.@i])
+			    && attachrid($@partymemberaid[.@i])) {
+				if (strcharinfo(3) == .@mapa$
+				    && (BaseLevel - .@nivel) <= .FaixaNivel
+				    && (BaseLevel - .@nivel) >= (0 - .FaixaNivel)
+				    && Hp >= 1) {
+					BaseExp += .@base;
+					JobExp += .@job;
+					dispbottom "[ROTD em grupo] +" + .@base + " de EXP";
+				}
+			}
+			.@i++;
+		}
+		// Volta para quem matou ANTES de dar zeny e item, senao o premio cai
+		// no ultimo membro que o laco tiver anexado.
+		attachrid(.@aid);
+	} else {
+		BaseExp += .@base;
+		JobExp += .@job;
+		dispbottom "[ROTD] +" + .@base + " de EXP";
+	}
+
+	if ($ROTD_Zeny && rand(100) < $ROTD_Taxa)
+		Zeny += rand(1, $ROTD_Zeny);
+	// rand(1,n) e nao rand(n): rand(n) devolve 0..n-1, e getitem com
+	// quantidade 0 falha.
+	if ($ROTD_ItemId && $ROTD_ItemQtd && rand(100) < $ROTD_Taxa)
+		getitem $ROTD_ItemId, rand(1, $ROTD_ItemQtd);
+	end;
+
+OnInit:
+	// SC cosmetico inerte, com o Icon reapontado para o "Bonus de EXP" em
+	// db/import/status.yml. Trocar de icone e mexer la, nao aqui.
+	.Icone = SC_TIME_ACCESSORY;
+	.GmMinimo = 80;
+	.FaixaNivel = 10;      // diferenca de nivel que ainda recebe o bonus
+	.ExpMin = 10;
+	.ExpMax = 100;
+
+	// SO as 10 racas reais de monstro. Os indices batem com RC_* de
+	// src/map/map.hpp - ver a nota 1 no topo.
+	setarray .Raca$[0],
+		"Sem Forma",     // RC_FORMLESS  0
+		"Morto-Vivo",    // RC_UNDEAD    1
+		"Bruto",         // RC_BRUTE     2
+		"Planta",        // RC_PLANT     3
+		"Inseto",        // RC_INSECT    4
+		"Peixe",         // RC_FISH      5
+		"Demônio",       // RC_DEMON     6
+		"Humanoide",     // RC_DEMIHUMAN 7
+		"Anjo",          // RC_ANGEL     8
+		"Dragão";        // RC_DRAGON    9
+	.Total = getarraysize(.Raca$);
+
+	.Menu$ = "";
+	for (.@i = 0; .@i < .Total; .@i++)
+		.Menu$ += .Raca$[.@i] + ":";
+	.Menu$ += "^0055FFRaça aleatória^000000";
+
+	// So sorteia se ainda nao houver raca definida. Sem esta guarda, todo
+	// @reloadscript trocaria a raca do dia no meio do dia.
+	if ($ROTD_Exp <= 0)
+		callsub S_Definir, rand(.Total), rand(.ExpMin, .ExpMax);
+	else
+		callsub S_Definir, $ROTD_Raca, $ROTD_Exp;
+	initnpctimer;
+	end;
+}

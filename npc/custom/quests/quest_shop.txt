@@ -22,13 +22,13 @@
 //= 1.6c Replaced function 'A_An' with "F_InsertArticle".
 //============================================================
 
-// Shop NPCs -- supplying no argument displays entire menu.
-//	callfunc "qshop"{,<shop ID>{,<shop ID>{,...}}};
-//  ADD YOUR NPC HERE
+// NPCs da loja -- sem argumento, mostra o menu inteiro.
+//	callfunc "qshop"{,<ID da loja>{,<ID da loja>{,...}}};
+//  ADICIONE SEUS NPCs AQUI
 //============================================================
-prontera,164,203,6	script	Quest Shop#1	998,{ callfunc "qshop"; }
-// prontera,165,203,6	script	Quest Shop#2	998,{ callfunc "qshop",1,2; }	// call the shop 1 and 2 defined below
-// etc.. Add your Shop NPCs 'Quest Shop#XXX' here
+prontera,164,203,6	script	Loja de Missões#1	998,{ callfunc "qshop"; }
+// prontera,165,203,6	script	Loja de Missões#2	998,{ callfunc "qshop",1,2; }	// abre so as lojas 1 e 2 definidas abaixo
+// etc.. Adicione os NPCs 'Loja de Missões#XXX' aqui
 //============================================================
 
 
@@ -43,19 +43,19 @@ OnInit:
 //  Basic shop settings.
 // -----------------------------------------------------------
 
-	set .Announce,1;	// Announce quest completion? (1: yes / 0: no)
-	set .ShowSlot,1;	// Show item slots? (2: all equipment / 1: if slots > 0 / 0: never)
-	set .ShowID,0;  	// Show item IDs? (1: yes / 0: no)
-	set .ShowZeny,0;	// Show Zeny cost, if any? (1: yes / 0: no)
-	set .MaxStack,100;	// Max number of quest items purchased at one time.
+	set .Announce,1;	// Anunciar a conclusao no servidor? (1: sim / 0: nao)
+	set .ShowSlot,1;	// Mostrar slots do item? (2: todo equipamento / 1: so se tiver slot / 0: nunca)
+	set .ShowID,0;  	// Mostrar o ID do item? (1: sim / 0: nao)
+	set .ShowZeny,0;	// Mostrar o custo em Zeny, se houver? (1: sim / 0: nao)
+	set .MaxStack,100;	// Maximo de itens comprados de uma vez.
 
 // -----------------------------------------------------------
-//  Points variable -- optional quest requirement.
-//	setarray .Points$[0],"<variable name>","<display name>";
+//  Variavel de pontos -- requisito opcional da missao.
+//	setarray .Points$[0],"<nome da variavel>","<nome exibido>";
 // -----------------------------------------------------------
 
 	setarray .Points$[0],
-		"#CASHPOINTS", "Cash Points";
+		"#CASHPOINTS", "Pontos de Cash";
 
 
 //=====================================================================================
@@ -63,20 +63,24 @@ OnInit:
 //=====================================================================================
 
 // -----------------------------------------------------------
-//  Shop IDs -- to add shops, copy dummy data at bottom of file.
-//	setarray .Shops$[1],"<Shop 1>","<Shop 2>"{,...};
+//  IDs das lojas -- para criar mais, copie os "qshop" do fim
+//  do arquivo. O nome aqui e o que aparece no menu.
+//	setarray .Shops$[1],"<Loja 1>","<Loja 2>"{,...};
 // -----------------------------------------------------------
 
 	setarray .Shops$[1],
-		"Headgears",	// Shop Named 1
-		"Weapons",		// Shop Named 2
-		"Other";		// Shop Named 3
+		"Acessórios de Cabeça",	// Loja 1
+		"Armas",				// Loja 2
+		"Outros";				// Loja 3
 
 // -----------------------------------------------------------
-//  Quest items -- do NOT use a reward item more than once!
-//	Add(<shop ID>,<reward ID>,<reward amount>,
-//	    <Zeny cost>,<point cost>,
-//	    <required item ID>,<required item amount>{,...});
+//  Itens de missao -- NAO repita o mesmo item de recompensa!
+//	Add(<ID da loja>,<ID da recompensa>,<quantidade>,
+//	    <custo em Zeny>,<custo em pontos>,
+//	    <ID do item exigido>,<quantidade exigida>{,...});
+//
+//  Os IDs saem de db/pre-re/ (o servidor e pre-renewal).
+//  Item inexistente e so ignorado, com aviso no console.
 // -----------------------------------------------------------
 
 // Shop 1
@@ -120,10 +124,10 @@ OnMenu:
 	}
 	deletearray @i[0],getarraysize(@i);
 	if (.Shops$[@shop_index] == "") {
-		message strcharinfo(0),"An error has occurred.";
+		message strcharinfo(0),"Ocorreu um erro.";
 		end;
 	}
-	dispbottom "Select one item at a time.";
+	dispbottom "Selecione um item por vez.";
 	callshop "qshop"+@shop_index,1;
 	npcshopattach "qshop"+@shop_index;
 	end;
@@ -134,12 +138,12 @@ OnBuyItem:
 	copyarray .@q[3],getd(".q_"+@shop_index+"_"+.@q[0]+"[0]"),getarraysize(getd(".q_"+@shop_index+"_"+.@q[0]));
 	set .@q[2],.@q[1]*.@q[3];
 	if (!.@q[2] || .@q[2] > 30000) {
-		message strcharinfo(0),"You can't purchase that many "+getitemname(.@q[0])+".";
+		message strcharinfo(0),"Você não pode trocar por essa quantidade de "+getitemname(.@q[0])+".";
 		end;
 	}
-	mes "[Quest Shop]";
-	mes "Reward: ^0055FF"+((.@q[2] > 1)?.@q[2]+"x ":"")+Slot(.@q[0])+"^000000";
-	mes "Requirements:";
+	mes "[Loja de Missões]";
+	mes "Recompensa: ^0055FF"+((.@q[2] > 1)?.@q[2]+"x ":"")+Slot(.@q[0])+"^000000";
+	mes "Requisitos:";
 	disable_items;
 	if (.@q[4]) mes " > "+Chk(Zeny,.@q[4]*.@q[1])+(.@q[4]*.@q[1])+" Zeny^000000";
 	if (.@q[5]) mes " > "+Chk(getd(.Points$[0]),.@q[5]*.@q[1])+(.@q[5]*.@q[1])+" "+.Points$[1]+" ("+getd(.Points$[0])+"/"+(.@q[5]*.@q[1])+")^000000";
@@ -151,16 +155,16 @@ OnBuyItem:
 		set .@preview,1;
 	addtimer 1000, strnpcinfo(0)+"::OnEnd";
 	while(1) {
-		switch(select(" ~ Purchase ^0055FF"+getitemname(.@q[0])+"^000000:"+((.@preview && !@qe[7])?" ~ Preview...":"")+": ~ ^777777Cancel^000000")) {
+		switch(select(" ~ Trocar por ^0055FF"+getitemname(.@q[0])+"^000000:"+((.@preview && !@qe[7])?" ~ Visualizar...":"")+": ~ ^777777Cancelar^000000")) {
 		case 1:
 			if (@qe[0]) {
-				mes "[Quest Shop]";
-				mes "You're missing one or more quest requirements.";
+				mes "[Loja de Missões]";
+				mes "Você não cumpriu um ou mais requisitos.";
 				close;
 			}
 			if (!checkweight(.@q[0],.@q[2])) {
-				mes "[Quest Shop]";
-				mes "^FF0000You need "+(((.@q[2]*getiteminfo(.@q[0], ITEMINFO_WEIGHT))+Weight-MaxWeight)/10)+" additional weight capacity to complete this trade.^000000";
+				mes "[Loja de Missões]";
+				mes "^FF0000Você precisa de "+(((.@q[2]*getiteminfo(.@q[0], ITEMINFO_WEIGHT))+Weight-MaxWeight)/10)+" de capacidade de peso a mais para concluir a troca.^000000";
 				close;
 			}
 			if (.@q[4]) set Zeny, Zeny-(.@q[4]*.@q[1]);
@@ -168,7 +172,7 @@ OnBuyItem:
 			if (.@q[6]) for(set .@i,6; .@i<getarraysize(.@q); set .@i,.@i+2)
 				delitem .@q[.@i],.@q[.@i+1]*.@q[1];
 			getitem .@q[0],.@q[2];
-			if (.Announce) announce strcharinfo(0)+" has created "+((.@q[2] > 1)?.@q[2]+"x "+getitemname(.@q[0]):callfunc("F_InsertArticle",getitemname(.@q[0])))+"!",0;
+			if (.Announce) announce strcharinfo(0)+" conseguiu "+((.@q[2] > 1)?.@q[2]+"x ":"")+getitemname(.@q[0])+"!",0;
 			specialeffect2 EF_FLOWERLEAF;
 			close;
 		case 2:
@@ -195,13 +199,13 @@ OnEnd:
 
 function Add {
 	if (getitemname(getarg(1)) == "null") {
-		debugmes "Quest reward #"+getarg(1)+" invalid (skipped).";
+		debugmes "Recompensa de missao #"+getarg(1)+" invalida (ignorada).";
 		return;
 	}
 	setarray .@j[0],getarg(2),getarg(3),getarg(4);
 	for(set .@i,5; .@i<getargcount(); set .@i,.@i+2) {
 		if (getitemname(getarg(.@i)) == "null") {
-			debugmes "Quest requirement #"+getarg(.@i)+" invalid (skipped).";
+			debugmes "Requisito de missao #"+getarg(.@i)+" invalido (ignorado).";
 			return;
 		} else
 			setarray .@j[.@i-2],getarg(.@i),getarg(.@i+1);

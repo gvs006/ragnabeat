@@ -1,5 +1,5 @@
 //--------------------------------------------------------------
-// Ragnabeat â€” battle config custom
+// Ragnabeat — battle config custom
 // Importado por conf/battle_athena.conf (linha 64).
 // Sobrescreve o que estiver em conf/battle/*.conf.
 //--------------------------------------------------------------
@@ -46,7 +46,7 @@ randopt_drop_t2_minlevel: 40
 randopt_drop_t3_minlevel: 75
 
 // Capacete (head top/mid/low) e acessorio recebem bonus?
-// 0 = nao (recomendado â€” sao os slots mais faceis de farmar e trocar, e viram
+// 0 = nao (recomendado — sao os slots mais faceis de farmar e trocar, e viram
 //          empilhamento de porcentagem)
 // 1 = sim
 // Costume nunca recebe, independente deste valor.
@@ -55,3 +55,50 @@ randopt_drop_helm_acc: 0
 // Nota: item roubado so recebe bonus se o config abaixo (nativo, em
 // conf/battle/skill.conf) estiver ligado.
 //skill_steal_random_options: yes
+
+// ---------------------------------------------------------------------------
+// Cores de roupa e cabelo - pacote palette.grf (12/ago/2026)
+//
+// O cliente ganhou C:/RagnaClient/RagnaBeat.Dev/palette.grf, carregado como
+// entrada 2 do DATA.ini. Sem subir os limites abaixo o servidor recusa
+// qualquer cor acima do padrao e o estilista nao oferece nada de novo.
+//
+// Os numeros nao sao chute: foram medidos dentro do GRF.
+//
+//   roupa   4..699 presentes nos 213 grupos de classe+sexo do pacote.
+//           As cores 0..3 nao estao la porque ja vem no data.grf base - e por
+//           isso o palette.grf entra DEPOIS dele no DATA.ini, para nao trocar
+//           a aparencia de quem ja joga.
+//   cabelo  0..127 presentes nos 240 grupos.
+//
+// Se alguem trocar o pacote, remedir antes de mexer aqui: cor sem .pal para a
+// classe do jogador deixa o personagem com a paleta errada.
+// ATENCAO: estas 699 cores valem para o corpo NORMAL. O corpo MONTADO tem
+// so 4 a 8 cores no cliente - o palette.grf (pacote Kamishi) nao estendeu as
+// montarias. Montar com cor acima do teto trava o personagem com erro de
+// palette. A guarda esta em F_Montaria (npc/custom/transmutador.txt), e o
+// gerador que preenche o que falta em docs/cliente/gerar-palettes-montaria.py.
+// Ver docs/rebalance.md secao 13.
+max_cloth_color: 699
+max_hair_color: 127
+
+// ---------------------------------------------------------------------------
+// NOME DE MONSTRO EM PT-BR - 03/set/2026
+// ---------------------------------------------------------------------------
+// Com 0 (padrao) o servidor usa o nome escrito na LINHA DE SPAWN, e as linhas
+// de npc/pre-re/mobs/ tem o nome em ingles cravado:
+//
+//     mag_dun02,0,0  monster  Deleter  1384,25
+//
+// Ou seja: os 561 nomes traduzidos de db/ragnabeat_mob_names.yml nunca
+// apareciam em tela. O mob_db so era consultado pelo @mi.
+//
+// 1 usa o campo Name do mob_db (npc.cpp:5366 grava "--en--", que mob.cpp:454
+// resolve para mob->name) - e Name e exatamente onde a traducao vive.
+//
+// NAO USE 2. O comentario do monster.conf fala em "JName / nome original do
+// kRO", vocabulario do db em .txt antigo. No YAML, 2 le mob->jname, que vem
+// do campo JapaneseName - presente em 147 entradas do db/pre-re/mob_db.yml.
+// Nessas 147 o nome sairia em japones/coreano.
+// ---------------------------------------------------------------------------
+override_mob_names: 1

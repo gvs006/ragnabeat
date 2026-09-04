@@ -45,7 +45,7 @@ services:
     volumes:
       - .:/server
     ports:
-      - "6900:6900"
+      - "127.0.0.1:16900:6900"
       # O cliente 2025 NAO usa uma porta fixa para o login: ele deriva uma do
       # bloco de agency em runtime. Medido em 11/ago/2026 com rastreio de socket,
       # numa tentativa que travou no "Please wait":
@@ -64,19 +64,19 @@ services:
       # erro e depois SILENCIOSAMENTE ignorado - o docker port nao mostra nada e
       # as portas ficam fechadas. Faixa no host so funciona com faixa do mesmo
       # tamanho no container.
-      - "6950:6900"
-      - "6951:6900"
-      - "6952:6900"
-      - "6953:6900"
-      - "6954:6900"
-      - "6955:6900"
-      - "6956:6900"
-      - "6957:6900"
-      - "6958:6900"
-      - "6959:6900"
-      - "6960:6900"
-      - "6121:6121"
-      - "5121:5121"
+      - "127.0.0.1:16950:6900"
+      - "127.0.0.1:16951:6900"
+      - "127.0.0.1:16952:6900"
+      - "127.0.0.1:16953:6900"
+      - "127.0.0.1:16954:6900"
+      - "127.0.0.1:16955:6900"
+      - "127.0.0.1:16956:6900"
+      - "127.0.0.1:16957:6900"
+      - "127.0.0.1:16958:6900"
+      - "127.0.0.1:16959:6900"
+      - "127.0.0.1:16960:6900"
+      - "127.0.0.1:16121:6121"
+      - "127.0.0.1:15121:5121"
       # O cliente 2025-04-16 conecta no login pela 6951 (porta derivada em codigo,
       # nao vem do clientinfo.xml). Encaminhamos para a 6900 do login-server em vez
       # de mexer na config do rAthena.

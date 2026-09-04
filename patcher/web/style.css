@@ -1,0 +1,269 @@
+/* Estilo dos NoticeBox do patcher Midgard Eternal.
+ *
+ * ISTO RODA DENTRO DO INTERNET EXPLORER embutido do Thor, nao num navegador
+ * moderno. Nada de flexbox, grid, var(), media query ou fonte web - o layout
+ * aqui e float, tabela e margem, de proposito. Se abrir bonito no Chrome e
+ * torto no patcher, foi por ter esquecido disso.
+ *
+ * As cores saem do design (Launcher Midgard.dc.html) e batem com o bg.bmp que
+ * o gerar-visual.py desenha atras: o fundo aqui e transparente onde o bitmap
+ * ja pintou o painel, para nao aparecer um retangulo recortado por cima. */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    /* NAO use transparent: o controle do IE pinta a propria area de BRANCO
+       quando o fundo nao e opaco, e apareceu um retangulo branco por cima do
+       painel desenhado no bg.bmp. Esta cor e a mesma que o gerar-visual.py
+       pinta atras, entao a emenda so se nota nos cantos, que ali sao retos. */
+    /* MESMA cor do PAINEL_HTML em patcher/gerar-visual.py - e o que faz a
+       caixa do IE nao aparecer recortada sobre o bitmap. Mudou aqui, mude la. */
+    background: #061a30;
+    color: #dff2ff;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    font-size: 13px;
+    overflow-x: hidden;
+}
+
+/* barra de rolagem discreta - so o IE entende estas */
+body {
+    scrollbar-face-color: #17466e;
+    scrollbar-track-color: #071c34;
+    scrollbar-arrow-color: #9fe9ff;
+    scrollbar-highlight-color: #071c34;
+    scrollbar-shadow-color: #071c34;
+    scrollbar-3dlight-color: #071c34;
+    scrollbar-darkshadow-color: #071c34;
+}
+
+/* ---------- abas ---------- */
+.abas { padding: 2px 0 12px 0; }
+
+.aba {
+    display: inline-block;
+    /* apertado de proposito: com padding maior as quatro abas nao cabiam em
+       uma linha nesta largura e a quarta caia sozinha embaixo */
+    padding: 6px 11px 5px;
+    margin-right: 4px;
+    border-radius: 999px;
+    font-family: "Arial Narrow", "Segoe UI", sans-serif;
+    font-weight: bold;
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #cbeaff;
+    background: #0a2740;
+    border: 1px solid #2f6b93;
+    cursor: pointer;
+}
+
+.aba:hover { color: #ffffff; border-color: #78e6ff; }
+
+.aba.on {
+    color: #062338;
+    background: #9fe9ff;
+    border-color: #ffffff;
+}
+
+
+/* ---------- fontes do design ----------
+ * Servidas por nos, nao pelo Google: o patcher fala com esta maquina pela
+ * tailnet e pode nao ter saida para a internet. O IE11 le TTF em @font-face. */
+@font-face {
+    font-family: 'Cinzel';
+    src: url('fontes/Cinzel-900.ttf') format('truetype');
+    font-weight: 900;
+}
+@font-face {
+    font-family: 'BarlowCond';
+    src: url('fontes/BarlowCondensed-700.ttf') format('truetype');
+    font-weight: 700;
+}
+
+/* ---------- slider ---------- */
+.slider {
+    position: relative;
+    height: 210px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #1d4f75;
+}
+
+.quadro { position: absolute; top: 0; left: 0; width: 100%; height: 210px; }
+.quadro.oculto { display: none; }
+
+/* A "arte" e o lugar do banner do design (image-slot 600x300). Sem imagem
+ * ainda, cada cartao ganha um degrade proprio para nao parecerem o mesmo. */
+.arte { position: absolute; top: 0; left: 0; width: 100%; height: 210px; }
+.arte-a { background: #123a5e; }
+.arte-b { background: #1a2f5e; }
+.arte-c { background: #10405c; }
+
+.tarja {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 150px;
+    background: #061a30;
+    filter: alpha(opacity=82);
+    opacity: .82;
+}
+
+.rotulo { position: absolute; left: 20px; right: 20px; bottom: 16px; }
+
+.olho {
+    font-family: 'BarlowCond', "Arial Narrow", sans-serif;
+    font-size: 12px;
+    letter-spacing: .22em;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #86dcff;
+    margin-bottom: 2px;
+}
+
+/* O titulo do cartao. Antes era um h3 de 13px igual ao corpo, e o cartao
+ * inteiro lia como paragrafo. Serifada, grande e branca, ele vira o ponto de
+ * entrada da leitura - que e o papel dele no design. */
+.titulo {
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 900;
+    font-size: 27px;
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 5px;
+}
+
+.linha { font-size: 12px; line-height: 1.45; color: #bcd9ee; }
+
+.seta {
+    position: absolute; top: 78px;
+    width: 30px; height: 30px;
+    line-height: 27px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #d6f3ff;
+    background: #0a2740;
+    border: 1px solid #2f6b93;
+    border-radius: 999px;
+}
+.seta:hover { background: #17608c; color: #ffffff; }
+.seta.esq { left: 10px; }
+.seta.dir { right: 10px; }
+
+.pontos { position: absolute; right: 16px; top: 14px; }
+
+.ponto {
+    display: inline-block;
+    width: 8px; height: 8px;
+    margin-left: 5px;
+    border-radius: 999px;
+    background: #2f6b93;
+    text-decoration: none;
+}
+.ponto.on { background: #78e6ff; }
+
+.rodape-noticia {
+    padding: 10px 2px 0 2px;
+    font-size: 11px;
+    color: #6f95b3;
+}
+
+/* ---------- painel de conteudo ---------- */
+.painel {
+    padding: 14px 16px 16px 16px;
+    border-radius: 18px;
+    background: #061a30;
+    border: 1px solid #1d4f75;
+}
+
+.painel h2 {
+    margin: 0 0 3px 0;
+    font-size: 15px;
+    color: #ffffff;
+}
+
+.selo {
+    font-size: 11px;
+    letter-spacing: .22em;
+    font-weight: bold;
+    color: #86dcff;
+    text-transform: uppercase;
+}
+
+.painel p {
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+    color: #c3e2f7;
+}
+
+.painel ul {
+    margin: 6px 0 0 0;
+    padding: 0 0 0 18px;
+    color: #c3e2f7;
+    line-height: 1.55;
+}
+
+.painel li { margin-bottom: 4px; }
+
+.item {
+    margin: 0 0 12px 0;
+    padding: 9px 12px 10px 12px;
+    background: #0a2440;
+    border-left: 3px solid #2f6b93;
+}
+
+.item.novo { border-left-color: #78e6ff; }
+.item.aviso { border-left-color: #ffcf6a; }
+
+.item h3 {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    color: #eaf7ff;
+}
+
+.item .data {
+    float: right;
+    font-size: 11px;
+    font-weight: normal;
+    color: #6f95b3;
+}
+
+.item p { margin: 0 0 5px 0; font-size: 12px; }
+.item p.ultimo { margin-bottom: 0; }
+
+code {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: #9fe9ff;
+    background: #06203a;
+    padding: 1px 4px;
+}
+
+/* limpa o float da data */
+.item { zoom: 1; }
+.item:after { content: ""; display: block; height: 0; clear: both; }
+
+/* ---------- status do mundo (o segundo NoticeBox) ---------- */
+.mundo { padding: 10px 16px 8px 16px; }
+
+.mundo .titulo {
+    font-size: 11px;
+    letter-spacing: .2em;
+    font-weight: bold;
+    color: #86dcff;
+    margin-bottom: 7px;
+    text-transform: uppercase;
+}
+
+.mundo table { width: 100%; border-collapse: collapse; }
+
+.mundo td {
+    padding: 4px 0;
+    font-size: 13px;
+    border-top: 1px solid #17405f;
+}
+
+.mundo td.k { color: #a8cde5; }
+.mundo td.v { text-align: right; font-weight: bold; color: #dff2ff; }
+.mundo td.v.on { color: #7cf2b8; }
+.mundo td.v.off { color: #ff9b9b; }

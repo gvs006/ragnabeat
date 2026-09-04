@@ -1,0 +1,62 @@
+# Nomes de monstro que o gerador NAO consegue produzir
+#
+# O docs/gerar-nomes-mob.py casa por TEXTO EM INGLES e desempata por voto da
+# maioria. Isso quebra quando varios ids diferentes compartilham o mesmo nome
+# em ingles e o bRO da nomes DIFERENTES a cada um - o voto escolhe um so, ou
+# nenhum. Este arquivo e a lista dos casos assim, corrigidos a mao.
+#
+# Entra DEPOIS do ragnabeat_mob_names.yml na cadeia do db/import/mob_db.yml,
+# entao o que estiver aqui ganha. E este arquivo E EDITAVEL A MAO - os outros
+# dois sao gerados e qualquer coisa escrita neles some na proxima regeracao.
+#
+# ---------------------------------------------------------------------------
+# AS QUATRO SOMBRAS DO SATAN MORROC
+# ---------------------------------------------------------------------------
+# Ids 1918-1921 (MOROCC_1..4) sao quatro monstros bem diferentes - elemento,
+# raca, tamanho e status distintos - e o rAthena chama TODOS de "Incarnation
+# of Morocc", tanto no pre-re quanto no re. Por isso o gerador nao tinha como
+# separa-los.
+#
+# Os quatro nomes do bRO estao na base do LATAM, todos casando com o mesmo
+# ingles ("Incarnation of Morroc" e "Shadow of Morroc"):
+#
+#     Sombra da Ira        Sombra da Inveja
+#     Sombra da Gula       Sombra da Vaidade
+#
+# ATENCAO - A ORDEM ABAIXO E INFERIDA, NAO E DE FONTE.
+#
+# Nenhuma fonte que temos aqui diz QUAL id e QUAL pecado: nem o mob_db (nomes
+# iguais), nem os scripts do rAthena, nem os sprites (morocc_1..4, sem pista),
+# nem a base do LATAM (o ingles e o mesmo para os quatro). A ordem usada segue
+# a sequencia dos AegisName MOROCC_1..4 contra a ordem classica do kRO.
+#
+# COMO CONFERIR EM 30 SEGUNDOS: @monster 1918 e olhe o bicho. O 1918 e o unico
+# raca ANJO e tamanho GRANDE dos quatro; o 1921 e o unico de elemento FANTASMA
+# e INT 220. Se nao bater com o que o bRO chama, e so trocar as quatro linhas
+# de Name aqui - nada mais depende dessa ordem.
+# ---------------------------------------------------------------------------
+
+Header:
+  Type: MOB_DB
+  Version: 5
+
+Body:
+  - Id: 1918
+    AegisName: MOROCC_1
+    Name: Sombra da Ira
+  - Id: 1919
+    AegisName: MOROCC_2
+    Name: Sombra da Gula
+  - Id: 1920
+    AegisName: MOROCC_3
+    Name: Sombra da Inveja
+  - Id: 1921
+    AegisName: MOROCC_4
+    Name: Sombra da Vaidade
+  # As duas versoes "guardiao" do mesmo bicho, usadas na luta do Satan.
+  - Id: 1922
+    AegisName: G_MOROCC_1
+    Name: Sombra da Ira
+  - Id: 1923
+    AegisName: G_MOROCC_2
+    Name: Sombra da Gula

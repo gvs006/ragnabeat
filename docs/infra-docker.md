@@ -195,6 +195,165 @@ Versionados hoje:
 4. Cliente: ver [cliente/leia-me.md](cliente/leia-me.md) — o `.exe` precisa dos patches
    de pós-build, que não vêm do repo
 
+## Jogador de fora: por que só o localhost funciona
+
+Descoberto em 12/ago/2026, preparando o primeiro build para outras pessoas
+testarem. Custou várias tentativas erradas; o resumo está aqui para ninguém
+repetir.
+
+**Sintoma:** `127.0.0.1:6900` conecta. `192.168.1.5:6900` e o IP do Tailscale
+dão *timeout* — não "connection refused", o que já descarta firewall.
+
+**Causa:** o Docker Desktop roda no backend WSL2, que usa *localhost
+forwarding*. O `docker ps` anuncia `0.0.0.0:6900->6900/tcp`, mas do lado do
+Windows **não existe socket em escuta nenhum**:
+
+```
+Get-NetTCPConnection -State Listen -LocalPort 6900   # nao devolve nada
+```
+
+O `0.0.0.0` é a intenção do Docker dentro da VM, não uma ligação real na
+máquina. E tem um agravante: **publicar a porta a reserva no Windows**. Medido
+porta a porta — em `0.0.0.0`, `127.0.0.1`, na LAN e no Tailscale, todos dão
+`WinError 10013`:
+
+| Porta | Docker publicou? | Dá para ligar nela? |
+|---|---|---|
+| 6900, 5121, 6950, 6952-6954, 6956-6960 | sim | **não** — 10013 em qualquer endereço |
+| 6121, 6951, 6955 | não (falhou calado) | sim |
+
+Ou seja: a porta fica reservada, inalcançável de fora, e ainda bloqueia
+qualquer ponte que se tente montar em cima dela.
+
+### O que NÃO resolve
+
+1. **`netsh interface portproxy`** — as 14 regras são aceitas sem erro e
+   nenhuma chega a criar listener. Não é a pilha IPv6 (ligada na interface do
+   Tailscale) nem o IP Helper (rodando); é a reserva acima.
+2. **Publicar amarrado ao IP** (`100.76.66.99:16900:6900`) — o `docker ps`
+   passa a mostrar o IP e continua inalcançável.
+3. **`tailscale serve --tcp`** — funciona para outro aparelho do tailnet, mas
+   **não atende conexão da própria máquina**. Foi o que quebrou o cliente local
+   depois que o exe passou a apontar para o IP do Tailscale.
+
+### A solução: deslocar o Docker e pôr uma ponte na frente
+
+O `docker-compose.yml` publica em **porta + 10000, só no loopback**
+(`127.0.0.1:16900:6900`). Assim quem fica reservado é o 16900, que ninguém usa,
+e o 6900 de verdade sobra.
+
+O [ponte-portas.py](ponte-portas.py) então escuta as portas reais em **dois
+endereços** — `127.0.0.1` e o IP do Tailscale — e encaminha para o loopback
+deslocado. Um socket Windows comum atende os dois casos: o cliente desta
+máquina e o do tailnet caem no mesmo listener.
+
+```
+cliente local  ->  127.0.0.1:6900     -                                        >-- ponte --> 127.0.0.1:16900 --> Docker
+cliente remoto ->  100.76.66.99:6900  -/
+```
+
+Roda pela Tarefa Agendada **"RagnaBeat - ponte de portas"**, no logon, com
+`pythonw.exe`. Para conferir: `Get-ScheduledTask 'RagnaBeat - ponte de portas'`.
+
+### As duas tarefas agendadas
+
+O projeto tem dois processos de fundo, e os dois seguem a mesma receita: sobem
+no logon do `huds`, sem limite de tempo de execução, e reiniciam sozinhos até 3
+vezes com 1 minuto de intervalo.
+
+| Tarefa | Script | Portas |
+|---|---|---|
+| `RagnaBeat - ponte de portas` | [ponte-portas.py](ponte-portas.py) | 6900, 6121, 5121 |
+| `RagnaBeat - patcher HTTP` | `patcher/servir.py` | 8099 |
+
+```powershell
+Get-ScheduledTask -TaskName 'RagnaBeat*' | Select-Object TaskName, State
+```
+
+> **Rodar o script na mão não substitui a tarefa — soma.** No Windows dois
+> processos podem escutar a mesma porta sem erro, e qual deles atende cada
+> conexão não é determinístico. Em 03/set/2026 havia **quatro** instâncias da
+> ponte no ar, três delas sobras de execuções manuais em console; o sintoma
+> disso não é uma falha limpa, é "às vezes não conecta". Antes de rodar à mão,
+> pare a tarefa; ao terminar, ligue a tarefa de volta.
+
+```powershell
+# o que esta mesmo escutando
+Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='pythonw.exe'" |
+  Where-Object { $_.CommandLine -match 'ponte-portas|servir\.py' } |
+  Select-Object ProcessId, Name, CommandLine
+```
+
+A ponte só aceita origem da faixa CGNAT do Tailscale e da própria máquina — a
+Ethernet aqui é rede *Public*, e sem esse filtro ela seria um buraco onde o
+Docker não era. A regra de firewall "RagnaBeat - rAthena via Tailscale" limita o
+mesmo, em outra camada.
+
+> **Se mudar o `DESLOCAMENTO`, mude nos dois lugares** — `docker-compose.yml` e
+> `ponte-portas.py`. Nada avisa se desencontrar: as portas simplesmente param de
+> responder.
+
+### ⚠ O `subnet_athena.conf` anula o `char_ip` e o `map_ip`
+
+Descoberto em 03/set/2026, depois de um tester travar em **"Por favor aguarde"**
+com o login dando certo no servidor.
+
+O `conf/subnet_athena.conf` vem de fábrica assim:
+
+```
+subnet: 255.0.0.0:127.0.0.1:127.0.0.1
+subnet: 0.0.0.0:127.0.0.1:127.0.0.1     <- esta
+```
+
+A máscara `0.0.0.0` casa com **todo** endereço. O login-server então tratava
+qualquer jogador como "mesma rede" e respondia `127.0.0.1` no lugar do
+`char_ip` — o cliente ia abrir o char-server na própria máquina do jogador e
+ficava esperando para sempre.
+
+O que torna isso difícil de achar: **o log do servidor não mostra erro nenhum**.
+A autenticação aparece como aceita, porque ela realmente foi. O que falha é o
+passo seguinte, que acontece inteiro do lado do cliente.
+
+Confirmado lendo o `AC_ACCEPT_LOGIN` cru — o servidor devolvia
+`-> 127.0.0.1:6121` mesmo com `char_ip: 100.76.66.99` no
+`conf/import/char_conf.txt`. Com a linha desativada, passou a devolver
+`-> 100.76.66.99:6121` para todas as contas.
+
+> A linha `255.0.0.0` fica: ela casa só com clientes vindos de `127.x`, que é o
+> único caso em que responder `127.0.0.1` está certo.
+
+Não há `conf/import/` para este arquivo — a alteração é no
+`conf/subnet_athena.conf` mesmo, e volta a aparecer em merge do upstream.
+
+### Os IPs anunciados, do lado do rAthena
+
+Sem isto o jogador conecta no login e é mandado para 127.0.0.1 — a própria
+máquina dele.
+
+| Onde | Campo | Valor | Por quê |
+|---|---|---|---|
+| **`pos-warp.py`** | **`SERVIDOR`** | **IP do Tailscale** | **é DAQUI que o cliente tira o login** |
+| `conf/import/char_conf.txt` | `char_ip` | IP do Tailscale | o login manda isso ao cliente |
+| `conf/import/map_conf.txt` | `map_ip` | IP do Tailscale | o char manda isso ao cliente |
+| `conf/char_athena.conf` | `login_ip` | `127.0.0.1` | char → login, mesmo container |
+| `conf/map_athena.conf` | `char_ip` | `127.0.0.1` | map → char, mesmo container |
+| `RagnaBeat.Dev/data/clientinfo.xml` | `<address>` | IP do Tailscale | por coerência; o cliente 2025 não usa isto para o login |
+
+> **A armadilha que custou uma rodada de teste.** Mudar só o `clientinfo.xml`
+> não adianta: o cliente 2025 lê o endereço do login de uma tabela em `.rdata`,
+> e o `pos-warp.py` grava esse endereço **dentro do exe**. Trocar o endereço
+> exige **regerar o release**.
+
+Confirmar no log depois de subir:
+
+```
+[Status]: Character server IP address : 100.76.66.99 -> 100.76.66.99
+[Status]: Map-Server 0 connected: 1265 maps, from IP 100.76.66.99 port 5121.
+```
+
+**Quem testa precisa estar no tailnet** — convite aceito e Tailscale rodando.
+Não é um build que funciona para qualquer um que baixar.
+
 ## Pendências
 
 - **Migração para VPS**: trocar os `127.0.0.1` anunciados, restringir a 3307 ao loopback,

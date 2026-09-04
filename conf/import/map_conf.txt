@@ -1,0 +1,11 @@
+// Override local de conf/map_athena.conf.
+// Versionado de proposito - ver a excecao por arquivo no fim do .gitignore.
+
+// Endereco que o CHAR informa ao cliente para achar o map server. Mesmo
+// raciocinio do char_ip em char_conf.txt: o char_ip de map_athena.conf e para
+// onde o map CONECTA (127.0.0.1, mesmo container) e nao muda; este e o que o
+// jogador recebe e precisa alcancar.
+//
+// Sem isto o jogador passa da selecao de personagem e trava ao entrar no mapa,
+// que e o ponto mais confuso de diagnosticar: login e char funcionaram.
+map_ip: 100.76.66.99

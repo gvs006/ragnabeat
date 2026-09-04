@@ -327,3 +327,23 @@ Mais 26 buildins, 5 atcommands (`@listenbg`, `@order`, `@leader`, `@reportafk`, 
 - C++ custom em `src/custom/` (`atcommand.inc`, `script.inc`, `defines_pre.hpp`)
 - NPCs custom em `npc/custom/`, registrados em `npc/scripts_custom.conf`
 - Alterações de conf em `conf/import/`
+
+---
+
+## Preview de item na loja (botão "Visualizar")
+
+Levantado em 12/ago/2026. O cliente tem o botão; faltam três peças, e as três
+precisam entrar juntas:
+
+1. **Recompilar o servidor** com `ENABLE_CASHSHOP_PREVIEW_PATCH` descomentado
+   em `src/config/core.hpp:100`. É a única coisa até hoje que exige rebuild do
+   C++ — todo o resto do projeto foi script e config.
+2. **Repatchar o cliente** no WARP com `PreviewInShop`, e rodar o `pos-warp.py`
+   depois (o WARP apaga os ajustes).
+3. **Migrar a loja de visuais de `barter` para `cashshop`**, porque o preview
+   viaja no pacote `ZC_ACK_SCHEDULER_CASHITEM`, que só a Loja Cash usa.
+
+O passo 3 já estava pedido por outro motivo — é a UI em grade com busca e
+paginação. Os dois se resolvem juntos.
+
+Detalhes e o que foi descartado em [docs/cliente/leia-me.md](docs/cliente/leia-me.md).

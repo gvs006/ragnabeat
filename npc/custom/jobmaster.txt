@@ -16,7 +16,7 @@
 //= 2.0 Added 4th class [Lemongrass]
 //============================================================
 
-prontera,153,193,6	script	Mestre das Classes	123,{
+prontera,153,193,6	script	Mestre das Classes	640,{
 function Get_Job_Equip;
 // Checks if the Player has the required level.
 // closes if not, returns if yes

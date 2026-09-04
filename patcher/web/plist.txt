@@ -1,0 +1,18 @@
+// Lista de patches do RagnaBeat.
+//
+// Um patch por linha, no formato:
+//
+//     <numero> <arquivo.thor>
+//
+// O numero e sequencial e NUNCA se repete nem volta atras: o patcher guarda o
+// ultimo aplicado no server.dat do jogador e so baixa o que for maior. Por
+// isso patch publicado nao se edita - corrige-se com um numero novo.
+//
+// Linha comecando com // e ignorada.
+//
+// Os arquivos ficam em web/data/ e sao gerados pelo ThorGenerator.exe, que
+// esta em DEVTOOLS/Thor Patcher/Tools/. Ver docs/cliente/patcher.md.
+//
+// A 0.0.11 e a primeira versao distribuida: o tester recebe a pasta completa e
+// nao ha nada para aplicar por cima. A lista comeca vazia de proposito - o
+// patcher le, nao acha patch pendente e libera o JOGAR na hora.

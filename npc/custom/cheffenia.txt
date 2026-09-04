@@ -1,0 +1,328 @@
+//===== rAthena Script =======================================
+//= Cheffenia - a sala dos MVPs
+//===== Descricao: ===========================================
+//= Mapa fechado onde so ha MVP. A entrada e paga e vale por
+//= tempo; vencido o passe, o jogador volta para Prontera.
+//=
+//= GERADO POR docs/gerar-cheffenia.py - NAO EDITE A MAO.
+//= Mexer aqui e perder a alteracao na proxima geracao. Mude o
+//= gerador e rode de novo.
+//=
+//===== SOBRE O NOME =========================================
+//= "Cheffenia" vem dos servidores custom brasileiros (bRO
+//= Thor, RO Latam). La era um MAPA PROPRIO - cheffenia.gat -
+//= distribuido junto com o cliente.
+//=
+//= Esse mapa NAO existe nas nossas GRFs. Foi conferido:
+//= procurei cheffen/chefenia/bossnia nos 214.224 arquivos da
+//= data.grf e nao ha nada. Trazer o mapa original exigiria
+//= distribuir .gat/.gnd/.rsw pelo patcher, registrar em
+//= db/map_index.txt e regerar o map_cache - projeto a parte.
+//=
+//= Entao a Cheffenia daqui e o CONTEUDO - sala so de MVP com
+//= entrada paga - montado sobre um mapa oficial do kRO.
+//=
+//===== POR QUE ordeal_a02 ==============================
+//= Salao das Provacoes. Escolhido por medida, nao por gosto:
+//=
+//=   - 24.388 celulas andaveis LIGADAS ENTRE SI. Da para
+//=     cacar MVP sem virar moedor de carne.
+//=   - arte completa no cliente: .rsw, .gnd e .gat estao na
+//=     data.grf (conferido)
+//=   - ZERO uso no servidor. Nenhum mob, nenhum NPC, nenhum
+//=     warp, nenhuma mapflag apontam para ele. Nao tira
+//=     conteudo de lugar nenhum.
+//=
+//===== POR QUE CADA MVP TEM SUA PROPRIA LINHA DE SPAWN ======
+//= O jeito obvio seria "ordeal_a02,0,0" - nascer em qualquer
+//= lugar do mapa. Aqui isso esta errado.
+//=
+//= O mapa tem 44.916 celulas andaveis, mas so 24.388
+//= estao ligadas a entrada. Os outros 46% sao bolsoes
+//= isolados, inalcancaveis a pe. Com spawn 0,0 quase metade
+//= dos MVPs nasceria onde ninguem chega.
+//=
+//= Por isso cada MVP tem ancora propria, escolhida dentro da
+//= regiao conectada e com a caixa de +-3 celulas conferida
+//= uma a uma: o sorteio que o servidor faz dentro do raio nao
+//= tem como cair fora da regiao.
+//=
+//= As ancoras sao espalhadas por amostragem do ponto mais
+//= distante, entao os MVPs nao ficam empilhados num canto.
+//=
+//===== O PASSE ==============================================
+//= cheffenia_ate e variavel de PERSONAGEM (permanente) e
+//= guarda o unixtime em que o passe vence.
+//=
+//= Morreu? Voltou para o savepoint, mas o passe continua
+//= valendo: o Guarda deixa reentrar de graca ate vencer. Isso
+//= e de proposito - o custo e da SESSAO, nao da porta. Sem
+//= isso, morrer para um MVP custaria 1.000.000 zeny.
+//=
+//= Quem expulsa e o Relogio de Cheffenia, que varre o mapa a
+//= cada 30 segundos. Varredura em vez de addtimer porque
+//= timer de jogador morre em relog e em @reloadscript, e ai
+//= o passe vencido nunca expiraria. A varredura nao esquece.
+//============================================================
+
+
+
+//======================================================
+// O Guarda - a porta, em Prontera
+//======================================================
+prontera,169,186,4	script	Guarda de Cheffenia::CheffeniaPorta	723,{
+	.@resta = cheffenia_ate - gettimetick(2);
+
+	mes "[Guarda de Cheffenia]";
+
+	// Passe ainda de pe: entra de novo sem pagar. Ver O PASSE
+	// no cabecalho - o custo e da sessao, nao da porta.
+	if (.@resta > 0) {
+		mes "Seu passe ainda vale ^0000FF" + (.@resta / 60 + 1) + " minuto(s)^000000.";
+		mes "Entre à vontade.";
+		next;
+		if (select("Voltar para Cheffenia:Fico por aqui") == 2)
+			close;
+		if (getmapusers(.mapa$) >= .lotacao) {
+			mes "[Guarda de Cheffenia]";
+			mes "O salão está lotado. Espere alguém sair.";
+			close;
+		}
+		close2;
+		warp .mapa$, .x, .y;
+		end;
+	}
+
+	mes "Atrás de mim fica ^FF0000Cheffenia^000000, o salão onde";
+	mes "os senhores de Midgard estão presos.";
+	mes "Só há MVP lá dentro. Mais nada.";
+	next;
+	mes "[Guarda de Cheffenia]";
+	mes "A passagem custa ^FF0000" + callfunc("F_InsertComma", .custo) + " zeny^000000";
+	mes "e vale por ^0000FF" + .minutos + " minutos^000000.";
+	mes " ";
+	mes "Se você morrer lá dentro, o passe continua";
+	mes "valendo. Volte aqui que eu deixo entrar.";
+	next;
+
+	switch (select("Quero entrar:Quantos estão lá dentro?:Melhor não")) {
+	case 1:
+		mes "[Guarda de Cheffenia]";
+		if (BaseLevel < .nivel) {
+			mes "Nível base ^FF0000" + .nivel + "^000000, no mínimo.";
+			mes "Você tem " + BaseLevel + ". Volte mais forte.";
+			close;
+		}
+		if (getmapusers(.mapa$) >= .lotacao) {
+			mes "O salão está lotado - ^FF0000" + .lotacao + "^000000 lá dentro.";
+			mes "Espere alguém sair.";
+			close;
+		}
+		if (Zeny < .custo) {
+			mes "Faltam ^FF0000" + callfunc("F_InsertComma", .custo - Zeny) + " zeny^000000.";
+			close;
+		}
+		Zeny -= .custo;
+		cheffenia_ate = gettimetick(2) + .minutos * 60;
+		mes "Que Odin tenha piedade.";
+		close2;
+		warp .mapa$, .x, .y;
+		end;
+
+	case 2:
+		mes "[Guarda de Cheffenia]";
+		mes "Há ^0000FF" + getmapusers(.mapa$) + "^000000 de " + .lotacao + " lá dentro agora.";
+		close;
+
+	case 3:
+		mes "[Guarda de Cheffenia]";
+		mes "Sensato.";
+		close;
+	}
+
+OnInit:
+	// ---- a configuracao inteira mora aqui ----
+	// O Vigia e o Relogio leem daqui por getvariableofnpc, entao
+	// mudar um valor neste bloco muda o sistema todo.
+	.mapa$ = "ordeal_a02";
+	.x = 103;
+	.y = 156;
+	.custo = 1000000;
+	.minutos = 60;
+	.nivel = 80;
+	.lotacao = 30;
+	.volta$ = "prontera";
+	.volta_x = 155;
+	.volta_y = 186;
+
+	waitingroom "Cheffenia", 0;
+	end;
+}
+
+//======================================================
+// O Vigia - a saida, dentro do salao
+//======================================================
+ordeal_a02,106,156,4	script	Vigia de Cheffenia::CheffeniaVigia	778,{
+	.@resta = cheffenia_ate - gettimetick(2);
+
+	mes "[Vigia de Cheffenia]";
+	if (.@resta > 0)
+		mes "Restam ^0000FF" + (.@resta / 60 + 1) + " minuto(s)^000000 do seu passe.";
+	else
+		mes "Seu passe venceu. Sai andando ou eu te arrasto.";
+	next;
+	if (select("Sair do salão:Ficar") == 2)
+		close;
+	close2;
+	warp getvariableofnpc(.volta$, "CheffeniaPorta"),
+	     getvariableofnpc(.volta_x, "CheffeniaPorta"),
+	     getvariableofnpc(.volta_y, "CheffeniaPorta");
+	end;
+
+OnInit:
+	waitingroom "Saída de Cheffenia", 0;
+	end;
+}
+
+//======================================================
+// O Relogio - expulsa quem esta com o passe vencido
+//
+// Varre o mapa a cada 30s em vez de dar addtimer no jogador
+// na entrada. O motivo esta no cabecalho: timer de jogador
+// morre em relog e em @reloadscript, e ai o passe vencido
+// nunca expiraria. A varredura sobrevive aos dois.
+//======================================================
+-	script	CheffeniaRelogio	-1,{
+OnInit:
+	initnpctimer;
+	end;
+
+OnTimer30000:
+	.@mapa$ = getvariableofnpc(.mapa$, "CheffeniaPorta");
+	.@volta$ = getvariableofnpc(.volta$, "CheffeniaPorta");
+	.@vx = getvariableofnpc(.volta_x, "CheffeniaPorta");
+	.@vy = getvariableofnpc(.volta_y, "CheffeniaPorta");
+	.@agora = gettimetick(2);
+
+	// getmapunits devolve os block ids; para jogador o block id
+	// E o account id, entao attachrid recebe ele direto.
+	.@n = getmapunits(BL_PC, .@mapa$, .@rid);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (!attachrid(.@rid[.@i]))
+			continue;
+		// GM entra para administrar, nao para farmar: nao expulsa.
+		if (getgroupid() < 99 && cheffenia_ate <= .@agora) {
+			dispbottom "Seu passe de Cheffenia venceu.";
+			warp .@volta$, .@vx, .@vy;
+		}
+		detachrid;
+	}
+	setnpctimer 0;
+	end;
+}
+
+
+//======================================================
+// Os MVPs
+//
+// Formato: <mapa>,<x>,<y>,<raio x>,<raio y> boss_monster
+//          --ja-- <id>,<qtd>,<respawn>,<variacao>
+//
+// --ja-- faz o servidor usar o nome do mob_db em vez de um
+// nome escrito aqui, entao os nomes em portugues de
+// db/import/mob_db.yml valem tambem aqui dentro.
+//
+// boss_monster (e nao monster) para o Espelho Convexo
+// enxergar. Numa sala de MVP isso e o ponto.
+//
+// Respawn: 30 min + ate 15 min de sorteio.
+//======================================================
+
+
+// --- nivel 60+ ---
+ordeal_a02,98,121,3,3	boss_monster	--ja--	1086,1,1800000,900000
+ordeal_a02,193,275,3,3	boss_monster	--ja--	1115,1,1800000,900000
+ordeal_a02,29,245,3,3	boss_monster	--ja--	1150,1,1800000,900000
+ordeal_a02,21,21,3,3	boss_monster	--ja--	1159,1,1800000,900000
+
+// --- nivel 70+ ---
+ordeal_a02,166,32,3,3	boss_monster	--ja--	1112,1,1800000,900000
+ordeal_a02,214,150,3,3	boss_monster	--ja--	1583,1,1800000,900000
+ordeal_a02,126,217,3,3	boss_monster	--ja--	1492,1,1800000,900000
+ordeal_a02,21,148,3,3	boss_monster	--ja--	1046,1,1800000,900000
+ordeal_a02,93,286,3,3	boss_monster	--ja--	1252,1,1800000,900000
+ordeal_a02,46,84,3,3	boss_monster	--ja--	1418,1,1800000,900000
+ordeal_a02,65,191,3,3	boss_monster	--ja--	1059,1,1800000,900000
+ordeal_a02,88,40,3,3	boss_monster	--ja--	1190,1,1800000,900000
+ordeal_a02,171,110,3,3	boss_monster	--ja--	1087,1,1800000,900000
+ordeal_a02,129,75,3,3	boss_monster	--ja--	1251,1,1800000,900000
+ordeal_a02,167,182,3,3	boss_monster	--ja--	1038,1,1800000,900000
+ordeal_a02,141,264,3,3	boss_monster	--ja--	1658,1,1800000,900000
+
+// --- nivel 80+ ---
+ordeal_a02,81,236,3,3	boss_monster	--ja--	1272,1,1800000,900000
+ordeal_a02,108,173,3,3	boss_monster	--ja--	1871,1,1800000,900000
+ordeal_a02,176,232,3,3	boss_monster	--ja--	1039,1,1800000,900000
+ordeal_a02,40,286,3,3	boss_monster	--ja--	1147,1,1800000,900000
+ordeal_a02,54,129,3,3	boss_monster	--ja--	1785,1,1800000,900000
+ordeal_a02,78,154,3,3	boss_monster	--ja--	1389,1,1800000,900000
+ordeal_a02,22,205,3,3	boss_monster	--ja--	1630,1,1800000,900000
+ordeal_a02,124,142,3,3	boss_monster	--ja--	1885,1,1800000,900000
+ordeal_a02,91,82,3,3	boss_monster	--ja--	1623,1,1800000,900000
+ordeal_a02,21,65,3,3	boss_monster	--ja--	1511,1,1800000,900000
+ordeal_a02,43,43,3,3	boss_monster	--ja--	1688,1,1800000,900000
+ordeal_a02,50,221,3,3	boss_monster	--ja--	1768,1,1800000,900000
+
+// --- nivel 90+ ---
+ordeal_a02,106,255,3,3	boss_monster	--ja--	1719,1,1800000,900000
+ordeal_a02,37,175,3,3	boss_monster	--ja--	1734,1,1800000,900000
+ordeal_a02,64,21,3,3	boss_monster	--ja--	1157,1,1800000,900000
+ordeal_a02,67,62,3,3	boss_monster	--ja--	2068,1,1800000,900000
+ordeal_a02,69,267,3,3	boss_monster	--ja--	1373,1,1800000,900000
+ordeal_a02,96,204,3,3	boss_monster	--ja--	1312,1,1800000,900000
+ordeal_a02,161,286,3,3	boss_monster	--ja--	1685,1,1800000,900000
+ordeal_a02,69,102,3,3	boss_monster	--ja--	1779,1,1800000,900000
+ordeal_a02,182,140,3,3	boss_monster	--ja--	1874,1,1800000,900000
+ordeal_a02,149,55,3,3	boss_monster	--ja--	1646,1,1800000,900000
+ordeal_a02,133,111,3,3	boss_monster	--ja--	1647,1,1800000,900000
+ordeal_a02,107,59,3,3	boss_monster	--ja--	1648,1,1800000,900000
+ordeal_a02,116,30,3,3	boss_monster	--ja--	1649,1,1800000,900000
+ordeal_a02,142,195,3,3	boss_monster	--ja--	1650,1,1800000,900000
+ordeal_a02,151,91,3,3	boss_monster	--ja--	1651,1,1800000,900000
+ordeal_a02,28,118,3,3	boss_monster	--ja--	1708,1,1800000,900000
+ordeal_a02,203,125,3,3	boss_monster	--ja--	1751,1,1800000,900000
+ordeal_a02,110,98,3,3	boss_monster	--ja--	1832,1,1800000,900000
+
+
+//======================================================
+// Mapflags
+//
+// O mapa nao tinha NENHUMA mapflag antes disto - todas as
+// linhas abaixo sao nossas.
+//
+// nomemo / noreturn / noteleport fecham as tres saidas de
+//   graca: /memo, Asa de Borboleta e Asa de Mosca. Quem
+//   pagou pelo tempo sai pelo Vigia ou espera o Relogio.
+//
+// monster_noteleport e o importante: MVP se teleporta o
+//   tempo todo. Sem isto o jogador paga o passe e passa a
+//   sessao perseguindo boss que pula de canto em canto.
+//
+// nosave SavePoint devolve quem deslogar la dentro para o
+//   proprio savepoint. Sem isto daria para deslogar dentro
+//   do salao e voltar depois sem pagar.
+//
+// nobranch e noicewall tapam Galho Seco e Muro de Gelo, que
+//   sao os dois jeitos classicos de quebrar sala de MVP.
+//
+// NAO ponha hidemobhpbar aqui: conf/battle/monster.conf usa
+//   show_mob_info 2 para mostrar o HP do MVP em porcentagem,
+//   e a mapflag desligaria justamente isso.
+//======================================================
+ordeal_a02	mapflag	nomemo
+ordeal_a02	mapflag	noreturn
+ordeal_a02	mapflag	noteleport
+ordeal_a02	mapflag	monster_noteleport
+ordeal_a02	mapflag	nobranch
+ordeal_a02	mapflag	noicewall
+ordeal_a02	mapflag	nosave	SavePoint

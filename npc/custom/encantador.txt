@@ -1,0 +1,89 @@
+//===== rAthena Script =======================================
+//= Encantador Elemental
+//===== Descrição: ===========================================
+//= Encanta a arma equipada com um elemento, por zeny. É o
+//= mesmo efeito das Cartas Elementais do Bruxo (Endow):
+//= a arma passa a bater com o elemento até o tempo acabar.
+//=
+//= Preço: 80.000z por encantamento (.Preco, no OnInit).
+//=
+//===== O QUE ELE NÃO FAZ ====================================
+//= NÃO muda o elemento da ARMADURA e nÃO é permanente. Os dois
+//= são outra coisa: elemento de armadura é
+//= SC_ARMOR_PROPERTY/bonus de item, e mudança permanente de
+//= arma exigiria trocar o item. Aqui é o Endow clássico.
+//=
+//===== ARMADILHAS DO ENDOW ==================================
+//= 1. OS QUATRO SE EXPULSAM. SC_FIREWEAPON, SC_WATERWEAPON,
+//=    SC_WINDWEAPON e SC_EARTHWEAPON não convivem - começar um
+//=    encerra o anterior. É do rAthena, não precisa de sc_end
+//=    aqui, mas explica por que não dá para "acumular dois".
+//=
+//= 2. CAI AO TROCAR DE ARMA. O encantamento vive no personagem,
+//=    não no item, e sai quando a arma é desequipada. Quem
+//=    trocar de arma perde os 80k - por isso o aviso no
+//=    diálogo antes de cobrar.
+//=
+//= 3. SEM ARMA NÃO ADIANTA. Punho não recebe elemento. O
+//=    script recusa antes de cobrar.
+//============================================================
+
+prontera,138,171,4	script	Encantador Elemental	4_M_ALCHE_A,{
+	.@n$ = "[Encantador Elemental]";
+
+	mes .@n$;
+	mes "Ponho elemento na sua arma por ^0000FF" + callfunc("F_InsertComma", .Preco) + "z^000000.";
+	mes "Dura ^FF0000" + (.Duracao / 60000) + " minutos^000000.";
+	mes " ";
+	mes "^FF0000Trocar de arma cancela^000000 - o encantamento fica em";
+	mes "você, não na peça.";
+	next;
+
+	if (!getequipisequiped(EQI_HAND_R)) {
+		mes .@n$;
+		mes "Você não está com arma. Punho não recebe elemento.";
+		close;
+	}
+
+	.@sel = select(.Menu$);
+	if (.@sel > getarraysize(.Nome$))
+		close;
+
+	mes .@n$;
+	mes "^0000FF" + .Nome$[.@sel - 1] + "^000000 em " + getequipname(EQI_HAND_R) + ".";
+	mes "Custa " + callfunc("F_InsertComma", .Preco) + "z.";
+	next;
+	if (select("Encantar:Deixa quieto") == 2)
+		close;
+
+	if (Zeny < .Preco) {
+		mes .@n$;
+		mes "Faltam ^FF0000" + callfunc("F_InsertComma", .Preco - Zeny) + "z^000000.";
+		close;
+	}
+
+	Zeny -= .Preco;
+	sc_start .Status[.@sel - 1], .Duracao, 1;
+	specialeffect2 .Efeito[.@sel - 1];
+
+	mes .@n$;
+	mes "Pronto. ^0000FF" + .Nome$[.@sel - 1] + "^000000 por " + (.Duracao / 60000) + " minutos.";
+	close;
+
+OnInit:
+	.Preco = 80000;
+	.Duracao = 1200000;        // 20 minutos
+
+	setarray .Nome$[0], "Fogo", "Água", "Vento", "Terra";
+	setarray .Status[0], SC_FIREWEAPON, SC_WATERWEAPON, SC_WINDWEAPON, SC_EARTHWEAPON;
+	// Os EF_CHANGE* sao os efeitos oficiais de Endow - um por elemento.
+	setarray .Efeito[0], EF_CHANGEFIRE, EF_CHANGECOLD, EF_CHANGEWIND, EF_CHANGEEARTH;
+
+	.Menu$ = "";
+	for (.@i = 0; .@i < getarraysize(.Nome$); .@i++)
+		.Menu$ += .Nome$[.@i] + ":";
+	.Menu$ += "Deixa quieto";
+
+	waitingroom "Encantador Elemental", 0;
+	end;
+}

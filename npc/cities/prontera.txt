@@ -73,14 +73,14 @@ prontera,106,116,6	script	Merideth#pront	91,{
 }
 
 prontera,160,133,2	script	YuPi#pront	102,{
-	mes "[YuPi]";
-	mes "Although many monsters may look the same, be careful! There are variations among monsters that have the same basic form.";
+	mes "[Yuni]";
+	mes "Entre monstros da mesma forma, existem alguns mais ferozes que outros. Um exemplo são Porings e Poporings, que tem a mesma forma mas forças diferentes.";
 	next;
-	mes "[YuPi]";
-	mes "One monster, that looks just like a peaceful and weak one that you've already encountered, may actually be wild and ferocious!";
+	mes "É bom tomar cuidado ao atacar algum deles, pois você pode se dar mal.";
+	mes "[Yuni]";
 	next;
-	mes "[YuPi]";
-	mes "You can tell these kinds of monsters apart by their body color. Wilder and more powerful monsters have more dangerous looking colors.";
+	mes "Normalmente, você pode determinar qual é qual pela diferença de cores.";
+	mes "Como eu disse, tomar cuidado é sempre bom, então cheque os nomes dos inimigos antes de atacar.";
 	close;
 }
 
@@ -247,18 +247,18 @@ prt_in,178,92,0	script	Curator of Library#pront	57,{
 */
 
 prt_in,175,50,0	script	Library Girl#pront	71,{
-	mes "[Library Girl Ellen]";
-	mes "Here in the Eastern branch of the Prontera Library, we provide Monster Encyclopedias in which creatures are organized by their properties. We also have books on Merchant and Blacksmith skills.";
-	mes "Ooh~! The other branch of our library also has many interesting things to read! So if you get a chance, you just might want to visit.";
+	mes "[Bibliotecária Barbara]";
+	mes "Bem-vindo! Os dados nesta biblioteca estão separados pelos nomes dos monstros. Você pode ler livros e escritas de seu interesse aqui. Aqui também existem livros sobre as classes dos Ferreiros e Mercadores.";
+	mes "Ah! A próxima biblioteca também é muito interessante. Visite-a se puder.";
 	close;
 }
 
 prt_in,47,141,0	script	An Old Man#pront	56,{
-	mes "[Old Man]";
-	mes "The Prontera Culvert sewers have been left unattended for a long time. Now that place is infested with ^000077Thief Bugs^000000!";
+	mes "[Tio]";
+	mes "As pessoas não entram nestes esgotos há muito tempo... Um aventureiro me contou que o lugar está infestado de ^000077Baratas^000000.";
 	next;
-	mes "[Old Man]";
-	mes "These Thief Bugs seem to quickly grab items dropped on the ground, and then run away with them... They're even more annoying than cockroaches!!";
+	mes "[Tio]";
+	mes "Elas se reproduzem muito rápido e ninguém as têm impedido de se espalhar... Imagine quantas não devem existir lá embaixo agora!";
 	close;
 }
 

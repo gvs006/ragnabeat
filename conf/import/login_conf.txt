@@ -33,3 +33,43 @@
 // (8888 esta livre e nossa), tabelas ausentes (web.sql carregado), servidor fora
 // do ar (os quatro rodando).
 use_web_auth_token: no
+
+// Auto-registro pelo sufixo _M / _F, ligado em 03/set/2026 para o teste fechado.
+//
+// O tester digita "fulano_M" (ou _F) e uma senha na tela de login, e a conta
+// nasce com o userid SEM o sufixo - da segunda vez em diante ele entra como
+// "fulano". Isso e o que mais confunde, e o aviso esta na aba Guia do patcher.
+//
+// So esta liberado porque a tailnet ja e a porta: quem nao esta nela nao
+// alcanca a 6900. Num servidor publico isto vira porta aberta para criacao de
+// conta em massa e sai daqui.
+//
+// O login_athena.conf continua com allowed_regs 1 e time_allowed 10, ou seja
+// uma conta a cada 10 segundos por IP.
+//
+// ATENCAO: use_MD5_passwords continua "no", entao a senha vai em texto puro
+// no banco. Ligar o MD5 agora TRANCA todas as contas existentes, que foram
+// gravadas em texto - a troca exige converter a tabela junto.
+new_account: yes
+
+// ============================================================
+// BAN AUTOMATICO POR ERRO DE SENHA: DESLIGADO em 03/set/2026.
+//
+// O rAthena bane o IP depois de 7 senhas erradas em 5 minutos. Isso pressupoe
+// que cada jogador tem um IP proprio. AQUI NAO TEM: o servidor roda em Docker
+// e o acesso externo passa pela ponte (docs/ponte-portas.py), entao TODO mundo
+// chega como 172.18.0.1, o gateway da rede do Docker.
+//
+// O resultado medido: um tester errando a senha algumas vezes gerou a linha
+//     172.18.0.*  |  "Password error ban"
+// na tabela ipbanlist, e a partir dali NINGUEM conectava - o log so repetia
+// "Connection refused: IP isn't authorised (deny/allow, ip: 172.18.0.1)".
+//
+// Ou seja, a protecao contra forca bruta virou um botao de derrubar o servidor
+// inteiro ao alcance de qualquer um que digite errado. Enquanto o IP de origem
+// for compartilhado, ela faz mais mal do que bem.
+//
+// Para religar um dia: e preciso que o rAthena enxergue o IP real do jogador,
+// o que exige a ponte repassar a origem (PROXY protocol) ou o servidor deixar
+// de estar atras de NAT.
+ipban_dynamic_pass_failure_ban: no

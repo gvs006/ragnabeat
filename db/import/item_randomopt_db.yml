@@ -182,3 +182,114 @@ Body:
     Option: DAMAGE_PROPERTY_UNDEAD_TARGET
     Script: |
       bonus2 bAddEle,Ele_Undead,getrandomoptinfo(ROA_VALUE);
+
+# ---------------------------------------------------------------------------
+# RESISTENCIA E DANO POR RACA, E CHEFE - acrescentados em 03/set/2026
+# ---------------------------------------------------------------------------
+# OS Ids NAO SAO ESCOLHA NOSSA. Eles tem de bater com o EnumVAR do cliente,
+# que e quem decide o TEXTO mostrado na linha do item. Id 101 e
+# "Dano fisico contra Inseto" porque e assim no kRO; inventar outro numero
+# faria o servidor aplicar o bonus certo e o cliente escrever outra coisa.
+# Copiados de db/re/item_randomopt_db.yml, que e o mapa oficial - aquele
+# arquivo esta no Footer do db/item_randomopt_db.yml mas NAO carrega neste
+# build (as entradas dele sao Mode: Renewal), por isso a copia.
+#
+# ESTAR DEFINIDO AQUI NAO POE NADA EM JOGO. Opcao so aparece se algum grupo
+# do item_randomopt_group.yml sortear ela. As 22 abaixo estao definidas para
+# que acrescentar qualquer uma ao grupo seja uma linha - hoje so duas estao
+# em uso (RACE_DAMAGE_INSECT e CLASS_DAMAGE_BOSS_TARGET, no T3).
+#
+# CUIDADO AO MEXER NO TAMANHO DO POOL: o sorteio extra pega UMA opcao da
+# lista ao acaso (itemdb.cpp:4695). Cada opcao nova dilui todas as outras.
+# Por isso as 22 nao foram jogadas todas no grupo de uma vez - o pool do T3
+# passaria de 14 para 36 e cada bonus ficaria 2,6x mais raro, desfazendo o
+# aumento de chance feito no mesmo dia.
+# ---------------------------------------------------------------------------
+  - Id: 87
+    Option: RACE_TOLERACE_NOTHING
+    Script: |
+      bonus2 bSubRace,RC_Formless,getrandomoptinfo(ROA_VALUE);   // Resistencia a Amorfo
+  - Id: 88
+    Option: RACE_TOLERACE_UNDEAD
+    Script: |
+      bonus2 bSubRace,RC_Undead,getrandomoptinfo(ROA_VALUE);   // Resistencia a Morto-Vivo
+  - Id: 89
+    Option: RACE_TOLERACE_ANIMAL
+    Script: |
+      bonus2 bSubRace,RC_Brute,getrandomoptinfo(ROA_VALUE);   // Resistencia a Bruto
+  - Id: 90
+    Option: RACE_TOLERACE_PLANT
+    Script: |
+      bonus2 bSubRace,RC_Plant,getrandomoptinfo(ROA_VALUE);   // Resistencia a Planta
+  - Id: 91
+    Option: RACE_TOLERACE_INSECT
+    Script: |
+      bonus2 bSubRace,RC_Insect,getrandomoptinfo(ROA_VALUE);   // Resistencia a Inseto
+  - Id: 92
+    Option: RACE_TOLERACE_FISHS
+    Script: |
+      bonus2 bSubRace,RC_Fish,getrandomoptinfo(ROA_VALUE);   // Resistencia a Peixe
+  - Id: 93
+    Option: RACE_TOLERACE_DEVIL
+    Script: |
+      bonus2 bSubRace,RC_Demon,getrandomoptinfo(ROA_VALUE);   // Resistencia a Demonio
+  - Id: 94
+    Option: RACE_TOLERACE_HUMAN
+    Script: |
+      bonus2 bSubRace,RC_DemiHuman,getrandomoptinfo(ROA_VALUE);   // Resistencia a Humanoide
+  - Id: 95
+    Option: RACE_TOLERACE_ANGEL
+    Script: |
+      bonus2 bSubRace,RC_Angel,getrandomoptinfo(ROA_VALUE);   // Resistencia a Anjo
+  - Id: 96
+    Option: RACE_TOLERACE_DRAGON
+    Script: |
+      bonus2 bSubRace,RC_Dragon,getrandomoptinfo(ROA_VALUE);   // Resistencia a Dragao
+  - Id: 97
+    Option: RACE_DAMAGE_NOTHING
+    Script: |
+      bonus2 bAddRace,RC_Formless,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Amorfo
+  - Id: 98
+    Option: RACE_DAMAGE_UNDEAD
+    Script: |
+      bonus2 bAddRace,RC_Undead,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Morto-Vivo
+  - Id: 99
+    Option: RACE_DAMAGE_ANIMAL
+    Script: |
+      bonus2 bAddRace,RC_Brute,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Bruto
+  - Id: 100
+    Option: RACE_DAMAGE_PLANT
+    Script: |
+      bonus2 bAddRace,RC_Plant,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Planta
+  - Id: 101
+    Option: RACE_DAMAGE_INSECT
+    Script: |
+      bonus2 bAddRace,RC_Insect,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Inseto
+  - Id: 102
+    Option: RACE_DAMAGE_FISHS
+    Script: |
+      bonus2 bAddRace,RC_Fish,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Peixe
+  - Id: 103
+    Option: RACE_DAMAGE_DEVIL
+    Script: |
+      bonus2 bAddRace,RC_Demon,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Demonio
+  - Id: 104
+    Option: RACE_DAMAGE_HUMAN
+    Script: |
+      bonus2 bAddRace,RC_DemiHuman,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Humanoide
+  - Id: 105
+    Option: RACE_DAMAGE_ANGEL
+    Script: |
+      bonus2 bAddRace,RC_Angel,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Anjo
+  - Id: 106
+    Option: RACE_DAMAGE_DRAGON
+    Script: |
+      bonus2 bAddRace,RC_Dragon,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Dragao
+  - Id: 148
+    Option: CLASS_DAMAGE_BOSS_TARGET
+    Script: |
+      bonus2 bAddClass,Class_Boss,getrandomoptinfo(ROA_VALUE);   // Dano fisico contra Chefes
+  - Id: 150
+    Option: CLASS_DAMAGE_BOSS_USER
+    Script: |
+      bonus2 bSubClass,Class_Boss,getrandomoptinfo(ROA_VALUE);   // Resistencia a Chefes

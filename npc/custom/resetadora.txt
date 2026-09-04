@@ -1,0 +1,104 @@
+//===== rAthena Script =======================================
+//= Resetadora de Atributos e Habilidades
+//===== Descrição: ===========================================
+//= Devolve os pontos gastos, cobrando zeny:
+//=
+//=   Atributos    (resetstatus)    750.000z
+//=   Habilidades  (resetskill)     750.000z
+//=   Os dois                     1.500.000z
+//=
+//= O preço do pacote é CALCULADO (.Preco * 2), não digitado.
+//= Mudar .Preco no OnInit ajusta os três valores de uma vez.
+//=
+//===== ARMADILHAS DO RESET ==================================
+//= 1. TAEKWON RANKER NÃO RESETA HABILIDADE. O pc_resetskill
+//=    (pc.cpp:9403) devolve 0 sem fazer nada se o personagem
+//=    está no ranking de Taekwon - "já tem todas as skills
+//=    mesmo", diz o comentário oficial. O script NÃO tem como
+//=    saber disso antes de cobrar: não existe comando de
+//=    script para pc_is_taekwon_ranker. Se alguém reclamar
+//=    que pagou e nada aconteceu, é isto - devolva o zeny à
+//=    mão.
+//=
+//= 2. RESETAR HABILIDADE DESMONTA. O mesmo pc_resetskill tira
+//=    Peco, Fálcão, Warg e carrinho junto (pc.cpp:9409-9421),
+//=    porque as skills que os sustentam sumiram. É esperado,
+//=    mas o jogador precisa ser avisado antes de pagar - por
+//=    isso a confirmação mostra o que vai acontecer.
+//=
+//= 3. O ZENY SÓ SAI DEPOIS DA CONFIRMAÇÃO. Entre o menu e o
+//=    clique existe um next/select, e nesse intervalo o
+//=    jogador pode ter gastado o dinheiro em outra janela -
+//=    por isso o saldo é conferido DUAS vezes, antes de
+//=    mostrar o preço e de novo na hora de cobrar.
+//============================================================
+
+prontera,142,193,4	script	Resetadora	124,{
+	mes "[Resetadora]";
+	mes "Distribuiu errado? Eu desfaço.";
+	mes " ";
+	mes "Atributos: ^0000FF" + callfunc("F_InsertComma", .Preco) + "z^000000";
+	mes "Habilidades: ^0000FF" + callfunc("F_InsertComma", .Preco) + "z^000000";
+	mes "Os dois: ^0000FF" + callfunc("F_InsertComma", .PrecoDuplo) + "z^000000";
+	next;
+
+	.@op = select(
+		"Resetar atributos - " + callfunc("F_InsertComma", .Preco) + "z",
+		"Resetar habilidades - " + callfunc("F_InsertComma", .Preco) + "z",
+		"Os dois - " + callfunc("F_InsertComma", .PrecoDuplo) + "z",
+		"Deixa pra lá.");
+
+	if (.@op == 4) {
+		mes "[Resetadora]";
+		mes "Pense com calma. Estou aqui.";
+		close;
+	}
+
+	.@custo = (.@op == 3) ? .PrecoDuplo : .Preco;
+
+	mes "[Resetadora]";
+	switch (.@op) {
+		case 1: mes "Reseto seus ^0000FFatributos^000000."; break;
+		case 2: mes "Reseto suas ^0000FFhabilidades^000000."; break;
+		case 3: mes "Reseto ^0000FFatributos e habilidades^000000."; break;
+	}
+	if (.@op >= 2) {
+		mes " ";
+		mes "^FF0000Atenção:^000000 resetar habilidade também desmonta";
+		mes "Peco, Fálcão e Warg, e recolhe o carrinho.";
+	}
+	mes " ";
+	mes "Custo: ^0000FF" + callfunc("F_InsertComma", .@custo) + "z^000000";
+	mes "Você tem: ^777777" + callfunc("F_InsertComma", Zeny) + "z^000000";
+	next;
+
+	if (select("Confirmar:Cancelar") == 2) {
+		mes "[Resetadora]";
+		mes "Sem pressa.";
+		close;
+	}
+
+	// Segunda conferência: o saldo pode ter mudado entre o menu e o clique.
+	if (Zeny < .@custo) {
+		mes "[Resetadora]";
+		mes "Faltam ^FF0000" + callfunc("F_InsertComma", .@custo - Zeny) + "z^000000.";
+		close;
+	}
+
+	Zeny -= .@custo;
+	if (.@op == 1 || .@op == 3)
+		resetstatus;
+	if (.@op >= 2)
+		resetskill;
+
+	specialeffect2 EF_REFINEOK;
+	mes "[Resetadora]";
+	mes "Pronto. Recomece do jeito certo.";
+	close;
+
+OnInit:
+	// Preço de UM reset. O pacote é o dobro, calculado abaixo.
+	.Preco = 750000;
+	.PrecoDuplo = .Preco * 2;
+	end;
+}

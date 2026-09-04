@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Midgard Eternal</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<!-- As abas do design viram abas de verdade aqui dentro: o NoticeBox e um
+     controle do Internet Explorer, entao HTML e JS simples funcionam. O Thor
+     nao teria como fazer isso com Button, que so sabe disparar um Hook. -->
+<div class="abas">
+  <a class="aba on" href="#" id="t0" onclick="ver(0);return false;">Noticias</a>
+  <a class="aba" href="#" id="t1" onclick="ver(1);return false;">Evento</a>
+  <a class="aba" href="#" id="t2" onclick="ver(2);return false;">Guia</a>
+  <a class="aba" href="#" id="t3" onclick="ver(3);return false;">Suporte</a>
+</div>
+
+<!-- ABA 0: o slider. E o "banner do evento em destaque" do design, com a
+     tarja de leitura embaixo e o titulo por cima - so que rodando entre tres
+     cartoes em vez de um so. -->
+<div id="p0">
+  <div class="slider">
+    <div class="quadro" id="s0">
+      <div class="arte arte-a"></div>
+      <div class="tarja"></div>
+      <div class="rotulo">
+        <div class="olho">Novidade da versao</div>
+        <div class="titulo">1.419 Visuais</div>
+        <div class="linha">399 a mais que na versao anterior, incluindo as auras
+          de efeito.</div>
+      </div>
+    </div>
+
+    <div class="quadro oculto" id="s1">
+      <div class="arte arte-b"></div>
+      <div class="tarja"></div>
+      <div class="rotulo">
+        <div class="olho">Auras de efeito</div>
+        <div class="titulo">Aura Astrologica</div>
+        <div class="linha">Ela, o Circulo de Conjuracao e a Chama Circular nao
+          usam sprite: o cliente desenha o efeito.</div>
+      </div>
+    </div>
+
+    <div class="quadro oculto" id="s2">
+      <div class="arte arte-c"></div>
+      <div class="tarja"></div>
+      <div class="rotulo">
+        <div class="olho">Capas recuperadas</div>
+        <div class="titulo">Espada de Thanatos</div>
+        <div class="linha">Com as Asas de Lucifer, de Raguel e de Raphael, entre
+          outras 19 que estavam marcadas como quebradas por engano.</div>
+      </div>
+    </div>
+
+    <a class="seta esq" href="#" onclick="anda(-1);return false;">&#8249;</a>
+    <a class="seta dir" href="#" onclick="anda(1);return false;">&#8250;</a>
+
+    <div class="pontos">
+      <a href="#" id="d0" class="ponto on" onclick="mostra(0);return false;"></a>
+      <a href="#" id="d1" class="ponto" onclick="mostra(1);return false;"></a>
+      <a href="#" id="d2" class="ponto" onclick="mostra(2);return false;"></a>
+    </div>
+  </div>
+
+  <div class="rodape-noticia">
+    Versao 0.0.13 &middot; 3 de setembro de 2026 &middot; teste fechado
+  </div>
+</div>
+
+<div id="p1" style="display:none">
+  <div class="painel">
+    <div class="olho">Evento ativo</div>
+    <h2>Nenhum evento no ar</h2>
+    <p class="ultimo">
+      O teste fechado esta focado em validar o cliente. Os primeiros eventos
+      entram depois que a lista de bugs abaixar.
+    </p>
+  </div>
+</div>
+
+<div id="p2" style="display:none">
+  <div class="painel">
+    <div class="olho">Primeiros passos</div>
+    <h2>Como entrar</h2>
+    <ul>
+      <li>o <strong>Tailscale precisa estar ligado</strong> &mdash; e por ele que
+          o jogo conecta;</li>
+      <li>o jogo ja abre em 1366x768 em janela; para mudar, use a engrenagem;</li>
+      <li>a <strong>engrenagem</strong> aqui do lado abre o opensetup &mdash; e
+          la que se muda resolucao e se desliga o VSync, que e o que prende o
+          jogo em 60 FPS;</li>
+    </ul>
+
+    <div class="olho" style="margin-top:14px">Criando sua conta</div>
+    <p>
+      Nao existe cadastro em site: a conta nasce na propria tela de login.
+      <strong>Na primeira vez</strong>, acrescente <code>_M</code> ao nome que
+      voce quer (ou <code>_F</code>, tanto faz maiuscula ou minuscula) e escolha
+      uma senha.
+    </p>
+    <p>
+      <strong>O nome precisa ter 6 letras ou mais SEM contar o sufixo</strong>,
+      e a senha tambem 6. Essa e a pegadinha: <code>katy_f</code> passa pela
+      tela do jogo, mas o servidor tira o <code>_f</code> e sobra
+      <code>katy</code>, que tem 4 &mdash; e ele recusa dizendo
+      <em>senha incorreta</em>, o que nao ajuda nada.
+    </p>
+    <p>
+      certo: usuario <code>katydev_f</code> &nbsp;&middot;&nbsp; senha
+      <code>suasenha</code><br>
+      errado: <code>katy_f</code> &mdash; vira um nome de 4 letras
+    </p>
+    <p class="ultimo">
+      <strong>Da segunda vez em diante o sufixo some</strong>: voce entra so
+      como <code>katydev</code>, com a mesma senha. O servidor aceita uma conta
+      nova a cada 10 segundos.
+    </p>
+  </div>
+</div>
+
+<div id="p3" style="display:none">
+  <div class="painel">
+    <div class="olho">Suporte</div>
+    <h2>O que reportar</h2>
+    <p>Este e um teste fechado. O que mais ajuda:</p>
+    <ul>
+      <li>traje que nao aparece no corpo, ou aparece errado;</li>
+      <li>nome de item em coreano ou com <code>?</code> no lugar do acento;</li>
+      <li>caixa de erro do cliente &mdash; mande o texto inteiro;</li>
+      <li>qualquer coisa que trave a entrada no jogo.</li>
+    </ul>
+    <p class="ultimo">
+      Se o patcher nao encontrar o servidor, confirme o Tailscale antes de abrir
+      um chamado.
+    </p>
+  </div>
+</div>
+
+<script type="text/javascript">
+// JS de 1999 de proposito: sem querySelector, sem classList, sem
+// addEventListener. O controle do IE embutido no Thor e velho e nao vale
+// arriscar sintaxe moderna aqui.
+var atual = 0, N = 3, timer = null;
+
+function mostra(n) {
+  for (var i = 0; i < N; i++) {
+    var q = document.getElementById('s' + i);
+    var d = document.getElementById('d' + i);
+    if (q) { q.className = (i == n) ? 'quadro' : 'quadro oculto'; }
+    if (d) { d.className = (i == n) ? 'ponto on' : 'ponto'; }
+  }
+  atual = n;
+}
+
+function anda(passo) {
+  var n = atual + passo;
+  if (n < 0) { n = N - 1; }
+  if (n >= N) { n = 0; }
+  mostra(n);
+  reiniciar();
+}
+
+// A troca automatica para no primeiro clique manual e volta depois: girar
+// debaixo do dedo de quem esta lendo e a maneira mais rapida de irritar.
+function reiniciar() {
+  if (timer) { window.clearInterval(timer); }
+  timer = window.setInterval(function () { anda2(); }, 7000);
+}
+
+function anda2() {
+  var n = atual + 1;
+  if (n >= N) { n = 0; }
+  mostra(n);
+}
+
+function ver(n) {
+  for (var i = 0; i < 4; i++) {
+    var p = document.getElementById('p' + i);
+    var t = document.getElementById('t' + i);
+    if (p) { p.style.display = (i == n) ? '' : 'none'; }
+    if (t) { t.className = (i == n) ? 'aba on' : 'aba'; }
+  }
+  window.scrollTo(0, 0);
+}
+
+reiniciar();
+</script>
+
+</body>
+</html>

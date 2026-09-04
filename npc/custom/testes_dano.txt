@@ -1,0 +1,289 @@
+//===== rAthena Script =======================================
+//= Área de treino - bonecos de dano + @dps
+//===== Descrição: ===========================================
+//= Uma grade de 8 bonecos fixa em Prontera, 2 colunas por 4
+//= linhas. Cada boneco assume o ID do monstro que você
+//= escolher: digite 1751 e ele passa a ter a DEF, a MDEF, o
+//= elemento, a raça, o tamanho e a CLASSE da Valquíria -
+//= inclusive contar como CHEFE para bônus de dano.
+//=
+//===== "MEIO NPC, MEIO MOB" =================================
+//= São duas coisas empilhadas:
+//=
+//=   o BONECO   é um monstro de verdade, na célula y+1
+//=   o LETREIRO é o NPC clicável, na célula de baixo
+//=
+//= Monstro não abre diálogo e NPC não entra na fórmula de
+//= dano, por isso os dois.
+//=
+//= COM O BONECO NO LUGAR, O LETREIRO SOME. Isso é cloakonnpc,
+//= não disablenpc: o NPC continua existindo e clicável, só
+//= não é desenhado. Não precisou de skill nenhuma - é comando
+//= de script. Ao esvaziar o slot, cloakoffnpc traz de volta.
+//=
+//= REDE DE SEGURANÇA: se por algum motivo o letreiro invisível
+//= não aceitar clique no seu cliente, ^0000FF@dps limpar^000000 esvazia
+//= o boneco mais próximo e faz o letreiro reaparecer. Nunca dá
+//= para ficar preso com os 8 sumidos.
+//=
+//===== A FLAG DE CHEFE - ERRO CORRIGIDO EM 04/set/2026 ======
+//= A primeira versao fazia:
+//=
+//=     setunitdata <gid>, UMOB_MODE, 0;
+//=
+//= para deixar o bicho parado. Isso QUEBRAVA o bônus contra
+//= chefe: "Dano contra Chefes" do B.A. e a Carta Cavaleiro do
+//= Abismo não valiam nada no boneco.
+//=
+//= O motivo está em status.cpp:6174. A classe do monstro NÃO é
+//= um campo próprio - ela é DERIVADA DO MODE a cada recalculo:
+//=
+//=     if (mode & (MD_STATUSIMMUNE|MD_KNOCKBACKIMMUNE|MD_DETECTOR))
+//=         class_ = CLASS_BOSS;
+//=
+//= Zerar o mode zerava esses três bits junto, e o bicho virava
+//= CLASS_NORMAL. O bAddClass,Class_Boss indexa por class_, então
+//= simplesmente não encontrava nada.
+//=
+//= Agora o mode base fica INTACTO e só os bits de agressividade
+//= saem, pelo val4 do SC_MODECHANGE. Os bits de chefe
+//= sobrevivem, o boneco continua parado, e o dano contra chefe
+//= volta a valer.
+//=
+//===== NÃO EXISTE @dps NO rATHENA ===========================
+//= Este arquivo cria o comando. Não há ACMD_DEF(dps) em
+//= src/map/atcommand.cpp - aqui ele mede pela vida do boneco.
+//=
+//===== SE UM BONECO NÃO APARECER ============================
+//= A célula não é andável: o servidor carrega o NPC sem
+//= reclamar e ele não renderiza. As coordenadas estão nas
+//= linhas de duplicata no fim do arquivo. As atuais foram
+//= escolhidas por evidência - células livres cercadas de NPCs
+//= de outros scripts que aparecem em jogo.
+//============================================================
+
+prontera,150,176,4	script	Boneco de Treino#01	4_BOARD3,{
+	.@n$ = "[Boneco de Treino]";
+	.@slot = atoi(strnpcinfo(2));
+	getmapxy(.@m$, .@x, .@y, BL_NPC);
+
+	@dps_slot = .@slot;
+
+	mes .@n$;
+	mes "Boneco ^0000FF" + .@slot + "^000000.";
+	if ($BonecoId[.@slot] > 0) {
+		mes "No lugar: ^0000FF" + getmonsterinfo($BonecoId[.@slot], MOB_NAME) + "^000000 (id " + $BonecoId[.@slot] + ")";
+		mes "DEF ^777777" + getmonsterinfo($BonecoId[.@slot], MOB_DEF) + "^000000  MDEF ^777777" + getmonsterinfo($BonecoId[.@slot], MOB_MDEF) + "^000000  Nível ^777777" + getmonsterinfo($BonecoId[.@slot], MOB_LV) + "^000000";
+	} else {
+		mes "Vazio.";
+	}
+	next;
+
+	switch (select(
+		"Trocar o monstro",
+		($BonecoId[.@slot] <= 0) ? "" : "Restaurar a vida",
+		($BonecoId[.@slot] <= 0) ? "" : "Esvaziar",
+		"Sair")) {
+
+	case 1:
+		mes .@n$;
+		mes "ID do monstro? (ex.: ^0000FF1751^000000 = Valquíria)";
+		input .@id, 1000, 32767;
+		if (getmonsterinfo(.@id, MOB_NAME) == "null") {
+			mes " ";
+			mes "^FF0000Esse ID não existe no mob_db.^000000";
+			close;
+		}
+		callsub S_Criar, .@slot, .@m$, .@x, .@y, .@id;
+		mes .@n$;
+		mes "No lugar: ^0000FF" + getmonsterinfo(.@id, MOB_NAME) + "^000000.";
+		close;
+
+	case 2:
+		callsub S_Criar, .@slot, .@m$, .@x, .@y, $BonecoId[.@slot];
+		mes .@n$;
+		mes "Vida cheia de novo.";
+		close;
+
+	case 3:
+		callsub S_Esvaziar, .@slot, .@m$;
+		mes .@n$;
+		mes "Esvaziado.";
+		close;
+
+	default:
+		close;
+	}
+
+// getarg: 0 slot, 1 mapa, 2 x do NPC, 3 y do NPC, 4 id do monstro
+S_Criar:
+	.@sl = getarg(0);
+	.@mp$ = getarg(1);
+	.@id = getarg(4);
+
+	killmonster .@mp$, strnpcinfo(3) + "::OnDummy";
+	// y+1 = uma celula ao norte, que na tela fica ACIMA do letreiro.
+	monster .@mp$, getarg(2), getarg(3) + 1, getmonsterinfo(.@id, MOB_NAME),
+		.@id, 1, strnpcinfo(3) + "::OnDummy";
+	$BonecoGid[.@sl] = $@mobid[0];
+	$BonecoId[.@sl] = .@id;
+
+	// DESARMAR SEM PERDER A FLAG DE CHEFE.
+	//
+	// NAO use setunitdata UMOB_MODE, 0 aqui - ver a nota "A FLAG DE CHEFE"
+	// no topo. O mode base fica como veio do mob_db; so os bits de acao sao
+	// removidos, pelo val4 do SC_MODECHANGE (status.cpp:8877):
+	//    val2 = DEFINE   val3 = SOMA   val4 = TIRA
+	// Nao da para "definir 0": o codigo testa `if (val2)` e zero e falso.
+	//
+	// Os bits que ficam de fora desta lista sao de proposito -
+	// MD_STATUSIMMUNE, MD_KNOCKBACKIMMUNE e MD_DETECTOR sao exatamente os
+	// tres que status.cpp:6175 le para decidir CLASS_BOSS.
+	sc_start4 SC_MODECHANGE, INFINITE_TICK, 1, 0, 0,
+		MD_CANMOVE | MD_CANATTACK | MD_AGGRESSIVE | MD_ANGRY
+		| MD_CASTSENSORIDLE | MD_CASTSENSORCHASE
+		| MD_CHANGECHASE | MD_CHANGETARGETMELEE | MD_CHANGETARGETCHASE
+		| MD_TARGETWEAK | MD_RANDOMTARGET,
+		10000, 0, $BonecoGid[.@sl];
+
+	// 1 bilhao cabe no int32 (teto 2.147.483.647). MAXHP ANTES de HP: setar
+	// HP acima do MAXHP atual seria cortado.
+	setunitdata $BonecoGid[.@sl], UMOB_MAXHP, 1000000000;
+	setunitdata $BonecoGid[.@sl], UMOB_HP, 1000000000;
+
+	// Com o boneco no lugar, o letreiro sai de cena.
+	cloakonnpc strnpcinfo(3);
+	return;
+
+// getarg: 0 slot, 1 mapa
+S_Esvaziar:
+	killmonster getarg(1), strnpcinfo(3) + "::OnDummy";
+	$BonecoGid[getarg(0)] = 0;
+	$BonecoId[getarg(0)] = 0;
+	cloakoffnpc strnpcinfo(3);
+	return;
+
+// Rotulo de morte. Nunca dispara - o boneco tem 1 bilhao de HP. Existe
+// porque o killmonster precisa de um rotulo para mirar so neste boneco.
+OnDummy:
+	end;
+
+OnInit:
+	.@slot = atoi(strnpcinfo(2));
+	getmapxy(.@m$, .@x, .@y, BL_NPC);
+	// Cada duplicata registra a propria posicao. E isso que deixa o @dps
+	// achar o boneco mais proximo sem depender de clique.
+	$BonecoX[.@slot] = .@x;
+	$BonecoY[.@slot] = .@y;
+	$BonecoTotal = 8;
+	// Boot sempre com a grade vazia: os monstros nao sobrevivem ao restart,
+	// mas as variaveis $ sim - sem isto o script acharia que ha boneco.
+	$BonecoGid[.@slot] = 0;
+	$BonecoId[.@slot] = 0;
+	cloakoffnpc strnpcinfo(3);
+	end;
+}
+
+// --------------------------------------------------
+//	@dps - mede, e @dps limpar - esvazia
+// --------------------------------------------------
+//	Os dois agem no boneco MAIS PROXIMO de voce, nao no ultimo clicado.
+//	Foi assim de proposito: com o letreiro invisivel, depender de clique
+//	deixaria o jogador sem saida.
+-	script	DpsCmd	-1,{
+	end;
+
+// Devolve o slot do boneco mais proximo do jogador, ou 0 se nao houver
+// nenhum ocupado. Compara distancia de Chebyshev, que e como o RO mede.
+S_MaisProximo:
+	getmapxy(.@m$, .@px, .@py, BL_PC);
+	.@melhor = 0;
+	.@dist = 99999;
+	for (.@i = 1; .@i <= $BonecoTotal; .@i++) {
+		if (!$BonecoGid[.@i])
+			continue;
+		.@dx = $BonecoX[.@i] - .@px;
+		if (.@dx < 0) .@dx = .@dx * -1;
+		.@dy = $BonecoY[.@i] - .@py;
+		if (.@dy < 0) .@dy = .@dy * -1;
+		.@d = (.@dx > .@dy) ? .@dx : .@dy;
+		if (.@d < .@dist) {
+			.@dist = .@d;
+			.@melhor = .@i;
+		}
+	}
+	return .@melhor;
+
+OnComando:
+	.@slot = callsub(S_MaisProximo);
+	if (!.@slot) {
+		dispbottom "[dps] Nenhum boneco no lugar. Clique num letreiro para pôr um.";
+		end;
+	}
+
+	if (.@atcmd_numparameters > 0 && .@atcmd_parameters$[0] == "limpar") {
+		killmonster "prontera", "Boneco de Treino#" + ((.@slot < 10) ? "0" : "") + .@slot + "::OnDummy";
+		$BonecoGid[.@slot] = 0;
+		$BonecoId[.@slot] = 0;
+		cloakoffnpc "Boneco de Treino#" + ((.@slot < 10) ? "0" : "") + .@slot;
+		@dps_medindo = 0;
+		dispbottom "[dps] Boneco " + .@slot + " esvaziado. O letreiro voltou.";
+		end;
+	}
+
+	getunitdata $BonecoGid[.@slot], .@d;
+	// getunitdata devolve -1 e nao preenche nada quando o GID sumiu - o
+	// MAXHP zerado e o sintoma disso.
+	if (.@d[UMOB_MAXHP] <= 0) {
+		dispbottom "[dps] O boneco " + .@slot + " não está mais no mapa.";
+		$BonecoGid[.@slot] = 0;
+		$BonecoId[.@slot] = 0;
+		cloakoffnpc "Boneco de Treino#" + ((.@slot < 10) ? "0" : "") + .@slot;
+		end;
+	}
+
+	if (!@dps_medindo) {
+		@dps_medindo = 1;
+		@dps_slot = .@slot;
+		@dps_hp0 = .@d[UMOB_HP];
+		@dps_t0 = gettimetick(0);
+		dispbottom "[dps] Medindo o boneco " + .@slot + " ("
+			+ getmonsterinfo($BonecoId[.@slot], MOB_NAME) + "). @dps de novo para parar.";
+		end;
+	}
+
+	@dps_medindo = 0;
+	.@dano = @dps_hp0 - .@d[UMOB_HP];
+	// gettimetick(0) e em milissegundos. Piso de 1s para nao dividir por zero.
+	.@ms = gettimetick(0) - @dps_t0;
+	if (.@ms < 1000)
+		.@ms = 1000;
+	.@seg = .@ms / 1000;
+
+	if (.@dano <= 0) {
+		dispbottom "[dps] Nenhum dano em " + .@seg + "s.";
+		end;
+	}
+	dispbottom "[dps] " + getmonsterinfo($BonecoId[.@slot], MOB_NAME) + " - "
+		+ callfunc("F_InsertComma", .@dano) + " de dano em " + .@seg + "s = "
+		+ callfunc("F_InsertComma", .@dano / .@seg) + " por segundo.";
+	end;
+
+OnInit:
+	bindatcmd "dps", strnpcinfo(3) + "::OnComando";
+	end;
+}
+
+// --------------------------------------------------
+//	A grade
+// --------------------------------------------------
+//	O número depois do # é o slot, lido com strnpcinfo(2). Mudar a
+//	ordem aqui embaralha $BonecoId[].
+//	Colunas em x=150 e x=164, 14 células de distância. O boneco nasce em y+1.
+prontera,164,176,4	duplicate(Boneco de Treino#01)	Boneco de Treino#02	4_BOARD3
+prontera,150,180,4	duplicate(Boneco de Treino#01)	Boneco de Treino#03	4_BOARD3
+prontera,164,180,4	duplicate(Boneco de Treino#01)	Boneco de Treino#04	4_BOARD3
+prontera,150,184,4	duplicate(Boneco de Treino#01)	Boneco de Treino#05	4_BOARD3
+prontera,164,184,4	duplicate(Boneco de Treino#01)	Boneco de Treino#06	4_BOARD3
+prontera,150,188,4	duplicate(Boneco de Treino#01)	Boneco de Treino#07	4_BOARD3
+prontera,164,188,4	duplicate(Boneco de Treino#01)	Boneco de Treino#08	4_BOARD3

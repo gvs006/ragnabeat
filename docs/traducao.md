@@ -14,7 +14,7 @@ Atualizado em 11/ago/2026.
 | Camada | Onde vive | Fonte | Estado |
 |---|---|---|---|
 | Mensagens do servidor | `conf/msg_conf/import/map_msg_eng_conf.txt` | rAthena (mkbu95/Mahiro) | ✅ 1.276 |
-| Itens (cliente) | `SystemEN/itemInfo_C.lua` | LATAM | ✅ 5.296 |
+| Itens (cliente) | `SystemEN/itemInfo_C.lua` | LATAM | ✅ 6.327 |
 | Nomes de item (servidor) | `db/import/item_db.yml` | itemInfo_C, por ID | ✅ 4.305 |
 | Nomes de mapa | `System/mapInfo_true.lub` | LATAM | ✅ 959 |
 | Interface e login | `data/msgstringtable.csv` | LATAM `_ml`, coluna 7 | ✅ 4.207 |
@@ -24,10 +24,47 @@ Atualizado em 11/ago/2026.
 | Nome de classe | `.../datainfo/pcjobname.lub` | LATAM | ✅ 146 de 163 |
 | Prefixo de carta | `data/cardprefixnametable.txt` | LATAM | ✅ 1.822 |
 | **Ordem `prefixo + nome`** | compilada no exe | — | ❌ ver [pendências](#pendências) |
-| **Texturas de login e ESC** | 111 BMPs | LATAM | ❌ texto pintado na imagem |
+| Texturas de login e ESC | 110 BMP + 1 TGA | LATAM | ✅ 56 de 111 — o resto não tem par |
 | **NPCs** | `npc/**` | brAthena | ⚠ ~16% viável |
-| **Nomes de mob (servidor)** | `db/pre-re/mob_db.yml` | sem fonte definida | ❌ |
+| Nomes de mob (servidor) | `db/ragnabeat_mob_names.yml` | LATAM `i18n/sc/*.csv` | ✅ 561 de 1.004 |
 | Quests, conquistas, `towninfo` | `System/*.lub` | LATAM (acessível) | ❌ sensível a episódio |
+
+### A fonte que faltava para os mobs
+
+Nome de item o cliente resolve; **nome de mob vem do servidor**, é o campo
+`Name:` do `mob_db`. Por isso ficou em aberto tanto tempo — não há tabela de
+mob no cliente para traduzir.
+
+A fonte apareceu em `DEVTOOLS/PTBR/latam/i18n/sc/*.csv`: 1.494 planilhas do
+cliente LATAM, uma linha por texto e uma coluna por idioma, tudo em base64
+(coluna 2 inglês, coluna 7 português). São os nomes oficiais do bRO.
+
+**Armadilha:** a base repete a mesma string em inglês com traduções diferentes
+conforme o contexto, e pegar a primeira ocorrência trazia o ovo de pet como
+nome de monstro — *Isis → "Ovo de Ísis"*, *Orc Warrior → "Ovo de Guerreiro
+Orc"*. O [gerar-nomes-mob.py](gerar-nomes-mob.py) resolve por **voto da
+maioria**; 2.840 casos precisaram do desempate.
+
+---
+
+## Busca por nome nos comandos
+
+Já funciona, desde que se use o comando certo — e são dois:
+
+| Comando | Procura em | Estado |
+|---|---|---|
+| `@ii` / `@iteminfo` | **itens** (`itemdb_searchname_array`) | 4.305 nomes PT-BR |
+| `@mi` / `@mobinfo` | **monstros** (`mobdb_searchname_array`) | 561 nomes PT-BR |
+
+`@ii Goblin Arqueiro` não acha nada porque Goblin Arqueiro é **monstro** — o
+comando é `@mi Goblin Arqueiro`.
+
+A comparação é `strcmpi` (`src/map/mob.cpp:271`), byte a byte sem locale, então
+acento funciona: o cliente manda cp1252 e o db está em cp1252, os bytes batem.
+
+Um detalhe do `mobdb_searchname_sub` (`mob.cpp:273`): monstro **sem exp e sem
+spawn** é excluído da busca de propósito, por ser considerado slave. Se um mob
+não aparecer no `@mi`, é essa a razão antes de suspeitar do nome.
 
 ---
 
@@ -105,7 +142,9 @@ Todas versionadas em [docs/cliente/](cliente/), com cópia de trabalho em
 
 | Ferramenta | O que faz |
 |---|---|
-| `grf_listar.py` | lê GRF v2 e v3, lista e extrai sem percorrer os 4 GB |
+| `grf_listar.py` | lê GRF v2 e v3, lista, **decifra** e extrai sem percorrer os 4 GB |
+| `gen-texturas-ptbr.py` | texturas de login e ESC: extrai dos dois GRFs, tria e instala |
+| `corrigir-aspas.py` | conserta descrição partida em aspa escapada, com a fonte do LATAM |
 | `gen-nomes-servidor.py` | `db/import/item_db.yml` a partir do `itemInfo_C.lua` |
 | `gen-msgstringtable.py` | `msgstringtable.csv` da coluna 7 do `_ml` do LATAM |
 | `gen-nomes-classe.py` | `pcjobname.lub` no nosso formato com o texto deles |
@@ -123,6 +162,63 @@ cliente aceita fonte e bytecode, então não é preciso recompilar.
 ## Armadilhas já pagas
 
 Cada uma custou uma quebra do cliente. Estão aqui para não se repetirem.
+
+**O editor abriu um arquivo cp1252 como UTF-8 e destruiu os acentos ao gravar.**
+Aconteceu em 03/set/2026 com cinco arquivos: `npc/custom/warper.txt` (326
+acentos), `curandeira.txt` (55), `black_market.txt` (34), `jobmaster.txt` (13) e
+`db/ragnabeat_items.yml` (6, em nome de item). No jogo o texto saiu assim:
+
+```
+esperado:  Bênção e Agilidade aplicadas.
+saiu:      Bï¿½nï¿½ï¿½o e Agilidade aplicadas.
+```
+
+`ï¿½` é a assinatura do estrago, e ela diz exatamente o que houve. São os bytes
+`EF BF BD` — o **U+FFFD REPLACEMENT CHARACTER** — lidos de novo como cp1252. Ou
+seja: alguém leu o arquivo como UTF-8, cada byte de acento (`ç` = `0xE7`) é
+inválido sozinho em UTF-8, virou U+FFFD, e o arquivo **foi gravado assim**.
+
+> Não confunda com codepage errado. Codepage errado troca o caractere e dá para
+> voltar (`é` vira `Ã©`, mas os bytes ainda estão lá). U+FFFD **apaga**: ele não
+> guarda qual acento era. A volta foi palavra por palavra, no olho.
+
+A forma de conferir se um reparo está certo é reaplicar o estrago:
+`reparado.encode('cp1252').decode('utf-8', errors='replace').encode('utf-8')` tem
+de devolver o arquivo corrompido byte a byte. Se devolver, cada U+FFFD virou um
+byte alto na posição certa e nada mais mudou.
+
+**Duas defesas ficaram no repo:**
+
+- [`ragnabeat.code-workspace`](../ragnabeat.code-workspace) trava
+  `files.autoGuessEncoding: false` e `windows1252` para `plaintext` e `yaml`.
+  Adivinhar foi o que causou o estrago. O erro na outra direção (UTF-8 lido como
+  cp1252) só dá `Ã©`, que é feio mas reversível — entre os dois, é o único que
+  tem conserto.
+- [`checar-encoding.py`](checar-encoding.py) varre o repo e sai com código 1 se
+  achar dano, UTF-8 onde devia ser cp1252, ou BOM. Rode antes de commitar
+  qualquer coisa com acento.
+
+
+**Aspa escapada parte a string e derruba o cliente inteiro.** A descrição do
+LATAM escreve aspas internas como `\"`, que é Lua válido. A regex ingênua
+`"([^"]*)"` não conhece isso e corta ali: o texto **entre** as aspas some e
+sobra uma linha que nunca fecha.
+
+```
+LATAM : "...admiradores de \"desenhos animados de Amatsu\" ou, como preferem..."
+gerado: "...admiradores de \",          <- a barra escapa a aspa de fechar
+        " ou, como preferem..."
+```
+
+O cliente não degrada: abre `CItemInfoMgr — unfinished string near` e **perde o
+itemInfo inteiro**. Aconteceu em 12/ago/2026 com 10 dos 1.020 visuais.
+
+Três coisas mudaram por causa disso:
+
+- `add-item-ptbr.py` usa `"((?:[^"\\]|\\.)*)"`, que consome barra + o que vier depois
+- `corrigir-aspas.py` conserta arquivo já gerado, buscando a linha certa no LATAM
+- `build.py` bloqueia o release: contar aspas **não** pega o caso (o número é par),
+  então a checagem varre a linha como o Lua faria
 
 **Ler o arquivo inteiro antes de substituir.** Gerar só a tabela que interessa deixa de
 fora o resto. O `pcjobname.lub` também define `ReqPCJobName`; sem ela o cliente entra em
@@ -149,6 +245,22 @@ você lê o nome do item não-identificado, vazio em 856 itens, e perde tudo em 
 **Encoding, de novo.** Ver a tabela acima. O `msgstringtable` em cp1252 fez todo acento
 virar `?` na tela de login.
 
+> **12/ago/2026 — EM ABERTO.** As mensagens que o cliente exibe ao entrar no
+> jogo ("Alimentação automática de mascote desligada", "Não mostrar seus
+> equipamentos ao público") aparecem **sem acento**. Foi descartado que seja
+> falta de tradução: as chaves estão no nosso `msgstringtable.csv` **com**
+> acento (`MSI_PET_AUTO_FEEDING_OFF`, `MSI_OPEN_EQUIPEDITEM_REFUSE`), e a
+> versão de dentro do `data.grf` é coreana — ou seja, o cliente está lendo o
+> nosso arquivo. Sobra a conversão.
+>
+> O arquivo está em UTF-8, mas o cliente converte texto com **cp1252** (6 das 7
+> constantes trocadas, ver [cliente/acentuacao.md](cliente/acentuacao.md)) — e a
+> tela de login, que funciona, pode usar outro caminho. Como o sintoma na tela
+> não distingue "byte descartado" de "codepage errado", existe agora o
+> [cliente/sonda-acento.py](cliente/sonda-acento.py): ele põe a mesma palavra
+> nas três codificações numa única mensagem, e a que sair legível responde.
+> **Rode, anote o resultado aqui, e tire a sonda.**
+
 **O LATAM erra.** `MSI_DO_YOU_AGREE` tem português falando de Replay. Há uma tabela
 `CORRIGIR` no `gen-msgstringtable.py` para esses casos.
 
@@ -168,11 +280,32 @@ prefixo depois. Se mostrar, existe mecanismo pronto e é melhor achá-lo que pat
 Alternativa barata: ajustar o texto dos prefixos no `cardprefixnametable.txt`, que já é
 nosso, para soarem melhor na posição em que aparecem.
 
-### 2. Texturas de login e menu ESC
+### 2. Texturas de login e menu ESC — feito o que dava
 
-111 BMPs — 33 `esc_*` mais `login_interface\`. O texto é **pintado na imagem**, não há
-string. Agora que o GRF deles abre, as PT-BR são extraíveis. É substituir imagem por
-imagem.
+São 111 arquivos (110 BMP + 1 TGA, não "111 BMPs"): 33 `esc_*` mais 78 de
+`login_interface\`, em `data\texture\<pasta de UI em cp949>\`. O texto é **pintado na
+imagem**, não há string.
+
+Metade estava encriptada nos dois GRFs, então o primeiro passo foi ensinar o
+[`grf_listar.py`](cliente/grf_listar.py) a decifrar — porte de `src/common/des.cpp` e
+`src/common/grfio.cpp` deste próprio repo. Ver [leia-me.md](cliente/leia-me.md).
+
+O [`gen-texturas-ptbr.py`](cliente/gen-texturas-ptbr.py) extrai, tria e instala. Rodado
+em 12/ago/2026 contra `C:\Gravity\Ragnarok\data.grf`:
+
+| | | |
+|---|---|---|
+| **56 trocadas** | mesmas dimensões e bpp | as abas do ESC, os botões e as janelas de login |
+| 25 iguais | LATAM nunca traduziu | setas de status, `win_make2`, `win_selectmap`, `name-edit` |
+| 8 divergem | dimensão ou bpp diferente | `warning`/`warning2` (1920×1440 aqui, 640×480 lá), `esc_05*`, `chk_save*`, `win_service` |
+| 22 sem par | só existem no kRO 2025 | `bt_start`, `bt_join`, `bt_otp*`, `bt_close*`, `btn_dropdown*`, `checkbox_*`, `bg_login.tga`, `bg_newotp1` |
+
+Os 30 que sobraram (8 + 22) só saem redesenhando o texto por cima da arte kRO — não é
+mais extração, é trabalho de imagem. A lista nominal fica em
+`DEVTOOLS\PTBR\_extraido\texturas\TRIAGEM.txt`, regerada a cada execução.
+
+A origem PT-BR é a **raiz** `data\texture\` do GRF do LATAM: `data\english\` e
+`data\spanish\` é que são os overrides, e não existe `data\portuguese\`.
 
 ### 3. NPCs — precisa de outra abordagem
 

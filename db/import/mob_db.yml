@@ -1,0 +1,16 @@
+# GERADO por docs/gerar-champions.py - NAO EDITE A MAO
+#
+# Existe so para enganchar db/ragnabeat_mobs.yml na cadeia do mob_db. O
+# rAthena carrega db/import/mob_db.yml por ultimo; o rodape abaixo puxa o
+# nosso arquivo depois dele.
+
+Header:
+  Type: MOB_DB
+  Version: 5
+
+Footer:
+  Imports:
+  - Path: db/ragnabeat_mob_names.yml
+  - Path: db/ragnabeat_mobs.yml
+  - Path: db/ragnabeat_mob_nomes_extra.yml
+  - Path: db/ragnabeat_biolab4.yml

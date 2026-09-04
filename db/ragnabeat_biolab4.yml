@@ -1,0 +1,546 @@
+# Biolaboratorio 4 (lhz_dun04) - mobs portados do renewal SEM DROPS
+#
+# Os 14 monstros do Bio Lab 4 (Ids 2221-2234) so existem em db/re/mob_db.yml,
+# que NAO carrega neste build - as entradas de la sao Mode: Renewal. Por isso
+# a copia.
+#
+# O QUE FOI TIRADO: os blocos Drops e MvpDrops, um por um. Era o pedido, e
+# tambem evita um problema real - as tabelas de drop deles apontam para itens
+# de renewal que este servidor pode nao ter. EXP e MvpExp ficaram.
+#
+# O QUE NAO FOI MEXIDO: elemento, raca, tamanho e a lista de habilidades.
+# Nivel, HP, ataque, defesa e atributos FORAM rebalanceados - ver abaixo.
+#
+# ---------------------------------------------------------------------------
+# REBALANCEADO EM 03/set/2026 - NAO SAO MAIS OS NUMEROS DO RENEWAL
+# ---------------------------------------------------------------------------
+# Como veio do renewal, a sala era INJOGAVEL. Nao "dificil": injogavel.
+#
+# Em pre-renewal a DEF do monstro e PERCENTUAL - DEF 100 = imune a dano
+# fisico - e o teto e DEFTYPE_MAX = CHAR_MAX = 127 (src/config/const.hpp:55).
+# O Paladino Randel vinha com DEF 667. O boot cortava para 127 e o bicho
+# ficava invulneravel; a Professora Celia, com MDEF 543, ficava imune a magia
+# tambem. Ate o Chen, com DEF 125 sem nem ser capado, ja passava o Lorde do
+# Inferno (77), o MVP mais duro que este servidor tinha.
+#
+# A REGUA FOI O lhz_dun03, o andar de baixo, um degrau acima dele:
+#
+#                       lhz_dun03 (existente)      Bio Lab 4 (agora)
+#   normais   nivel     82-92                      95
+#             HP        47k - 88k                  100k - 190k
+#             ATQ       497 - 2530                 1400 - 2900
+#             DEF       10 - 63                    20 - 68
+#             MDEF      10 - 74                    12 - 85
+#   MVP       nivel     99                         99
+#             HP        182k - 347k                450k - 750k
+#             ATQ       1688 - 5289                4200 - 7000
+#             DEF       10 - 72                    55 - 90
+#             MDEF      35 - 88                    40 - 95
+#
+# COMO, e nao so QUANTO: cada stat foi remapeado LINEARMENTE da faixa do
+# renewal para a faixa alvo. Isso preserva a ORDEM entre os mobs - o Randel
+# continua o mais tanque, a Celia continua a parede magica (MDEF 85, a maior
+# da sala), o Stalker continua o de maior ATQ. Nada foi digitado no olho.
+# Atributos primarios levaram fator unico: 0,70 nos normais, 0,60 nos MVP.
+#
+# EXP DOS MVP: o renewal nao define exp nenhuma para 2228-2234 - matar dava
+# ZERO. Recebeu 24000/14000, que e 1,3x o dos MVP do lhz_dun03 (18000/10000).
+#
+# HABILIDADES: estavam so em db/re/mob_skill_db.txt, que este build nao le.
+# As 372 linhas foram para db/import/mob_skill_db.txt - sem elas os 14 mobs
+# entravam mudos. O Asura do Chen foi de 10s para 3,5s de intervalo la.
+#
+# PARA REAJUSTAR: as faixas alvo estao no topo do script que fez isto. Mexer
+# num numero solto aqui quebra a proporcao com o resto da sala.
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+#
+# Spawns em npc/custom/lhz_dun04.txt.
+
+Header:
+  Type: MOB_DB
+  Version: 5
+
+Body:
+  - Id: 2221
+    AegisName: RANDEL
+    Name: Randel
+    Level: 95
+    Hp: 190000
+    BaseExp: 32367
+    JobExp: 31752
+    Attack: 2539
+    Attack2: 1618
+    Defense: 68
+    MagicDefense: 23
+    Str: 111
+    Agi: 52
+    Vit: 149
+    Int: 35
+    Dex: 130
+    Luk: 46
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+    Element: Holy
+    ElementLevel: 3
+    WalkSpeed: 180
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 19
+  - Id: 2222
+    AegisName: FLAMEL
+    Name: Flamel
+    Level: 95
+    Hp: 136655
+    BaseExp: 26397
+    JobExp: 30465
+    Attack: 1943
+    Attack2: 1916
+    Defense: 27
+    MagicDefense: 12
+    Str: 99
+    Agi: 55
+    Vit: 49
+    Int: 57
+    Dex: 103
+    Luk: 36
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+    Element: Fire
+    ElementLevel: 3
+    WalkSpeed: 180
+    AttackDelay: 1152
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 19
+  - Id: 2223
+    AegisName: CELIA
+    Name: Celia
+    Level: 95
+    Hp: 115839
+    BaseExp: 22107
+    JobExp: 25102
+    Attack: 1711
+    Attack2: 2595
+    Defense: 22
+    MagicDefense: 85
+    Str: 95
+    Agi: 69
+    Vit: 43
+    Int: 85
+    Dex: 85
+    Luk: 34
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+    Element: Ghost
+    ElementLevel: 3
+    WalkSpeed: 180
+    AttackDelay: 1152
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 19
+  - Id: 2224
+    AegisName: CHEN
+    Name: Chen
+    Level: 95
+    Hp: 124523
+    Sp: 25
+    BaseExp: 25684
+    JobExp: 26149
+    Attack: 2221
+    Attack2: 1633
+    Defense: 44
+    MagicDefense: 23
+    Str: 85
+    Agi: 57
+    Vit: 58
+    Int: 91
+    Dex: 141
+    Luk: 43
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demon
+    RaceGroups:
+      Biolab: true
+    Element: Water
+    ElementLevel: 4
+    WalkSpeed: 180
+    AttackDelay: 76
+    AttackMotion: 768
+    ClientAttackMotion: 576
+    DamageMotion: 288
+    Ai: 20
+    Modes:
+      Detector: true
+  - Id: 2225
+    AegisName: GERTIE
+    Name: Gertie
+    Level: 95
+    Hp: 120369
+    BaseExp: 24267
+    JobExp: 26706
+    Attack: 2900
+    Attack2: 1600
+    Defense: 37
+    MagicDefense: 12
+    Str: 126
+    Agi: 88
+    Vit: 38
+    Int: 36
+    Dex: 148
+    Luk: 31
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demon
+    RaceGroups:
+      Biolab: true
+    Element: Poison
+    ElementLevel: 4
+    WalkSpeed: 150
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 20
+    Modes:
+      Detector: true
+  - Id: 2226
+    AegisName: ALPHOCCIO
+    Name: Alphoccio
+    Level: 95
+    Hp: 116844
+    BaseExp: 22192
+    JobExp: 26824
+    Attack: 1516
+    Attack2: 3096
+    Defense: 26
+    MagicDefense: 13
+    Str: 84
+    Agi: 68
+    Vit: 50
+    Int: 127
+    Dex: 57
+    Luk: 57
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+    Element: Wind
+    ElementLevel: 3
+    WalkSpeed: 180
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 19
+  - Id: 2227
+    AegisName: TRENTINI
+    Name: Trentini
+    Level: 95
+    Hp: 100000
+    BaseExp: 15995
+    JobExp: 17486
+    Attack: 1400
+    Attack2: 3200
+    Defense: 20
+    MagicDefense: 12
+    Str: 80
+    Agi: 57
+    Vit: 46
+    Int: 136
+    Dex: 66
+    Luk: 53
+    AttackRange: 2
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+    Element: Wind
+    ElementLevel: 3
+    WalkSpeed: 180
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 19
+  - Id: 2228
+    AegisName: G_RANDEL
+    Name: Paladin Randel
+    Level: 99
+    Hp: 750000
+    BaseExp: 24000
+    JobExp: 14000
+    Attack: 6578
+    Attack2: 4641
+    Defense: 90
+    MagicDefense: 46
+    Str: 175
+    Agi: 93
+    Vit: 121
+    Int: 61
+    Dex: 159
+    Luk: 40
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+      Bio5_Swordman_Thief: true
+    Element: Holy
+    ElementLevel: 4
+    WalkSpeed: 100
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 21
+    Class: Boss
+    Modes:
+      FixedItemDrop: true
+  - Id: 2229
+    AegisName: G_FLAMEL
+    Name: Creator Flamel
+    Level: 99
+    Hp: 583566
+    BaseExp: 24000
+    JobExp: 14000
+    Attack: 4429
+    Attack2: 4167
+    Defense: 60
+    MagicDefense: 41
+    Str: 95
+    Agi: 105
+    Vit: 94
+    Int: 102
+    Dex: 142
+    Luk: 43
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+      Bio5_Acolyte_Merchant: true
+    Element: Fire
+    ElementLevel: 4
+    WalkSpeed: 100
+    AttackDelay: 1152
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 21
+    Class: Boss
+    Modes:
+      FixedItemDrop: true
+  - Id: 2230
+    AegisName: G_CELIA
+    Name: Professor Celia
+    Level: 99
+    Hp: 450000
+    BaseExp: 24000
+    JobExp: 14000
+    Attack: 4514
+    Attack2: 4732
+    Defense: 56
+    MagicDefense: 95
+    Str: 99
+    Agi: 89
+    Vit: 103
+    Int: 93
+    Dex: 160
+    Luk: 51
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+      Bio5_Mage_Archer: true
+    Element: Ghost
+    ElementLevel: 3
+    WalkSpeed: 100
+    AttackDelay: 1152
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 21
+    Class: Boss
+    Modes:
+      FixedItemDrop: true
+  - Id: 2231
+    AegisName: G_CHEN
+    Name: Champion Chen
+    Level: 99
+    Hp: 505721
+    BaseExp: 24000
+    JobExp: 14000
+    Sp: 1553
+    Attack: 5281
+    Attack2: 3634
+    Defense: 58
+    MagicDefense: 43
+    Str: 108
+    Agi: 99
+    Vit: 99
+    Int: 30
+    Dex: 179
+    Luk: 40
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+      Bio5_Acolyte_Merchant: true
+    Element: Water
+    ElementLevel: 4
+    WalkSpeed: 100
+    AttackDelay: 76
+    AttackMotion: 768
+    ClientAttackMotion: 576
+    DamageMotion: 288
+    Ai: 21
+    Class: Boss
+    Modes:
+      FixedItemDrop: true
+  - Id: 2232
+    AegisName: G_GERTIE
+    Name: Stalker Gertie
+    Level: 99
+    Hp: 479068
+    BaseExp: 24000
+    JobExp: 14000
+    Attack: 7000
+    Attack2: 3000
+    Defense: 60
+    MagicDefense: 40
+    Str: 130
+    Agi: 189
+    Vit: 76
+    Int: 31
+    Dex: 200
+    Luk: 37
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demon
+    RaceGroups:
+      Biolab: true
+      Bio5_Swordman_Thief: true
+    Element: Poison
+    ElementLevel: 4
+    WalkSpeed: 100
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 21
+    Class: Boss
+    Modes:
+      FixedItemDrop: true
+  - Id: 2233
+    AegisName: G_ALPHOCCIO
+    Name: Clown Alphoccio
+    Level: 99
+    Hp: 456449
+    BaseExp: 24000
+    JobExp: 14000
+    Attack: 4622
+    Attack2: 5330
+    Defense: 56
+    MagicDefense: 40
+    Str: 131
+    Agi: 97
+    Vit: 78
+    Int: 64
+    Dex: 162
+    Luk: 59
+    AttackRange: 1
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+      Bio5_Mage_Archer: true
+    Element: Wind
+    ElementLevel: 4
+    WalkSpeed: 150
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 21
+    Class: Boss
+    Modes:
+      FixedItemDrop: true
+  - Id: 2234
+    AegisName: G_TRENTINI
+    Name: Gypsy Trentini
+    Level: 99
+    Hp: 456449
+    BaseExp: 24000
+    JobExp: 14000
+    Attack: 4200
+    Attack2: 5600
+    Defense: 55
+    MagicDefense: 41
+    Str: 100
+    Agi: 148
+    Vit: 99
+    Int: 130
+    Dex: 140
+    Luk: 37
+    AttackRange: 2
+    SkillRange: 10
+    ChaseRange: 12
+    Size: Medium
+    Race: Demihuman
+    RaceGroups:
+      Biolab: true
+      Bio5_Mage_Archer: true
+    Element: Wind
+    ElementLevel: 4
+    WalkSpeed: 150
+    AttackDelay: 76
+    AttackMotion: 864
+    ClientAttackMotion: 672
+    DamageMotion: 288
+    Ai: 21
+    Class: Boss
+    Modes:
+      FixedItemDrop: true

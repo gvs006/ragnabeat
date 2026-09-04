@@ -1,0 +1,142 @@
+//===== rAthena Script =======================================
+//= Salao dos Bravos - ranking de MVP e loja de pontos
+//===== Descricao: ===========================================
+//= Cada MVP derrubado da 1 Ponto de Bravura ao jogador com
+//= maior dano. O NPC mostra o ranking, o seu saldo, e vende
+//= itens por pontos.
+//=
+//===== QUEM GANHA O PONTO - leia antes de mudar =============
+//= O rAthena NAO tem evento de script para "MVP morreu". O
+//= unico gancho e OnNPCKillEvent, e ele dispara para o
+//= first_sd (src/map/mob.cpp:3665).
+//=
+//= first_sd NAO e quem deu o ultimo golpe, e nem exatamente
+//= quem deu mais dano. E o topo da lista de loot, que o
+//= servidor monta assim (mob.cpp:3107-3115):
+//=
+//=   1. soma o dano de cada jogador
+//=   2. da +30% do dano TOTAL de bonus a quem atacou primeiro
+//=      (conf/battle/drops.conf -> first_attack_loot_bonus)
+//=   3. ordena por dano e pega o primeiro
+//=
+//= Ja o mvp_sd - quem leva o item e a exp de MVP - e o maior
+//= dano CRU, sem bonus (mob.cpp:2964-2984).
+//=
+//= Ou seja: os dois coincidem, EXCETO quando o primeiro
+//= atacante fica a menos de 30% do maior causador de dano.
+//= Nesse caso o ponto vai para o primeiro atacante e o item
+//= de MVP vai para o outro.
+//=
+//= PARA FICAR EXATO: basta
+//=     conf/battle/drops.conf -> first_attack_loot_bonus: 0
+//= Ai first_sd passa a ser o maior dano e os dois batem
+//= sempre. O custo e perder a prioridade de loot de quem
+//= puxa o mob, que e uma decisao de balanceamento - por isso
+//= NAO mexi nisso por conta propria.
+//=
+//= A alternativa seria criar um evento novo no mob.cpp para
+//= o mvp_sd. Sao ~3 linhas, mas exige recompilar o servidor.
+//=
+//===== ONDE OS PONTOS FICAM =================================
+//= Na variavel de personagem MVPPontos (tabela char_reg_num).
+//= E de PERSONAGEM, nao de conta: o ranking premia quem
+//= lutou, e juntar os pontos de todos os personagens de uma
+//= conta so num numero tornaria o topo do rank uma medida de
+//= quantos alts a pessoa tem.
+//=
+//= MVPAbates guarda quantos MVPs a pessoa derrubou, so para
+//= exibicao.
+//============================================================
+
+prontera,152,187,4	script	Rank MVP	4_M_JOB_KNIGHT1,{
+	.@n$ = "[Rank MVP]";
+	mes .@n$;
+	mes "Aqui contamos quem derruba os grandes.";
+	mes " ";
+	mes "Seus Pontos de Bravura: ^0000FF" + MVPPontos + "^000000";
+	mes "MVPs derrubados: ^0000FF" + MVPAbates + "^000000";
+	next;
+
+	switch (select("Ver o ranking:Trocar pontos:Como funciona:Sair")) {
+
+	case 1:
+		mes .@n$;
+		mes "^FF0000Os dez mais bravos^000000";
+		mes " ";
+		// O ranking sai do banco, nao de um array em memoria: assim ele
+		// sobrevive a restart e conta quem esta offline.
+		//
+		// `key` e `index` sao palavras reservadas no MySQL e exigem crase -
+		// sem elas a query nem roda. index = 0 pega a variavel escalar;
+		// indice maior seria array.
+		.@n = query_sql("SELECT c.name, r.value "
+			+ "FROM char_reg_num r JOIN `char` c ON c.char_id = r.char_id "
+			+ "WHERE r.`key` = 'MVPPontos' AND r.`index` = 0 AND r.value > 0 "
+			+ "ORDER BY r.value DESC LIMIT 10", .@nome$, .@pts);
+		if (.@n < 1) {
+			mes "Ninguém pontuou ainda. Pode ser voce.";
+			close;
+		}
+		for (.@i = 0; .@i < .@n; .@i++)
+			mes "  " + (.@i + 1) + ". ^0000FF" + .@nome$[.@i] + "^000000  -  "
+				+ .@pts[.@i] + " pontos";
+		close;
+
+	case 2:
+		// Janela NATIVA de compra, e nao um menu de dialogo. Quem faz isso e o
+		// tipo pointshop, logo abaixo: ele desenha a lista com icone, nome e
+		// preco em "P", e o total em Point na hora de fechar - exatamente a
+		// tela que o jogador ja conhece de outros servidores.
+		//
+		// O callshop com opcao 1 abre so a aba de COMPRA. Sem o 1 viria a
+		// janela de vender junto, e nao ha por que devolver item por ponto.
+		close2;
+		callshop "Loja de Bravura", 1;
+		end;
+
+	case 3:
+		mes .@n$;
+		mes "Cada MVP derrubado vale ^0000FF" + .PontosPorMVP + "^000000 ponto(s).";
+		mes " ";
+		mes "O ponto vai para quem ^0000FFmais contribuiu^000000 na luta -";
+		mes "o mesmo criterio que decide quem pega o item do MVP.";
+		mes "Chegar por ultimo e dar o golpe final nao conta.";
+		close;
+
+	case 4:
+		close;
+	}
+
+// O evento dispara em TODA morte de monstro; o filtro de MVP vem primeiro.
+OnNPCKillEvent:
+	if (getmonsterinfo(killedrid, MOB_MVPEXP) <= 0)
+		end;
+	MVPPontos += .PontosPorMVP;
+	MVPAbates++;
+	dispbottom "[Bravura] +" + .PontosPorMVP + " ponto por "
+		+ getmonsterinfo(killedrid, MOB_NAME) + ". Total: " + MVPPontos + ".";
+	if (.Anunciar)
+		announce strcharinfo(0) + " derrubou "
+			+ getmonsterinfo(killedrid, MOB_NAME) + "!", BC_ALL | BC_BLUE;
+	end;
+
+OnInit:
+	.PontosPorMVP = 1;
+	.Anunciar = 1;
+
+	waitingroom "Rank MVP", 0;
+	end;
+}
+
+//===== A loja, como pointshop ===============================
+//= O pointshop gasta uma VARIAVEL em vez de zeny. Aceita so
+//= variavel permanente de personagem, temporaria, ou de conta
+//= - MVPPontos e permanente de personagem, entao serve.
+//=
+//= Fica com sprite -1 (invisivel) e sem posicao no mapa: quem
+//= abre e o callshop do Rank MVP. Um NPC visivel aqui
+//= seria um segundo boneco fazendo o que o primeiro ja faz.
+//=
+//= Formato: <sprite>,<variavel>,<id>:<preco>,...
+//= O preco e em PONTOS, nao em zeny.
+-	pointshop	Loja de Bravura	-1,MVPPontos,7620:10,7619:10,969:40,994:25,995:25,996:25,997:25

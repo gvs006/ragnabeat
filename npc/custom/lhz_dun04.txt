@@ -1,0 +1,43 @@
+//===== rAthena Script =======================================
+//= Biolaboratório 4 (lhz_dun04) no pre-renewal
+//===== Descrição: ===========================================
+//= O andar 4 do Biolaboratório nasceu no renewal, então os
+//= spawns dele vivem em npc/re/mobs/dungeons/lhz_dun.txt, que
+//= não carrega neste build. O mapa existe (está no
+//= db/map_index.txt e no mapcache) e a Teleportadora já
+//= aponta para ele - só estava vazio.
+//=
+//= Estas linhas são as mesmas do arquivo de renewal. Os
+//= monstros vieram para db/ragnabeat_biolab4.yml SEM as
+//= tabelas de drop - ver o cabeçalho de lá.
+//=
+//===== O QUE FICOU DE FORA ==================================
+//= O arquivo de renewal tem, além destes spawns, um NPC
+//= controlador (mvp_lhz_dun04) que sorteia MVPs extras e os
+//= repõe. Não veio junto: as sete linhas de MVP abaixo já
+//= mantêm um de cada com respawn próprio de 55 minutos, que é
+//= o suficiente para a sala funcionar. Se quiser o mecanismo
+//= completo depois, ele está em
+//= npc/re/mobs/dungeons/lhz_dun.txt a partir da linha 128.
+//=
+//= Os drops de MVP também saíram junto com os normais. Matar
+//= um Paladino Randel aqui dá EXP, e só.
+//============================================================
+
+// --- os sete "normais" (na verdade 2a classe transcendida)
+lhz_dun04,0,0	monster	Randel	2221,42,5000
+lhz_dun04,0,0	monster	Flamel	2222,42,5000
+lhz_dun04,0,0	monster	Celia	2223,81,5000
+lhz_dun04,0,0	monster	Chen	2224,42,5000
+lhz_dun04,0,0	monster	Gertie	2225,57,5000
+lhz_dun04,0,0	monster	Alphoccio	2226,42,5000
+lhz_dun04,0,0	monster	Trentini	2227,42,5000
+
+// --- os sete MVP. 3.300.000ms = 55 min de respawn, como no renewal.
+lhz_dun04,0,0	monster	Paladin Randel	2228,1,3300000,3000000
+lhz_dun04,0,0	monster	Creator Flamel	2229,1,3300000,3000000
+lhz_dun04,0,0	monster	Professor Celia	2230,1,3300000,3000000
+lhz_dun04,0,0	monster	Champion Chen	2231,1,3300000,3000000
+lhz_dun04,0,0	monster	Stalker Gertie	2232,1,3300000,3000000
+lhz_dun04,0,0	monster	Clown Alphoccio	2233,1,3300000,3000000
+lhz_dun04,0,0	monster	Gypsy Trentini	2234,1,3300000,3000000

@@ -1,0 +1,282 @@
+//===== rAthena Script =======================================
+//= Champion Mobs - spawns
+//===== Descricao: ===========================================
+//= GERADO por docs/gerar-champions.py. NAO EDITE A MAO.
+//=
+//= Versao pre-renewal do npc/re/mobs/championmobs.txt do
+//= upstream, que nao e carregado aqui (a arvore que roda e a
+//= npc/pre-re/).
+//=
+//= Ficaram de fora os spawns em mapa que o nosso episodio nao
+//= usa e os champions cujo mob base e MVP ou so existe em
+//= renewal.
+//=
+//= Os mobs estao em db/ragnabeat_mobs.yml.
+//============================================================
+
+abbey01,0,0	monster	Veloz Banshee	2887,3,180000
+abyss_01,0,0	monster	Esquivo Ferus	2832,2,180000
+abyss_02,0,0	monster	Furioso Wyvern Dourado	2913,2,180000
+abyss_03,0,0	monster	Rijo Wyvern Dourado	2912,2,180000
+alde_dun01,0,0	monster	Furioso Arclouse	2894,1,180000
+alde_dun02,0,0	monster	Rijo Grand Orc	2805,2,180000
+alde_dun03,0,0	monster	Esquivo Penômena	2717,2,180000
+alde_dun04,0,0	monster	Esquivo Bathory	2885,1,180000
+ama_dun01,0,0	monster	Furioso Miyabi Ningyo	2746,2,180000
+ama_dun02,0,0	monster	Veloz Poison Toad	2704,1,180000
+ama_dun03,0,0	monster	Esquivo Shinobi	2664,2,180000
+ama_fild01,0,0	monster	Veloz Karakasa	2789,2,180000
+anthell01,0,0	monster	Lider Deniro	2857,3,180000
+anthell02,0,0	monster	Rijo Andre	2902,2,180000
+arug_dun01,0,0	monster	Lider Senhora das Bansh	2886,2,180000
+ayo_dun01,0,0	monster	Furioso Gato de Folha	2781,2,180000
+ayo_dun02,0,0	monster	Esquivo Tamruan	2639,2,180000
+ayo_fild01,0,0	monster	Esquivo Fumacento	2654,2,180000
+ayo_fild02,0,0	monster	Rijo Yoyo	2609,1,180000
+beach_dun,0,0	monster	Veloz Medusa	2759,2,180000
+beach_dun2,0,0	monster	Esquivo Golem Estalactí	2644,2,180000
+beach_dun3,0,0	monster	Lider Sapo de Thara	2635,2,180000
+c_tower1,0,0	monster	Rijo Rideword	2682,2,180000
+c_tower2,0,0	monster	Esquivo Relógio	2871,1,180000
+c_tower3,0,0	monster	Lider Alarme	2910,1,180000
+c_tower4,0,0	monster	Furioso Relógio	2870,2,180000
+cmd_fild01,0,0	monster	Lider Grove	2808,2,180000
+cmd_fild02,0,0	monster	Veloz Selo	2829,3,180000
+cmd_fild03,0,0	monster	Rijo Crocodilo	2907,3,180000
+cmd_fild04,0,0	monster	Furioso Lontra	2668,2,180000
+cmd_fild06,0,0	monster	Esquivo Golem	2812,2,180000
+cmd_fild07,0,0	monster	Lider Raggler	2694,2,180000
+cmd_fild08,0,0	monster	Lider Deniro	2857,2,180000
+cmd_fild09,0,0	monster	Veloz Metaller	2754,2,180000
+ein_dun01,0,0	monster	Lider Mineiros	2708,2,180000
+ein_dun02,0,0	monster	Rijo Mineral	2750,2,180000
+ein_fild02,0,0	monster	Furioso Ungoliant	2629,2,180000
+ein_fild03,0,0	monster	Veloz Ursinho	2636,2,180000
+ein_fild04,0,0	monster	Furioso Nuvem Venenosa	2624,2,180000
+ein_fild05,0,0	monster	Esquivo Nuvem Tóxica	2727,2,180000
+ein_fild06,0,0	monster	Rijo Holden	2745,2,180000
+ein_fild07,0,0	monster	Furioso Metaling	2756,2,180000
+ein_fild08,0,0	monster	Rijo Metaling	2755,2,180000
+ein_fild09,0,0	monster	Rijo Porcellio	2700,2,180000
+gef_dun00,0,0	monster	Esquivo Mosca Caçadora	2797,1,180000
+gef_dun01,0,0	monster	Lider Carniçal	2823,2,180000
+gef_dun02,0,0	monster	Rijo Deviruchi	2854,2,180000
+gef_dun03,0,0	monster	Rijo Xamã do Vento	2614,1,180000
+gef_fild00,0,0	monster	Lider ChonChon	2872,2,180000
+gef_fild01,0,0	monster	Esquivo Sapo de Rodda	2679,2,180000
+gef_fild02,0,0	monster	Rijo Belinha	2869,3,180000
+gef_fild03,0,0	monster	Rijo Senhora Orc	2725,3,180000
+gef_fild04,0,0	monster	Rijo Mandrágora	2765,2,180000
+gef_fild05,0,0	monster	Veloz Creamy	2863,2,180000
+gef_fild06,0,0	monster	Rijo Petite	2715,2,180000
+gef_fild07,0,0	monster	Veloz Poring	2699,2,180000
+gef_fild08,0,0	monster	Veloz Petite	2714,2,180000
+gef_fild09,0,0	monster	Veloz Belinha	2868,2,180000
+gef_fild10,0,0	monster	Esquivo Guerreiro Orc	2722,2,180000
+gef_fild11,0,0	monster	Veloz Goblin	2814,3,180000
+gefenia01,0,0	monster	Veloz Anjo Fajuto	2834,2,180000
+gefenia02,0,0	monster	Rijo Violy	2623,2,180000
+gefenia03,0,0	monster	Veloz Violy	2622,2,180000
+gefenia04,0,0	monster	Lider Violy	2621,2,180000
+gl_cas01,0,0	monster	Lider Carat	2877,2,180000
+gl_cas02,0,0	monster	Esquivo Andarilho	2620,2,180000
+gl_church,0,0	monster	Lider Druida Maligno	2838,2,180000
+gl_chyard,0,0	monster	Esquivo Sacerdote Maldi	2861,2,180000
+gl_dun01,0,0	monster	Rijo Arclouse	2893,1,180000
+gl_dun02,0,0	monster	Esquivo Majoruros	2767,1,180000
+gl_in01,0,0	monster	Furioso Marionete	2761,1,180000
+gl_knt01,0,0	monster	Rijo Raydric	2691,2,180000
+gl_knt02,0,0	monster	Veloz Raydric	2690,2,180000
+gl_prison,0,0	monster	Rijo Zumbi Prisioneiro	2604,1,180000
+gl_prison1,0,0	monster	Esquivo Injustiçado	2792,2,180000
+gl_sew01,0,0	monster	Rijo Sussurro	2618,1,180000
+gl_sew02,0,0	monster	Esquivo Gárgula	2827,1,180000
+gl_sew03,0,0	monster	Lider Sting	2640,2,180000
+gl_sew04,0,0	monster	Esquivo Anolian	2899,2,180000
+gl_step,0,0	monster	Rijo Xamã do Vento	2614,2,180000
+glast_01,0,0	monster	Furioso Gárgula	2826,1,180000
+gld_dun01,0,0	monster	Rijo Leib Olmai	2780,2,180000
+gld_dun02,0,0	monster	Furioso Zangão Gigante	2821,2,180000
+gld_dun03,0,0	monster	Esquivo Lagarta	2876,2,180000
+gld_dun04,0,0	monster	Furioso Zumbi Mestre	2605,2,180000
+gon_dun01,0,0	monster	Veloz Borboleta Sanguin	2883,2,180000
+gon_dun02,0,0	monster	Rijo Pessegueira Encant	2775,1,180000
+gon_dun03,0,0	monster	Lider Ninfa Perversa	2617,2,180000
+gon_fild01,0,0	monster	Furioso Pirralho	2683,2,180000
+hu_fild01,0,0	monster	Furioso Novus	2731,2,180000
+hu_fild02,0,0	monster	Rijo Novus	2730,2,180000
+hu_fild04,0,0	monster	Veloz Novus	2729,2,180000
+hu_fild05,0,0	monster	Lider Novus	2728,2,180000
+hu_fild06,0,0	monster	Veloz Molusco	2666,1,180000
+ice_dun01,0,0	monster	Veloz Siroma	2661,1,180000
+ice_dun02,0,0	monster	Rijo Yeti	2652,2,180000
+ice_dun03,0,0	monster	Veloz Titã de Gelo	2794,2,180000
+in_sphinx1,0,0	monster	Lider Drainliar	2847,1,180000
+in_sphinx2,0,0	monster	Rijo Réquiem	2687,2,180000
+in_sphinx3,0,0	monster	Lider Marduk	2763,1,180000
+in_sphinx4,0,0	monster	Veloz Minoroso	2749,1,180000
+in_sphinx5,0,0	monster	Veloz Pasana	2719,2,180000
+iz_dun00,0,0	monster	Esquivo Plâncton	2707,2,180000
+iz_dun01,0,0	monster	Rijo Vadon	2628,2,180000
+iz_dun02,0,0	monster	Rijo Cornutus	2864,2,180000
+iz_dun03,0,0	monster	Lider Fen	2713,2,180000
+iz_dun04,0,0	monster	Esquivo Tritão	2757,2,180000
+jupe_core,0,0	monster	Veloz Dimik	2853,3,180000
+juperos_01,0,0	monster	Esquivo Venatu	2625,3,180000
+juperos_02,0,0	monster	Esquivo Apocalipse	2895,3,180000
+kh_dun01,0,0	monster	Furioso Aliza	2908,1,180000
+kh_dun02,0,0	monster	Esquivo Alicel	2909,1,180000
+kh_kiehl01,0,0	monster	Esquivo Constant	2866,2,180000
+lhz_dun01,0,0	monster	Furioso Remover	2688,3,180000
+lhz_dun02,0,0	monster	Furioso Laurell Weinder	2692,3,180000
+lhz_fild01,0,0	monster	Veloz Rafflesia	2695,3,180000
+lhz_fild01,0,0	monster	Furioso Poring	2696,2,180000
+lhz_fild01,0,0	monster	Esquivo Poring	2697,2,180000
+lhz_fild01,0,0	monster	Lider Poring	2698,2,180000
+lhz_fild02,0,0	monster	Veloz Talo de Verme	2641,2,180000
+lhz_fild03,0,0	monster	Esquivo Breeze	2881,3,180000
+lou_dun01,0,0	monster	Lider Jing Guai	2778,2,180000
+lou_dun02,0,0	monster	Furioso Yao Jun	2796,1,180000
+lou_dun03,0,0	monster	Lider Zhu Po Long	2862,1,180000
+lou_fild01,0,0	monster	Lider Mi Gao	2793,1,180000
+mag_dun01,0,0	monster	Esquivo Estrondo	2837,1,180000
+mag_dun02,0,0	monster	Esquivo Pesadelo Sombri	2732,2,180000
+man_fild01,0,0	monster	Rijo Nepenthes	2735,2,180000
+man_fild02,0,0	monster	Lider Golem de Bradium	2882,2,180000
+man_fild03,0,0	monster	Rijo Tatacho	2637,1,180000
+mjo_dun01,0,0	monster	Furioso Tarou	2638,2,180000
+mjo_dun02,0,0	monster	Rijo Martin	2760,2,180000
+mjo_dun03,0,0	monster	Lider Skeleton Worker	2660,2,180000
+mjolnir_01,0,0	monster	Veloz Caramelo	2878,2,180000
+mjolnir_02,0,0	monster	Rijo Salgueiro Ancião	2840,3,180000
+mjolnir_03,0,0	monster	Furioso Sorrateiro	2663,2,180000
+mjolnir_04,0,0	monster	Esquivo Furador	2846,3,180000
+mjolnir_05,0,0	monster	Veloz Argiope	2892,2,180000
+mjolnir_06,0,0	monster	Rijo Esporo Venenoso	2705,3,180000
+mjolnir_07,0,0	monster	Furioso Selvagem	2673,3,180000
+mjolnir_08,0,0	monster	Esquivo Encouraçado	2787,2,180000
+mjolnir_09,0,0	monster	Veloz Bebê Selvagem	2671,2,180000
+mjolnir_10,0,0	monster	Esquivo Argos	2890,2,180000
+mjolnir_11,0,0	monster	Lider Argiope	2891,2,180000
+mjolnir_12,0,0	monster	Esquivo Poeira	2842,2,180000
+moc_fild01,0,0	monster	Furioso Muka	2741,3,180000
+moc_fild02,0,0	monster	Lider PecoPeco	2718,2,180000
+moc_fild03,0,0	monster	Veloz Lobo	2613,2,180000
+moc_fild07,0,0	monster	Furioso Drops	2845,3,180000
+moc_fild11,0,0	monster	Esquivo Filhote de Lobo	2856,3,180000
+moc_fild12,0,0	monster	Esquivo Picky	2712,2,180000
+moc_fild13,0,0	monster	Rijo Chonchon de Aço	2642,3,180000
+moc_fild16,0,0	monster	Esquivo Arenoso	2674,2,180000
+moc_fild17,0,0	monster	Esquivo Hode	2802,2,180000
+moc_fild18,0,0	monster	Lider Escorpião	2670,3,180000
+moc_fild20,0,0	monster	Veloz Incarnation of Mo	2744,1,180000
+moc_fild21,0,0	monster	Lider Incarnation of Mo	2743,2,180000
+moc_fild22,0,0	monster	Esquivo Incarnation of	2742,3,180000
+moc_pryd02,0,0	monster	Rijo Múmia	2740,2,180000
+moc_pryd03,0,0	monster	Veloz Múmia	2739,2,180000
+moc_pryd04,0,0	monster	Rijo Isis	2790,2,180000
+moc_pryd05,0,0	monster	Lider Minoroso	2748,2,180000
+moc_pryd06,0,0	monster	Lider Mímico	2753,2,180000
+mosk_dun01,0,0	monster	Lider Leshij	2612,2,180000
+mosk_dun02,0,0	monster	Veloz Les	2779,1,180000
+mosk_dun03,0,0	monster	Lider Baba-Yaga	2626,2,180000
+mosk_fild02,0,0	monster	Rijo Sorrateiro	2662,1,180000
+nif_fild01,0,0	monster	Lider Mascarado	2852,2,180000
+nif_fild02,0,0	monster	Veloz Loli Ruri	2774,1,180000
+niflheim,0,0	monster	Esquivo Lude	2772,1,180000
+nyd_dun01,0,0	monster	Rijo Draco	2849,2,180000
+odin_tem01,0,0	monster	Furioso Breeze	2880,1,180000
+odin_tem02,0,0	monster	Rijo Skogul	2657,1,180000
+odin_tem03,0,0	monster	Furioso Plasma	2706,2,180000
+orcsdun01,0,0	monster	Lider Orc Zumbi	2723,2,180000
+orcsdun02,0,0	monster	Veloz Orc Esqueleto	2724,2,180000
+pay_dun00,0,0	monster	Esquivo Zumbi	2606,2,180000
+pay_dun01,0,0	monster	Esquivo Esqueleto Solda	2649,2,180000
+pay_dun02,0,0	monster	Furioso Esqueleto Solda	2648,3,180000
+pay_dun03,0,0	monster	Veloz Sohee	2651,2,180000
+pay_dun04,0,0	monster	Esquivo Dokebi	2851,2,180000
+pay_fild01,0,0	monster	Furioso Salgueiro	2615,2,180000
+pay_fild02,0,0	monster	Furioso Jiboia	2653,3,180000
+pay_fild03,0,0	monster	Furioso Fabre	2836,3,180000
+pay_fild04,0,0	monster	Lider Poporing	2703,2,180000
+pay_fild06,0,0	monster	Furioso Wormtail	2610,3,180000
+pay_fild07,0,0	monster	Furioso Pé-Grande	2884,2,180000
+pay_fild09,0,0	monster	Rijo Besouro-Chifre	2800,2,180000
+pay_fild10,0,0	monster	Veloz Guardião da Flore	2809,2,180000
+prt_fild00,0,0	monster	Furioso Sapo de Rodda	2678,2,180000
+prt_fild01,0,0	monster	Furioso Lunático	2771,2,180000
+prt_fild02,0,0	monster	Lider Percevejo	2645,3,180000
+prt_fild03,0,0	monster	Veloz Yoyo	2608,2,180000
+prt_fild04,0,0	monster	Lider Ambernite	2905,2,180000
+prt_fild05,0,0	monster	Lider Zangão	2798,2,180000
+prt_fild06,0,0	monster	Rijo Fabre	2835,2,180000
+prt_fild07,0,0	monster	Lider Rocker	2680,3,180000
+prt_fild08,0,0	monster	Rijo Lunático	2770,1,180000
+prt_fild08,0,0	monster	Furioso Poring	2696,1,180000
+prt_fild08,0,0	monster	Esquivo Poring	2697,1,180000
+prt_fild08,0,0	monster	Lider Poring	2698,1,180000
+prt_fild08,0,0	monster	Veloz Poring	2699,1,180000
+prt_fild09,0,0	monster	Lider Magnólia	2768,2,180000
+prt_fild10,0,0	monster	Veloz Salgueiro Ancião	2839,3,180000
+prt_fild11,0,0	monster	Lider Goblin	2813,3,180000
+prt_maze01,0,0	monster	Rijo Selvagem	2672,2,180000
+prt_maze02,0,0	monster	Esquivo Poporing	2702,2,180000
+prt_maze03,0,0	monster	Furioso Poporing	2701,2,180000
+prt_maze03,0,0	monster	Veloz Louva-a-Deus	2764,2,180000
+prt_sewb1,0,0	monster	Lider Familiar	2833,1,180000
+prt_sewb2,0,0	monster	Esquivo Besouro-Ladrão	2634,2,180000
+prt_sewb3,0,0	monster	Furioso Besouro-Ladrão	2633,3,180000
+prt_sewb4,0,0	monster	Rijo Besouro-Ladrão	2632,2,180000
+ra_fild01,0,0	monster	Furioso Filhote de Lobo	2855,2,180000
+ra_fild03,0,0	monster	Veloz Vento da Colina	2804,3,180000
+ra_fild04,0,0	monster	Lider Vento da Colina	2803,3,180000
+ra_fild05,0,0	monster	Rijo Kobold	2785,3,180000
+ra_fild06,0,0	monster	Veloz Kobold Arqueiro	2784,3,180000
+ra_fild08,0,0	monster	Esquivo Anaconda	2904,2,180000
+ra_fild12,0,0	monster	Rijo Roween	2677,2,180000
+ra_san01,0,0	monster	Veloz Vanberk	2627,2,180000
+ra_san02,0,0	monster	Furioso Isilla	2791,2,180000
+ra_san03,0,0	monster	Furioso Hodremlin	2801,2,180000
+ra_san04,0,0	monster	Furioso Echio	2841,1,180000
+ra_san05,0,0	monster	Veloz Agav	2911,2,180000
+schg_dun01,0,0	monster	Lider Zakudam	2607,2,180000
+spl_fild01,0,0	monster	Rijo Pinguicula Sombria	2710,2,180000
+spl_fild02,0,0	monster	Furioso Pinguicula	2711,2,180000
+spl_fild03,0,0	monster	Lider Luciola Vespa	2773,1,180000
+tha_t01,0,0	monster	Veloz Rideword	2681,2,180000
+tha_t02,0,0	monster	Furioso Mímico Antigo	2903,2,180000
+tha_t03,0,0	monster	Furioso Palavra Morta	2860,2,180000
+tha_t04,0,0	monster	Rijo Palavra Morta	2859,2,180000
+tha_t05,0,0	monster	Furioso Duque Coruja	2721,2,180000
+tha_t06,0,0	monster	Veloz Palavra Morta	2858,2,180000
+thor_v01,0,0	monster	Lider Kasa	2788,2,180000
+thor_v02,0,0	monster	Furioso Golpeador	2786,1,180000
+thor_v03,0,0	monster	Lider Salamandra	2675,2,180000
+treasure02,0,0	monster	Furioso Penômena	2716,2,180000
+tur_dun01,0,0	monster	Veloz Lavadeira	2848,1,180000
+tur_dun02,0,0	monster	Rijo Solidificador	2647,2,180000
+tur_dun03,0,0	monster	Furioso Congelador	2831,1,180000
+tur_dun04,0,0	monster	Furioso Agressor	2889,1,180000
+tur_dun05,0,0	monster	Rijo Congelador	2830,1,180000
+um_fild01,0,0	monster	Veloz Dríade	2843,2,180000
+um_fild02,0,0	monster	Esquivo Guerreiro Woota	2611,1,180000
+um_fild03,0,0	monster	Rijo Parasita	2720,1,180000
+um_fild04,0,0	monster	Esquivo Rosa Selvagem	2616,1,180000
+ve_fild01,0,0	monster	Lider Galion	2828,1,180000
+ve_fild02,0,0	monster	Rijo Drosera	2844,2,180000
+ve_fild03,0,0	monster	Veloz Magmaring	2769,2,180000
+ve_fild04,0,0	monster	Lider Muscipular	2738,2,180000
+ve_fild07,0,0	monster	Furioso Stapo	2643,2,180000
+xmas_dun01,0,0	monster	Furioso Cookie	2865,2,180000
+xmas_dun02,0,0	monster	Esquivo Presente	2737,2,180000
+xmas_fild01,0,0	monster	Esquivo Marin	2762,1,180000
+yuno_fild01,0,0	monster	Rijo Planta Carnívora	2825,2,180000
+yuno_fild02,0,0	monster	Veloz Dorminhoco	2656,2,180000
+yuno_fild03,0,0	monster	Esquivo Harpia	2807,3,180000
+yuno_fild04,0,0	monster	Furioso Harpia	2806,3,180000
+yuno_fild06,0,0	monster	Lider Dorminhoco	2655,1,180000
+yuno_fild07,0,0	monster	Furioso Bode	2816,2,180000
+yuno_fild08,0,0	monster	Furioso Grand Peco	2811,2,180000
+yuno_fild09,0,0	monster	Rijo Grand Peco	2810,2,180000
+yuno_fild11,0,0	monster	Rijo Bode	2815,2,180000
+yuno_fild12,0,0	monster	Veloz Planta Carnívora	2824,1,180000

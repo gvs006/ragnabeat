@@ -1,0 +1,25 @@
+###########################################################################
+# Item Group Database - custom RagnaBeat
+###########################################################################
+#
+# So o grupo das Redeas de Montaria (7 dias), portado de db/re, que nao
+# carrega em pre-renewal. O Duration e em MINUTOS: 10080 = 7 dias. E o
+# mecanismo oficial de aluguel - equivale a um rentitem 12622.
+#
+# O item que abre a caixa e o 17162, em db/ragnabeat_items.yml.
+###########################################################################
+
+Header:
+  Type: ITEM_GROUP_DB
+  Version: 5
+
+Body:
+  - Group: BOARDING_HALTER_BOX7
+    SubGroups:
+      - SubGroup: 0
+        Algorithm: All
+        List:
+          - Index: 0
+            Item: Boarding_Halter
+            Duration: 10080
+            UniqueId: true

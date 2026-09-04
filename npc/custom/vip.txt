@@ -1,31 +1,73 @@
 //===== rAthena Script =======================================
-//= Gate de VIP — função global
+//= VIP - gate, tempo restante e concessão
 //===== Descrição: ===========================================
 //= Fonte única de verdade para "este jogador é VIP?".
 //=
 //= Todo NPC ou comando com benefício de VIP deve chamar
 //= callfunc("F_EhVip") em vez de reimplementar a checagem.
-//= Assim, quando o sistema VIP entrar (ROADMAP fase 3.1),
-//= existe UM número para trocar — e não um por NPC.
+//= Assim existe UM número para trocar - e não um por NPC.
 //=
 //= Em uso hoje:
 //=   npc/custom/curandeira.txt
 //=   npc/custom/restock.txt
+//=
+//===== MUDANÇA DE COMPORTAMENTO (03/set/2026) ===============
+//= O gate saiu do MODO 0 (todo mundo passa, fase de testes)
+//= para o MODO 1, que lê a variável de conta #vip_expire.
+//=
+//= ISSO SIGNIFICA QUE NINGUÉM É VIP ATÉ UM GM CONCEDER.
+//= Enquanto ninguém tiver #vip_expire no futuro, a Curandeira
+//= volta a dar só Bênção e Agilidade e o @restock recusa.
+//= Para voltar ao antigo: .@modo = 0 no F_EhVip.
+//=
+//= Concessão pelo comando @vip (GM 99), definido no fim deste
+//= arquivo.
+//=
+//===== POR QUE #vip_expire E NÃO O VIP NATIVO ================
+//= O VIP nativo do rAthena (vip_status) exige VIP_ENABLE
+//= descomentado em src/config/core.hpp e RECOMPILAR o
+//= map-server. Com o define desligado a função devolve 0
+//= sempre - ou seja, ligar o modo 2 antes de recompilar
+//= tranca TODO MUNDO fora do gate, sem erro no log.
+//=
+//= O #vip_expire é variável de CONTA (prefixo #): vale para
+//= todos os personagens da conta e vive no banco, então
+//= sobrevive a relog, @reloadscript e restart.
+//=
+//= O valor é um timestamp unix - o mesmo relógio do
+//= gettimetick(2). Comparar com qualquer outra coisa dá
+//= resultado errado.
+//=
+//===== O ÍCONE NA BARRA DE STATUS ===========================
+//= O quadradinho de VIP no canto direito é o SC_HAT_EFFECT,
+//= um status cosmético de renewal que não faz nada e cujo
+//= ícone foi reapontado em db/import/status.yml para o
+//= EFST_KINGS_GRACE (brasão dourado). O porquê desse atalho e
+//= o que ele custa estão no cabeçalho daquele arquivo.
+//=
+//= É PROVISÓRIO. O balão vai dizer "Graça Real / Imóvel /
+//= Imune a ataques", que é o texto do King's Grace do
+//= Guardião Real. Arte e texto próprios só saem com um GRF
+//= novo - está na fila em docs/cliente/estado-e-plano.md.
+//=
+//= O ícone é reaplicado no login e a cada concessão. Como o
+//= SC tem NoSave, ele não sobrevive ao logout sozinho - o
+//= OnPCLoginEvent existe exatamente por isso.
 //============================================================
 
-//	Modo do gate — o ÚNICO lugar para mexer.
+//	Modo do gate - o ÚNICO lugar para mexer.
 //
-//	  0 = liberado para todos      (fase de testes, atual)
+//	  0 = liberado para todos      (fase de testes, antigo)
 //	  1 = variável de conta        #vip_expire com timestamp unix
-//	                               (VIP por script — a rota recomendada
-//	                                no ROADMAP 3.1)
+//	                               (ATUAL - rota recomendada no
+//	                                ROADMAP 3.1)
 //	  2 = VIP nativo do rAthena    vip_status(), exige VIP_ENABLE
 //	                               descomentado em src/config/core.hpp.
 //	                               Com o define desligado a função
 //	                               devolve 0 sempre, então NINGUÉM passa
-//	                               no gate — não use antes de recompilar.
+//	                               no gate - não use antes de recompilar.
 function	script	F_EhVip	{
-	.@modo = 0;
+	.@modo = 1;
 
 	switch (.@modo) {
 		case 0:
@@ -36,4 +78,156 @@ function	script	F_EhVip	{
 			return vip_status(VIP_STATUS_ACTIVE);
 	}
 	return 0;
+}
+
+//	Segundos que ainda faltam de VIP. 0 se não é VIP.
+//	Serve para NPC mostrar tempo sem repetir a conta.
+function	script	F_VipRestante	{
+	.@falta = #vip_expire - gettimetick(2);
+	return (.@falta > 0) ? .@falta : 0;
+}
+
+//	Tempo restante escrito, no formato "99 Hora(s) 18 minuto(s)".
+//	Sem argumento usa o tempo do jogador anexado; com argumento
+//	formata os segundos passados.
+function	script	F_VipTempo	{
+	.@s = getarg(0, -1);
+	if (.@s < 0)
+		.@s = callfunc("F_VipRestante");
+	if (.@s <= 0)
+		return "sem acesso VIP";
+	return (.@s / 3600) + " Hora(s) " + ((.@s % 3600) / 60) + " minuto(s)";
+}
+
+// --------------------------------------------------
+//	@vip - concessão e consulta (GM 99)
+// --------------------------------------------------
+//	  @vip                  quanto falta do MEU VIP
+//	  @vip <personagem>     quanto falta do VIP dele
+//	  @vip <personagem> <dias>   soma dias (negativo tira)
+//
+//	Nome COM ESPAÇO funciona sem aspas: @vip Test Champ 30.
+//	O bindatcmd do rAthena parte por espaço e não entende aspas
+//	(src/map/npc.cpp:5128-5146), então o OnComando remonta o nome
+//	sozinho - veja o comentário lá embaixo.
+//
+//	Soma a partir do que já existe quando ainda está valendo, e
+//	a partir de agora quando já venceu - senão renovar um VIP
+//	vencido começaria no passado e não valeria nada.
+//
+//	SÓ FUNCIONA COM O ALVO ONLINE: #vip_expire é variável de
+//	conta e só dá para escrever nela com o jogador anexado.
+//	Para conceder offline seria preciso mexer no banco (tabela
+//	acc_reg_num) - fora do escopo desta primeira versão.
+-	script	VipAdmin	-1,{
+	end;
+
+// Coloca (ou tira) o ícone de VIP em quem está anexado.
+S_Icone:
+	.@s = callfunc("F_VipRestante");
+	if (.@s <= 0) {
+		sc_end .Icone;
+		return;
+	}
+	// sc_start recebe milissegundos num int32: acima de ~24 dias o valor
+	// estoura e vira negativo. Teto de 2.000.000s (23 dias) - o login
+	// seguinte recalcula, então VIP mais longo que isso só mostra o ícone
+	// com contagem menor, nunca quebrado.
+	sc_start .Icone, ((.@s > 2000000) ? 2000000000 : .@s * 1000), 1;
+	return;
+
+OnPCLoginEvent:
+	callsub S_Icone;
+	end;
+
+OnComando:
+	.@gm_aid = getcharid(3);
+
+	if (.@atcmd_numparameters == 0) {
+		dispbottom "[VIP] Você: " + callfunc("F_VipTempo");
+		end;
+	}
+
+	// O bindatcmd parte a mensagem por espaco num laco de caractere que
+	// NAO conhece aspas (src/map/npc.cpp:5128-5146). Por isso "@vip Test
+	// Champ" chega como DOIS parametros, e por aspas tambem nao resolve:
+	// vem ["Test e Champ]. Nao ha como pedir a mensagem crua ao script -
+	// o bindatcmd so expoe .@atcmd_command$ e os pedacos ja partidos.
+	//
+	// Entao remontamos aqui. Regra: se o ULTIMO pedaco for um inteiro e
+	// houver mais de um pedaco, ele e o <dias>; todo o resto volta a ser
+	// o nome, com os espacos de volta no lugar.
+	//
+	// O limite conhecido: personagem chamado "Fulano 30" fica ambiguo, e
+	// a leitura de <dias> ganha. Nome terminado em numero apos espaco e
+	// raro o bastante para valer a troca.
+	.@corte = .@atcmd_numparameters;
+	.@tem_dias = 0;
+	if (.@atcmd_numparameters > 1) {
+		.@ult$ = .@atcmd_parameters$[.@atcmd_numparameters - 1];
+		.@ul = getstrlen(.@ult$);
+		.@ini = (charat(.@ult$, 0) == "-") ? 1 : 0;
+		if (.@ul > .@ini) {
+			.@tem_dias = 1;
+			for (.@i = .@ini; .@i < .@ul; .@i++) {
+				if (compare("0123456789", charat(.@ult$, .@i)) == 0) {
+					.@tem_dias = 0;
+					break;
+				}
+			}
+		}
+		if (.@tem_dias)
+			.@corte = .@atcmd_numparameters - 1;
+	}
+
+	.@nome$ = "";
+	for (.@i = 0; .@i < .@corte; .@i++)
+		.@nome$ += ((.@i > 0) ? " " : "") + .@atcmd_parameters$[.@i];
+
+	// Quem digitar @vip "Test Champ" por costume tambem funciona: as
+	// aspas chegam grudadas nas pontas e saem aqui.
+	.@len = getstrlen(.@nome$);
+	if (.@len > 1 && charat(.@nome$, 0) == "\"" && charat(.@nome$, .@len - 1) == "\"")
+		.@nome$ = substr(.@nome$, 1, .@len - 2);
+
+	.@aid = getcharid(3, .@nome$);
+	if (!.@aid) {
+		dispbottom "[VIP] '" + .@nome$ + "' não está online. Só dá para mexer com o alvo conectado.";
+		end;
+	}
+
+	if (!.@tem_dias) {
+		attachrid(.@aid);
+		.@texto$ = callfunc("F_VipTempo");
+		attachrid(.@gm_aid);
+		dispbottom "[VIP] " + .@nome$ + ": " + .@texto$;
+		end;
+	}
+
+	.@dias = atoi(.@atcmd_parameters$[.@atcmd_numparameters - 1]);
+	if (!.@dias) {
+		dispbottom "[VIP] Uso: @vip <personagem> <dias>. Negativo tira. Nome com espaço pode ir sem aspas.";
+		end;
+	}
+
+	attachrid(.@aid);
+	.@agora = gettimetick(2);
+	.@base = (#vip_expire > .@agora) ? #vip_expire : .@agora;
+	#vip_expire = .@base + (.@dias * 86400);
+	if (#vip_expire < .@agora)
+		#vip_expire = 0;
+	.@texto$ = callfunc("F_VipTempo");
+	callsub S_Icone;
+	message strcharinfo(0), "[VIP] Seu acesso agora é: " + .@texto$;
+	attachrid(.@gm_aid);
+
+	dispbottom "[VIP] " + .@nome$ + " " + ((.@dias > 0) ? "+" : "") + .@dias + " dia(s). Agora: " + .@texto$;
+	end;
+
+OnInit:
+	// SC cosmético inerte, reapontado para o brasão dourado em
+	// db/import/status.yml. Trocar de ícone é mexer lá, não aqui.
+	.Icone = SC_HAT_EFFECT;
+	bindatcmd "vip", strnpcinfo(3) + "::OnComando", 99, 99;
+	end;
 }

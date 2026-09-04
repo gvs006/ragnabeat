@@ -1,0 +1,118 @@
+//===== rAthena Script =======================================
+//= Bragi - Poema de Bragi + Dança Cigana sob demanda
+//===== Descrição: ===========================================
+//= NPC DE TESTE. Entrega os dois buffs de suporte de Bardo e
+//= Cigana de uma vez, por 10 minutos, sem precisar de um par
+//= Bardo/Dançarina em jogo:
+//=
+//=   Poema de Bragi (BA_POEMBRAGI)  - reduz conjuração e
+//=                                    pós-conjuração
+//=   Dança Cigana   (DC_SERVICEFORYOU) - +SP máximo e menos
+//=                                    custo de SP
+//=
+//= Fica ao lado do Canto de Batalha (146,171) de propósito:
+//= os dois são buff sob demanda.
+//=
+//===== POR QUE sc_start4 E NÃO sc_start ======================
+//= Estes dois SC_ carregam o efeito em val2 e val3, não em
+//= val1 - e o sc_start de script só passa val1:
+//=
+//=   SC_POEMBRAGI  val1 = nível da skill
+//=                 val2 = % de redução de conjuração
+//=                        (skill.cpp:10174, reduce_cast_rate)
+//=                 val3 = % de redução de pós-conjuração
+//=                        (skill.cpp:10466, delay)
+//=
+//=   SC_SERVICE4U  val1 = nível da skill
+//=                 val2 = % de bônus de SP máximo
+//=                        (status.cpp:3374)
+//=                 val3 = % de redução do custo de SP
+//=                        (status.cpp:4662, sd->dsprate)
+//=
+//= Com sc_start puro, val2 e val3 ficariam zerados e o buff
+//= apareceria no cliente sem fazer efeito nenhum.
+//=
+//= ATENÇÃO AO PRE-RENEWAL: em RENEWAL o status_change_start
+//= RECALCULA val2/val3 a partir de val1 (status.cpp:11103 e
+//= 11121). Esse trecho está dentro do ramo #else de
+//= "#ifndef RENEWAL", ou seja, NÃO é compilado aqui - por
+//= isso os valores abaixo chegam intactos. Se um dia este
+//= servidor virar renewal, os números do OnInit passam a ser
+//= ignorados e viram 2*val1 / 3*val1.
+//=
+//===== O QUE ESPERAR NO CLIENTE =============================
+//= O ícone APARECE na barra da direita, com o texto já
+//= traduzido ("Poema de Bragi", "Dança Cigana"), mas SEM
+//= contagem regressiva - ele mostra como se fosse infinito.
+//= Isso é do pre-renewal, não é bug e não depende do
+//= cliente: status.cpp manda o ícone com INFINITE_TICK e
+//= guarda a duração real no tick_time (status.cpp:12510).
+//= O buff acaba certinho aos 10 minutos.
+//=
+//= NÃO CAI AO MORRER: os dois já têm NoRemoveOnDead em
+//= db/pre-re/status.yml, e status_change_clear() pula quem
+//= tem essa flag quando o motivo é morte (status.cpp:13394).
+//= Nada precisou ser mudado no db.
+//=
+//= CAI AO DESLOGAR: os dois têm NoSave. É de propósito no
+//= rAthena e não foi mexido.
+//=
+//= Cantado por um Bardo de verdade o buff ENCOLHE ao sair da
+//= área da música - inclusive ao morrer, porque renascer tira
+//= você de cima da unidade. Quem faz isso é skill_unit_onleft
+//= (skill.cpp:7756), que corta a duração para o Duration2 da
+//= skill (20s). Isso é do jogo oficial e NÃO vale para este
+//= NPC: aqui não existe unidade no chão, então nada encurta.
+//============================================================
+
+prontera,149,171,4	script	Bragi	4_M_BARD,{
+	mes "[Bragi]";
+	mes "Sem um Bardo e uma Cigana em cena, a fila do teste não anda.";
+	mes "Eu toco os dois.";
+	next;
+
+	if (select("Toque para mim:Agora não.") == 2) {
+		mes "[Bragi]";
+		mes "A música fica guardada.";
+		close;
+	}
+
+	specialeffect2 EF_ANGELUS;
+	sc_start4 SC_POEMBRAGI, .Duracao, .BragiNivel,  .BragiConj,  .BragiPos,   0;
+	sc_start4 SC_SERVICE4U, .Duracao, .CiganaNivel, .CiganaSpMax, .CiganaCusto, 0;
+
+	mes "[Bragi]";
+	mes "^0000FFPoema de Bragi^000000 - conjuração ^FF0000-" + .BragiConj + "%^000000, pós-conjuração ^FF0000-" + .BragiPos + "%^000000.";
+	mes "^0000FFDança Cigana^000000 - SP máximo ^FF0000+" + .CiganaSpMax + "%^000000, custo de SP ^FF0000-" + .CiganaCusto + "%^000000.";
+	mes "Dura ^FF0000" + (.Duracao / 60000) + " minutos^000000 e ^0000FFnão cai se você morrer^000000.";
+	close;
+
+OnInit:
+	// 10 minutos.
+	.Duracao = 600000;
+
+	// Os valores abaixo são os que as fórmulas de skill.cpp
+	// dariam para um par de nivel 99 com a lição no máximo -
+	// não são números inventados. Referência:
+	// Bardo DEX 99 / INT 60, Lições de Música 10;
+	// Cigana INT 60, Lições de Dança 10.
+
+	// Poema de Bragi nível 10 (skill.cpp:5923)
+	//   conjuração    = 3*nivel + DEX/10 + LiçõesDeMúsica
+	//                   = 30 + 9 + 10 = 49
+	//   pós-conjuração = 50 + INT/5 + 2*LiçõesDeMúsica
+	//                   = 50 + 12 + 20 = 82
+	.BragiNivel = 10;
+	.BragiConj  = 49;
+	.BragiPos   = 82;
+
+	// Dança Cigana nível 10 (skill.cpp:5950)
+	//   SP máximo   = 15 + nivel + INT/10 + LiçõesDeDança/2
+	//               = 15 + 10 + 6 + 5 = 36
+	//   custo de SP = 20 + 3*nivel + INT/10 + LiçõesDeDança/2
+	//               = 20 + 30 + 6 + 5 = 61
+	.CiganaNivel = 10;
+	.CiganaSpMax = 36;
+	.CiganaCusto = 61;
+	end;
+}

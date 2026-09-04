@@ -230,6 +230,10 @@ jogador, e não exige mexer no `DATA.ini`. Detalhe técnico da extração em
 
 ---
 
+> As alteracoes ja FEITAS em habilidades de classe (cast, area, empurrao)
+> estao em **[skills.md](skills.md)**. Esta secao aqui e proposta de
+> ARVORE de skill, que e outra coisa.
+
 ## 5. Skills do Super Aprendiz EX
 
 Boa notícia: não precisa de C++ nem de skill nova.
@@ -344,3 +348,394 @@ Mude ali junto.
 - **Cartas seladas** — pendência 6.4.
 - **Skills do Super Aprendiz** — pendência 6.5.
 - **Mochila da Aventura versão aluguel** — pendência 6.3 (falta a duração).
+
+---
+
+## 9. Champion Mobs — levantamento (12/ago/2026)
+
+O `npc/re/mobs/championmobs.txt` **já está no repo** (veio do upstream), mas só
+é carregado por `npc/re/scripts_monsters.conf` — e a árvore que roda aqui é a
+`npc/pre-re/`. Ou seja: existe no disco, não existe no jogo.
+
+São variantes turbinadas de mobs comuns, com prefixo `C1_`..`C5_` no
+`db/re/mob_db.yml` (Swift, Solid, Furious, Elusive, Ringleader).
+
+### O que dá para aproveitar
+
+| Medida | Número |
+|---|---|
+| Spawns no arquivo | 317 (5 já vêm comentados) |
+| Champions distintos | 311, IDs 2603–2913 |
+| **Marcados como MVP** | **0** — o pedido de "menos MVPs" já vem atendido |
+| Spawns em mapa que o nosso episódio usa | **277** |
+| Spawns em mapa de renewal (inalcançável aqui) | 40 — `bif_fild`, `dic_dun`, `ecl_*`, `bra_*`, `dew_*` |
+| Sprites a criar | **nenhum** |
+
+Sobre os sprites: `jobname.lub` aponta `JT_C1_YOYO` para `"YOYO"`, ou seja, o
+champion **usa o sprite do mob base**. O cliente já renderiza todos.
+
+### O que impede copiar e colar
+
+Os números são de renewal e não sobrevivem aqui:
+
+| | base pre-re | champion (renewal) |
+|---|---|---|
+| Zombie Slaughter | nível 77, 43.000 HP, 12.000 exp | nível **124**, **174.905** HP, 17.150 exp |
+| Yoyo | nível 21, 879 HP, 280 exp | nível 38, **6.940** HP, 1.500 exp |
+
+Nível 124 num servidor com teto 99, e 17 mil de exp base num servidor de
+**500x**. Fora que as tabelas de drop dos champions listam itens de renewal.
+
+### Proposta
+
+Em vez de importar as entradas de renewal, **gerar cada champion a partir do
+mob base do nosso `db/pre-re`**, multiplicando só o que interessa:
+
+```
+nível   = o do mob base            (nunca passa de 99)
+HP      = base x 8
+ATQ     = base x 1,5
+exp     = base x 4
+drops, raça, elemento, tamanho, IA = iguais aos do mob base
+```
+
+Assim nada de renewal entra junto: nem item que não existe, nem nível
+inalcançável. O arquivo sai gerado por script, para `db/ragnabeat_mobs.yml`,
+e os spawns viram um `npc/custom/champions.txt` com os 277 que valem.
+
+### Feito em 12/ago/2026
+
+Gerado por [gerar-champions.py](gerar-champions.py) com os multiplicadores
+acima. **260 mobs, 266 spawns**, zero erro no boot.
+
+| Arquivo | Conteúdo |
+|---|---|
+| `db/ragnabeat_mobs.yml` | os 260 champions |
+| `db/import/mob_db.yml` | só o rodapé que engancha na cadeia do `mob_db` |
+| `npc/custom/champions.txt` | os 266 spawns |
+
+Descartados pelo filtro: 50 spawns em mapa que o nosso episódio não usa, 1 sem
+mob base, e **0 com base MVP**.
+
+Rebalancear = mudar `MULT_HP`, `MULT_ATK` e `MULT_EXP` no topo do script e
+rodar de novo. Os arquivos são sobrescritos; não edite à mão.
+
+## 10. Nomes de monstro em PT-BR
+
+Consequência do item anterior: os champions nasciam "Rijo Zombie Prisoner",
+metade em cada idioma, porque **os 1004 mobs do `db/pre-re` estavam 100% em
+inglês**.
+
+Nome de item o cliente resolve — por isso o `itemInfo_C.lua` traduz 5.301 itens
+sem tocar no servidor. **Nome de monstro não**: é o campo `Name:` do `mob_db`,
+mandado pelo servidor. Traduzir monstro é mexer no db.
+
+**A fonte.** `DEVTOOLS/PTBR/latam/i18n/sc/*.csv` — 1.494 planilhas do cliente
+RO LATAM, uma linha por texto e uma coluna por idioma, tudo em base64 (coluna 2
+inglês, coluna 7 português). São os nomes **oficiais do bRO**, não tradução
+automática: *Zombie Slaughter → Massacre*, *Nightmare Terror → Pesadelo
+Sombrio*, *Soldier Skeleton → Esqueleto Soldado*.
+
+**A armadilha.** A base repete a mesma string em inglês com traduções
+diferentes conforme o contexto. Pegando a primeira ocorrência saía *Isis → Ovo
+de Ísis* e *Orc Warrior → Ovo de Guerreiro Orc* — os ovos de pet. O
+[gerar-nomes-mob.py](gerar-nomes-mob.py) resolve por **voto da maioria**:
+"Isis" aparece 8x como "Isis" e 1x como "Ovo de Ísis", então ganha o primeiro.
+2.840 casos precisaram desse desempate.
+
+Resultado sobre os 1004 mobs:
+
+| | |
+|---|---|
+| traduzidos | **561** |
+| já idênticos em PT (Poring, Familiar…) | 360 |
+| sem entrada na base — ficam em inglês | 77 |
+| tradução acima de 23 caracteres — pulados | 6 |
+
+Cobertura de **92%**. O que não tem tradução fica em inglês de propósito: é
+melhor que chute.
+
+---
+
+## 11. Acessórios custom — Transmutador e Anel do Mercador (02/set/2026)
+
+Três itens que não existem em nenhum servidor oficial. Ficam em
+`db/ragnabeat_items.yml` e são vendidos pelo Contrabandista de Visuais
+(`npc/custom/visuais.txt` → Acessório), pagos em Moeda de Mythril.
+
+| Id | Item | Slot | Preço | Efeito |
+|---|---|---|---|---|
+| 60000 | Anel Transmutador 4rd | Acessório **direito** | 150 | aparência de 4ª evolução |
+| 60001 | Brinco Transmutador 3rd | Acessório **direito** | 100 | aparência de 3ª evolução |
+| 60002 | Anel do Mercador | Acessório (qualquer lado) | 80 | Superfaturar 10 + Desconto 10 |
+
+### Transmutadores — só aparência, e só um por vez
+
+Não dão status nenhum: trocam o sprite do corpo para a classe equivalente de 3ª
+ou 4ª evolução, via `npc/custom/transmutador.txt`. Como este servidor é
+pre-renewal, essas classes não existem como classe jogável — são só os sprites,
+que o cliente 2025 tem de sobra.
+
+Os dois ficam em **`Right_Accessory`** de propósito. Um lado só significa um
+slot só: equipar um desloca o outro, pela mecânica do próprio emulador, sem
+script de guarda. Antes disso, com os dois vestidos ao mesmo tempo, ambos
+rodavam no mesmo recálculo e o último vencia — a aparência ficava imprevisível.
+
+> **Custo de balanceamento: um slot de acessório real.** É deliberado. O
+> pre-renewal não tem `Costume_Accessory` — só `Costume_Head_Top/Mid/Low` e
+> `Costume_Garment` (`doc/item_db.txt:188-203`). Pôr um item de aparência num
+> slot de traje de cabeça tiraria o traje de cabeça do jogador, o que é pior.
+
+### Por que isso exigiu `db/import/job_stats.yml`
+
+A primeira versão usava `changebase` e **não funcionava** — o log do servidor
+mostrava sucesso, com id de classe válido, e a tela não mudava. Foram três
+portões, todos silenciosos:
+
+1. **O cliente mudou de campo.** Desde os clientes 20231220+ o sprite do corpo
+   vem de `bodyStyle`/`LOOK_BODY2`, não mais de `LOOK_BASE`. O rAthena já trata
+   o corte (`src/map/clif.cpp:1182`, 1329, 1438). O `changebase`
+   (`src/map/script.cpp:12978`) manda `LOOK_BASE` — ignorado para o corpo — e no
+   `LOOK_BODY2` reenvia o valor que o `status_set_viewdata` acabou de preencher
+   com a **classe original**. Ele reafirma o sprite antigo.
+2. **`setlook LOOK_BODY2` sozinho também falharia.** `src/map/pc.cpp:11121` sai
+   com `return` mudo — sem log, sem pacote — quando `!job_db.exists(val)`. E em
+   pre-renewal o `job_db` vem só de `db/pre-re/job_stats.yml` (42 entradas, zero
+   classes de 3ª/4ª); quem as tem é `db/re/job_stats.yml`, carregado apenas com
+   `Mode: Renewal`.
+3. **O login resetava.** `src/map/pc.cpp:2114` devolve `status.body` para
+   `class_` quando o job não existe no `job_db`.
+
+Os três se abrem com a mesma mudança: **`db/import/job_stats.yml`** registra as
+27 classes de 3ª/4ª. É o último import de `db/job_stats.yml` e vai **sem
+`Mode:`**, então carrega em pre-renewal também.
+
+> **Isso NÃO torna as classes jogáveis.** Não há skill tree, caminho de
+> jobchange nem tabela de exp — são nomes no `job_db`, para o servidor aceitar
+> mandar o sprite. Todos os campos de stats são opcionais no parser.
+
+De quebra, o `setlook` grava em `sd->status.body`, que persiste na coluna
+`char.body`. Por isso o item ficou **só com `EquipScript` + `UnEquipScript`** — o
+campo `Script` (que roda no `status_calc_pc`) existia apenas para a aparência
+sobreviver ao relogar, e não é mais necessário.
+
+Referência: Racaae, dev do rAthena —
+<https://rathena.org/board/topic/147289-appearance-suit-or-3rd-job-suit/>.
+O tópico 149143 traz "FIX 1/FIX 2" em `clif.cpp` que **não** devem ser aplicados
+aqui: revertem o comportamento para pré-20231220 e quebrariam o suporte que já
+temos.
+
+### Anel do Mercador
+
+Moldado no oficial `Merchant_Manual` (2823, `db/pre-re/item_db_equip.yml:24741`),
+que já concede as duas skills exatamente assim:
+
+```yaml
+Script: |
+  skill "MC_DISCOUNT",10;
+  skill "MC_OVERCHARGE",10;
+```
+
+Ambas têm `MaxLevel: 10` no pre-renewal (`db/pre-re/skill_db.yml:1741-1748`).
+
+Duas diferenças deliberadas em relação ao molde:
+
+- **Sem bloco `Jobs:`.** O oficial é restrito a Aprendiz e Super Aprendiz; este
+  serve a qualquer classe — é o ponto do item.
+- **`Both_Accessory`, não `Right_Accessory`.** Como concede poder de verdade,
+  paga um slot de acessório e pode conviver com um Transmutador. Os
+  transmutadores, puramente cosméticos, é que ficam no lado único.
+
+Campo `Script:` e **não** `EquipScript:` — para conceder skill é o certo: roda no
+`status_calc_pc` e a skill é revogada sozinha ao desequipar, sem precisar de
+`UnEquipScript`. É o que todos os itens oficiais fazem.
+
+**Impacto no balanceamento.** Desconto 10 dá −24% na compra em NPC e
+Superfaturar 10 dá +24% na venda. O Mercador de verdade continua à frente: ele
+tem as duas skills **e** o slot de acessório livre, além de Carrinho e Descobrir
+Item. O anel custa 80 moedas e trava um slot — é conveniência para quem farma,
+não substituto de classe.
+
+---
+
+## 12. O "andar até a célula" ao usar skill — era o cliente (02/set/2026)
+
+Relato: ao usar **Nevasca**, o personagem caminha até a célula e a skill sai
+**nos pés dele**, em vez de ser lançada à distância.
+
+> **Correção.** A primeira versão desta seção concluía que era comportamento
+> normal ("você enxerga 14 células e a skill alcança 9"). **Estava errado.** O
+> detalhe que derrubou isso: a skill saindo na própria célula é sintoma de
+> alcance ZERO, não de alcance 9.
+
+### A causa: o patch `NoWalkDelay` do cliente
+
+`NoWalkDelay` ("Remove Walk Delay") faz o clique que lança a skill de chão virar
+**também** um comando de andar para a mesma célula. Era o **primeiro** patch da
+nossa sessão do WARP, e a própria descrição avisa: *"client may likely send
+more/duplicated packets"*, com `recommend: no`.
+
+O servidor então amplifica. Com o personagem já andando, o ramo `stepaction`
+(`src/map/unit.cpp:2679-2688`) **adia** a skill até a caminhada aproximar:
+
+```cpp
+if(src->type == BL_PC && ud->walktimer != INVALID_TIMER
+   && (!battle_check_range(src, &bl, range-1) || ignore_range)) {
+    ud->stepaction = true;
+    ud->target_to = (skill_x + skill_y*md->xs);
+    ud->stepskill_id = skill_id;
+    return 0; // Attacking will be handled by unit_walktoxy_timer in this case
+}
+```
+
+Resultado visual: andou até o alvo e a skill saiu lá — parecendo "nos pés".
+
+Bug conhecido, com Storm Gust citado nominalmente:
+[rathena#2046](https://github.com/rathena/rathena/issues/2046) (fechado como
+`status:invalid`, porque é client-side),
+[NEMO#152](https://github.com/Neo-Mind/NEMO/issues/152) (*"causes you to walk
+every time even if you use a skill... very annoying for all warlock or similar
+classes with floor skills"*),
+[board 112192](https://rathena.org/board/topic/112192-character-walks-after-using-a-ranged-insta-cast-skill/).
+
+**Corrigido em 02/set/2026** no rebuild do WARP, trocando `NoWalkDelay` por
+`CustomWalkDelay`. Detalhes em [cliente/leia-me.md](cliente/leia-me.md).
+
+### O que foi descartado, com evidência
+
+| Hipótese | Veredito |
+|---|---|
+| `Range` errado no `skill_db` | `WZ_STORMGUST` tem 9, o oficial de pré-re |
+| Servidor mandando andar | `unit_skilluse_pos2` só faz `return 0` fora de alcance |
+| `inf` lido errado (chão virando "self") | `int` = 4 bytes = `<type>.L` oficial |
+| Cliente 2025 não suportar os pacotes antigos 0x010F/0x0111 | tabela laRO: presentes, com handler |
+| Coordenadas x/y de offset errado | `0x0AF4` len 11, offsets 2,4,6,8,10 — batem |
+| `skillinfolist.lub` do cliente | `AttackRange = 9`, igual em pré-re e re |
+
+> Nota lateral achada no caminho, **não corrigida**: a guarda do `struct
+> SKILLDATA` (`src/map/packets_struct.hpp:4239`) escolhe o formato por
+> `PACKETVER_RE_NUM`/`PACKETVER_ZERO_NUM` e **ignora `PACKETVER_MAIN_NUM`** — 4
+> de 242 guardas do arquivo fazem isso, e a linha `clif.cpp:5820` logo abaixo
+> usa a guarda completa com a mesma data. Como o nosso build é MAIN, compila o
+> formato antigo. É inofensivo (o cliente aceita os dois; o que se perde é o
+> campo `level2`), está igual no upstream, e **não** era a causa. Fica anotado.
+
+---
+
+## 13. Cor de roupa e montaria — o erro de palette (02/set/2026)
+
+Uma Bruxa montou pela primeira vez e o cliente passou a dar **erro de palette**,
+deixando a personagem inutilizável.
+
+A montaria universal **existe** para classe antiga — cada linha de classe tem seu
+bicho, com nome coreano: 여우 (raposa, linha do Mago), 타조 (avestruz, Arqueiro),
+사자 (leão, Espadachim), 켈베로스 (cérbero, Gatuno), 페코, 두꺼비 (sapo).
+
+**O defeito é nosso `max_cloth_color: 699`.** O `palette.grf` (pacote Kamishi,
+111 MB) estendeu para 700 cores **apenas os corpos normais**. Medido nos dois
+GRFs:
+
+| Corpo | Cores |
+|---|---|
+| `하이위저드` (Bruxa, normal) | **700** (0-699) |
+| `여우하이위저드` (Bruxa na raposa) | **4** (0-3) |
+
+São **34 corpos montados** no cliente, e nenhum passa de **7** cores. Montar com
+cor acima do teto faz o cliente procurar um `.pal` inexistente.
+
+### A correção: gerar o que falta
+
+Houve uma primeira versão que **recusava montar** acima da cor 3, no
+`F_Montaria`. Foi retirada no mesmo dia: ela bloqueava até as cores já geradas,
+e o pior caso sem palette é a montaria sair com a cor errada — não vale trocar
+isso por um "não". O `F_Montaria` ficou só com o liga/desliga.
+
+A correção de verdade é
+[cliente/gerar-palettes-montaria.py](cliente/gerar-palettes-montaria.py), que
+preencheu **40.954 palettes** (40 MB) — os 34 corpos montados, nas cores que
+faltavam até 699.
+
+O algoritmo saiu de medição, não de chute. Comparando as 4 cores **oficiais**
+(só `data.grf` — o `palette.grf` sobrescreve até a cor 0, então derivar dele
+daria número errado):
+
+- corpo normal: **21** índices variam → a roupa
+- corpo montado: **27** → roupa + bicho
+- a diferença, **6** índices (235, 237-239, 252-253), **é a raposa**
+
+E o dado que fecha: uma cor custom muda **208 dos 256** índices — repinta o
+personagem quase inteiro — mas **nunca toca os 6 do bicho** (conferido em 125,
+400 e 699). Então:
+
+```
+saida = palette N do corpo NORMAL (custom, inteira)
+saida[índices do bicho] = palette 0 do corpo MONTADO
+```
+
+O personagem fica com o visual custom completo e a montaria com a cor original.
+
+Os arquivos vão para `data/palette/몸/` solto, que vence o GRF porque o
+`DataFolderFirst` está aplicado, com **nome mojibake** (bytes cp949 lidos como
+latin1) — a mesma convenção dos sprites soltos. Ver [encoding.md](encoding.md).
+
+O script é idempotente: pula cor que já existe no GRF (as oficiais) e cor que o
+corpo normal não tem. Rodar de novo não duplica nada.
+
+> ⚠ **O script grava no `RagnaBeat.Dev`, e os builds têm `data/` própria.**
+> Na primeira tentativa o cliente continuou dando `CPaletteRes :: Cannot find
+> File`, porque quem estava rodando era o `builds\RagnaBeatProdV0.0.10\`, que
+> não tinha `data/palette/`. Um build já pronto **não** herda nada gerado depois
+> dele. Para um build existente, leve as palettes por **hardlink** (instantâneo,
+> sem gastar disco). Builds novos já as incluem: `.pal` está em `POR_HARDLINK`
+> no [build.py](cliente/build.py).
+
+**A família `*_riding` (nomes em inglês) não precisa de nada.** Os 22 corpos de
+4ª classe ou já vêm com 700 cores do `palette.grf` (`arch_mage_riding`,
+`dragon_knight_riding`…), ou têm o corpo **normal** limitado a 8 cores
+(`meister`, `night_watch`) — e aí não há de onde copiar. Só a família coreana
+(as 2ª classes) precisava ser preenchida.
+
+**Ressalva medida:** a derivação dos índices da montaria não é igualmente
+precisa para todos. Na Bruxa são 6 índices; no `페코건너` (Gunslinger no peco)
+são 206, o que significa que boa parte da cor custom é descartada e o
+personagem muda pouco. Não é erro — é o limite de derivar por diferença quando
+as palettes oficiais daquele corpo variam muito. Quatro corpos dão 0 índices
+(`여우위저드` masc, `타조무희`, `타조바드`, `타조헌터`): neles a montaria é
+repintada junto. Nenhum dos dois casos trava o cliente.
+
+### Destravar um personagem que já travou
+
+O estado fica salvo em `sc_data`. `SC_ALL_RIDING` é o tipo **592** neste build:
+
+```sql
+DELETE FROM sc_data WHERE char_id = <id> AND type = 592;
+```
+
+Com o personagem offline, e reiniciando o servidor em seguida para o char-server
+não reescrever do cache. Foi o que destravou a `Katy Test` (char_id 150006).
+
+---
+
+## 14. Acessório Sombra — onde os Transmutadores foram parar
+
+Os Transmutadores (60000/60001) começaram em `Both_Accessory`, depois
+`Right_Accessory`, e agora estão em **`Shadow_Right_Accessory`**.
+
+O pedido era um "slot visual", que **não existe**: `Costume_Accessory` não é
+uma coisa no rAthena. Os slots são um enum C++ em `src/common/mmo.hpp:336-363`,
+sem `#ifdef RENEWAL`, com só quatro de traje (3 de cabeça + capa). Não há nada
+em `db/re` para copiar — YAML só *usa* os slots, não os define — e criar um
+exigiria recompilar **e ainda assim o cliente não teria onde desenhar**.
+
+O slot Sombra é o mais próximo que existe de verdade: `EQP_SHADOW_ACC_R`
+(0x100000) é bit independente de `EQP_ACC_R` (0x000008), com índice próprio em
+`sd->equip_index[]` e tratamento separado em `src/map/pc.cpp:12072`. **Convive
+com os dois acessórios normais**, e o cliente o desenha em janela separada.
+
+Exige `Type: Shadowgear`: `src/map/itemdb.cpp:467` recusa item com bit shadow e
+tipo diferente, rebaixando para `IT_ETC` com aviso.
+
+A exclusão mútua continua de graça: os dois no mesmo slot, um desloca o outro.
+
+O **Anel do Mercador (60002) ficou em `Both_Accessory`** — concede Superfaturar
+e Desconto, então paga um slot de acessório de verdade.

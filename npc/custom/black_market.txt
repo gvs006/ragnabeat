@@ -1,150 +1,149 @@
 //===== rAthena Script =======================================
-//= Mercado Negro Elite (Complex)
-//===== Description: =========================================
-//= Portal para Sala Secreta com Vendedores de MVP Cards por Slot
-//= Moeda: Mithril Coin (ID: 674)
+//= Mercado Negro - Contrabandista
+//===== Descrição: ===========================================
+//= Um único NPC em Prontera, com menu de dois níveis:
+//=
+//=   1) a parte do corpo  (Elmo, Arma, Armadura, ...)
+//=   2) o tipo            (Cartas MvP, Cartas Normais, Equips,
+//=                         Equips 3rd)
+//=
+//= Cada folha abre uma loja de troca nativa (barter), onde o
+//= jogador vê o ícone e a descrição, escolhe a quantidade, e
+//= o servidor debita a moeda com checagem de peso e espaço.
+//=
+//= AS LISTAS DE ITEM NÃO ESTÃO AQUI. Elas ficam em
+//= npc/custom/barters.yml, no formato Contra#<tipo>_<slot>.
+//= Este script só monta o nome e chama.
+//=
+//= O que "Equips 3rd" quer dizer aqui: equipamento nascido no
+//= episódio das 3as classes e trazido para o pre-renewal, com
+//= nível e classe ajustados. Não existe 3a classe neste
+//= servidor. Os valores e o porquê de cada ajuste estão em
+//= docs/rebalance.md.
+//=
+//= Por que barter e não itemshop: o itemshop do rAthena abre
+//= a janela de Cash Shop (src/map/npc.cpp, npc_click ->
+//= clif_cashshop_show). No cliente 2025 ela mostra campo de
+//= "Free Cash" e erra a mensagem de saldo, falando em Kafra
+//= Points quando na verdade faltam moedas. O barter é a
+//= janela feita para moeda-item e mostra o que falta certo.
+//=
+//= Moeda: Mithril Coin (674). Peso zerado em
+//= db/ragnabeat_items.yml para não pesar no inventário.
 //============================================================
 
-// Portal em Prontera
-prontera,156,187,4	script	Contrabandista	114,{
-	mes "[Contrabandista]";
-	mes "Psiu... Você parece alguém que procura por poder real.";
-	mes "Tenho um esconderijo onde o mercado de elite acontece.";
-	mes "Quer que eu te leve até lá?";
-	next;
-	if (select("Sim, me leve.:Não, obrigado.") == 2) {
-		mes "[Contrabandista]";
-		mes "Tsc. Então não me faça perder tempo.";
-		close;
-	}
-	mes "[Contrabandista]";
-	mes "Cuidado lá dentro... as sombras têm olhos.";
-	close2;
-	warp "prt_in",163,169;
-	end;
-}
-
-// Sala Secreta (prt_in) - NPCs de Venda
+//= BONUS ALEATORIO: nada comprado aqui vem com BA. O barter
+//= entrega o item cru - ele nao passa pelo randopt_drop_*
+//= (que so vale para drop de monstro) nem pelo
+//= randomoptgroup() de script. Para vender com BA seria
+//= preciso trocar barter por shop + npcshopattach +
+//= OnBuyItem, e ai some a janela com icone e quantidade.
+//= Ver docs/rebalance.md.
 //============================================================
 
-prt_in,167,169,4	script	Mestre do Câmbio	111,{
-	.@coin = 674; // Mithril Coin
-	.@price = 100000; // 100k cada moeda
-	
-	mes "[Mestre do Câmbio]";
-	mes "Aqui nós não aceitamos papel sujo do reino.";
-	mes "Se quiser comprar algo, vai precisar de ^FF0000Mithril Coins^000000.";
-	mes "Eu vendo cada uma por ^00AA00" + .@price + " Zeny^000000.";
+prontera,143,171,4	script	Contrabandista	615,{
+	mes "[Contrabandista]";
+	mes "Psiu... aqui dentro não circula papel do reino.";
+	mes "Só aceito " + mesitemlink(.Moeda) + ", e você tem ^0000FF" + countitem(.Moeda) + "^000000.";
 	next;
-	mes "[Mestre do Câmbio]";
-	mes "Quantas você quer?";
-	input .@amount;
-	
-	if (.@amount <= 0) {
-		mes "[Mestre do Câmbio]";
-		mes "Cai fora, não brinque com meu tempo.";
-		close;
-	}
-	
-	.@total = .@amount * .@price;
-	
-	if (Zeny < .@total) {
-		mes "[Mestre do Câmbio]";
-		mes "Você não tem Zeny suficiente para isso.";
-		close;
-	}
-	
-	Zeny -= .@total;
-	getitem .@coin, .@amount;
-	mes "[Mestre do Câmbio]";
-	mes "Aqui estão suas " + .@amount + " moedas. Agora vá gastar.";
-	close;
-}
 
-prt_in,159,169,4	script	Portal de Saída	114,{
-	mes "[Portal]";
-	mes "Deseja retornar para Prontera?";
-	next;
-	if (select("Sim:Não") == 1) {
-		warp "prontera",156,191;
-	}
-	close;
-}
-
-// --- NPCs de Cartas MVP por Slot ---
-
-// Headgear
-prt_in,153,164,4	script	Elite HG Cards	112,{
-	callfunc "F_EliteShop", "Headgear", 4144,4121,4168,4143,4276,4403;
-}
-
-// Weapon
-prt_in,158,164,4	script	Elite Weapon Cards	112,{
-	callfunc "F_EliteShop", "Arma", 4232,4147,4152,4263,4137,4241,4361,4376;
-}
-
-// Armor
-prt_in,163,164,4	script	Elite Armor Cards	112,{
-	callfunc "F_EliteShop", "Armadura", 4302,4282,4146,4151,4399;
-}
-
-// Shield
-prt_in,168,164,4	script	Elite Shield Cards	112,{
-	callfunc "F_EliteShop", "Escudo", 4123,4132;
-}
-
-// Garment
-prt_in,153,174,6	script	Elite Garment Cards	113,{
-	callfunc "F_EliteShop", "Capa", 4174,4202;
-}
-
-// Footgear
-prt_in,158,174,6	script	Elite Footgear Cards	113,{
-	callfunc "F_EliteShop", "Calçado", 4148,4211,4135,4128,4324;
-}
-
-// Accessory
-prt_in,163,174,6	script	Elite Accessory Cards	113,{
-	callfunc "F_EliteShop", "Acessório", 4145,4392,4407;
-}
-
-// Função de Loja Customizada
-function	script	F_EliteShop	{
-	.@slot$ = getarg(0);
-	.@coin = 674;
-	.@price = 100; // Preço padrão: 100 moedas
-	
-	mes "[Vendedor de Elite - " + .@slot$ + "]";
-	mes "Escolha a carta MVP que deseja para seu slot de " + .@slot$ + ".";
-	mes "Cada uma custa ^FF0000" + .@price + " Mithril Coins^000000.";
-	next;
-	
-	// Construir menu dinâmico
+L_Slot:
 	.@menu$ = "";
-	for (.@i = 1; .@i < getargcount(); .@i++) {
-		.@menu$ += getitemname(getarg(.@i)) + ":";
+	for (.@i = 0; .@i < getarraysize(.Slot$); .@i++)
+		.@menu$ += .Slot$[.@i] + ":";
+	.@menu$ += "Comprar " + getitemname(.Moeda) + ":Ir embora";
+
+	.@s = select(.@menu$) - 1;
+	if (.@s == getarraysize(.Slot$))
+		goto L_Cambio;
+	if (.@s < 0 || .@s > getarraysize(.Slot$)) {
+		mes "[Contrabandista]";
+		mes "Então some daqui.";
+		close;
 	}
-	
-	.@sel = select(.@menu$) + 1; // +1 porque pulei o arg 0 (slot$)
-	.@itemID = getarg(.@sel - 1);
-	
-	mes "[Vendedor de Elite]";
-	mes "Tem certeza que deseja comprar a carta ^0000FF" + getitemname(.@itemID) + "^000000?";
+
+	// .Tipos[] e uma mascara, ver o OnInit.
+	// Categoria vazia nao vira opcao - nada de porta para sala vazia.
+	.@m = .Tipos[.@s];
+	.@n = 0;
+	.@menu$ = "";
+	deletearray .@pref$[0];
+	for (.@i = 0; .@i < getarraysize(.Tipo$); .@i++) {
+		if (!(.@m & (1 << .@i)))
+			continue;
+		.@menu$ += .Tipo$[.@i] + " [" + .Slot$[.@s] + "]:";
+		.@pref$[.@n] = .TipoId$[.@i];
+		.@n++;
+	}
+	.@menu$ += "Voltar";
+
+	.@t = select(.@menu$) - 1;
+	if (.@t < 0 || .@t >= .@n) {
+		mes "[Contrabandista]";
+		mes "Decida-se.";
+		next;
+		goto L_Slot;
+	}
+
+	close2;
+	callshop "Contra#" + .@pref$[.@t] + "_" + .SlotId$[.@s];
+	end;
+
+L_Cambio:
+	mes "[Contrabandista]";
+	mes "Cada " + mesitemlink(.Moeda) + " sai por ^00AA00" + callfunc("F_InsertComma", .Preco) + " Zeny^000000.";
+	mes "Quantas você quer? (máximo " + .MaxCompra + " por vez)";
 	next;
-	if (select("Sim, comprar.:Não.") == 2) {
+
+	input .@qtd, 0, .MaxCompra;
+	if (.@qtd < 1) {
+		mes "[Contrabandista]";
+		mes "Não brinque com o meu tempo.";
 		close;
 	}
-	
-	if (countitem(.@coin) < .@price) {
-		mes "[Vendedor de Elite]";
-		mes "Você não tem moedas suficientes! Vá falar com o Mestre do Câmbio.";
+
+	.@total = .@qtd * .Preco;
+	if (Zeny < .@total) {
+		mes "[Contrabandista]";
+		mes "Isso daria ^00AA00" + callfunc("F_InsertComma", .@total) + " Zeny^000000.";
+		mes "Você não tem.";
 		close;
 	}
-	
-	delitem .@coin, .@price;
-	getitem .@itemID, 1;
-	specialeffect2 EF_LEVELUP;
-	mes "[Vendedor de Elite]";
-	mes "Excelente escolha! Aqui está sua carta.";
+
+	Zeny -= .@total;
+	getitem .Moeda, .@qtd;
+	mes "[Contrabandista]";
+	mes "Aqui estão suas " + .@qtd + " moedas. Agora vê gastar.";
 	close;
+
+OnInit:
+	waitingroom "Contrabandista", 0;
+	.Moeda = 674;			// Mithril Coin
+	.Preco = 100000;		// Zeny por moeda
+	.MaxCompra = 500;		// teto por compra (500 x 100k = 50M, longe do estouro de Zeny)
+
+	// Nome exibido e sufixo usado no nome da loja do barters.yml.
+	setarray .Slot$[0],
+		"Elmo", "Arma", "Armadura", "Escudo", "Capa", "Calçado", "Acessório";
+	setarray .SlotId$[0],
+		"elmo", "arma", "armadura", "escudo", "capa", "calcado", "acessorio";
+
+	setarray .Tipo$[0],
+		"Cartas MvP", "Cartas Normais", "Equips", "Equips 3rd";
+	setarray .TipoId$[0],
+		"mvp",        "norm",           "eq",     "3rd";
+
+	// Que tipos existem em cada slot, na ordem de .Slot$.
+	// 1 = Cartas MvP, 2 = Cartas Normais, 4 = Equips, 8 = Equips 3rd.
+	// ISTO TEM QUE BATER COM npc/custom/barters.yml. Categoria marcada aqui
+	// sem loja la vira "Shop not found" no console quando o jogador clicar.
+	setarray .Tipos[0],
+		1|2|4|8,	// Elmo
+		1|2|4|8,	// Arma
+		1|2|4,		// Armadura
+		1|2,		// Escudo
+		1|2|4|8,	// Capa
+		1|4,		// Calcado   (sem carta normal)
+		1|2|4|8;	// Acessorio
+	end;
 }

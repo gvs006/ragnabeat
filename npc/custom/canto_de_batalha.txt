@@ -1,0 +1,136 @@
+//===== rAthena Script =======================================
+//= Canto de Batalha sob demanda
+//===== Descrição: ===========================================
+//= Entrega, um de cada vez, os efeitos que o Canto de Batalha
+//= (PA_GOSPEL) sorteia dentro da área da skill. Aqui o
+//= jogador escolhe qual quer em vez de torcer pelo sorteio.
+//=
+//= Por que NÃO usar "sc_start SC_GOSPEL": os buffs do Canto
+//= de Batalha não vêm do status, vêm da unidade de skill no
+//= chão (src/map/skill.cpp, case UNT_GOSPEL). Um sc_start
+//= vindo de script deixa val4 = 0, e nesse estado o status
+//= não aplica buff nenhum. Por isso cada efeito é aplicado
+//= pelo SC_ próprio dele, com o mesmo valor do código.
+//=
+//===== "OS N JUNTOS !" ======================================
+//= A última opção antes de desistir aplica TODOS os efeitos
+//= da lista de uma vez. Não acumula nada: cada efeito é um
+//= SC_ diferente, e um sc_start sobre um SC_ que já está ativo
+//= REINICIA a duração em vez de somar (status_change_start
+//= reaproveita a mesma status_change_entry). Ou seja, clicar
+//= dez vezes dá exatamente o mesmo bloco de buffs que clicar
+//= uma - e o mesmo vale se o jogador já estiver debaixo do
+//= Canto de Batalha de um Sacerdote de verdade.
+//=
+//= O nome da opção é montado com o tamanho da lista, então
+//= acrescentar um quarto efeito troca o texto para "Os 4
+//= Juntos !" sozinho - não precisa mexer aqui.
+//=
+//===== PARA ADICIONAR MAIS EFEITOS ==========================
+//= Acrescente uma linha na MESMA POSIÇÃO dos quatro arrays do
+//= OnInit. A lógica do NPC não muda. Os que faltam, com os
+//= valores oficiais de skill.cpp:
+//=
+//=   "DEF +25%"             SC_INCDEFRATE    25    0
+//=   "HIT e Esquiva +50"    SC_INCHIT        50    SC_INCFLEE
+//=   "HP Máximo +100%"      SC_INCMHPRATE   100    0
+//=   "Imunidade a Status"   SC_SCRESIST     100    0
+//=   "Arma Sagrada"         SC_ASPERSIO       1    0
+//=   "Armadura Sagrada"     SC_BENEDICTIO     1    0
+//=
+//===== DE ONDE SAI O NOME DE CADA EFEITO ====================
+//= Do próprio cliente. Quando o Canto de Batalha sorteia um
+//= efeito, o servidor manda clif_gospel_info() e o cliente
+//= exibe a frase correspondente do msgstringtable:
+//=
+//=   MSI_GOSPEL3  "Seu HP máximo aumentará..."   SC_INCMHPRATE
+//=   MSI_GOSPEL4  "Seu SP máximo aumentará..."   SC_INCMSPRATE
+//=   MSI_GOSPEL5  "Suas habilidades serão        SC_INCALLSTATUS
+//=                 aprimoradas..."               (+20 em tudo)
+//=   MSI_GOSPEL9  "Seu ataque aumentará..."      SC_INCATKRATE
+//=
+//= "Habilidades Aprimoradas" é a GOSPEL5, e não um buff de
+//= skill: o que ela faz é +20 em TODOS os atributos. O nome
+//= no menu segue o texto do cliente para o jogador reconhecer.
+//============================================================
+
+prontera,146,171,4	script	Canto de Batalha	56,{
+	mes "[Canto de Batalha]";
+	mes "O canto abençoa quem está por perto, mas nunca com o que você precisa na hora.";
+	mes "Comigo você escolhe.";
+	next;
+
+	.@total = getarraysize(.Nome$);
+	.@menu$ = "";
+	for (.@i = 0; .@i < .@total; .@i++)
+		.@menu$ += .Nome$[.@i] + ":";
+	.@menu$ += "^0000FFOs " + .@total + " Juntos !^000000:Agora não.";
+
+	// 0 .. .@total-1  = um efeito só
+	// .@total         = todos de uma vez
+	// .@total+1       = desistiu
+	.@sel = select(.@menu$) - 1;
+	if (.@sel < 0 || .@sel > .@total) {
+		mes "[Canto de Batalha]";
+		mes "Volte quando a batalha apertar.";
+		close;
+	}
+
+	if (.@sel == .@total) {
+		.@ini = 0;
+		.@fim = .@total - 1;
+	} else {
+		.@ini = .@sel;
+		.@fim = .@sel;
+	}
+
+	specialeffect2 EF_ANGELUS;
+	for (.@i = .@ini; .@i <= .@fim; .@i++) {
+		sc_start .Status[.@i], .Duracao, .Valor[.@i];
+		if (.Status2[.@i] > 0)
+			sc_start .Status2[.@i], .Duracao, .Valor[.@i];
+	}
+
+	mes "[Canto de Batalha]";
+	if (.@sel == .@total) {
+		mes "Feito, os ^0000FF" + .@total + "^000000 ao mesmo tempo:";
+		for (.@i = 0; .@i < .@total; .@i++)
+			mes " ~ ^0000FF" + .Nome$[.@i] + "^000000";
+	} else {
+		mes "Feito: ^0000FF" + .Nome$[.@sel] + "^000000.";
+	}
+	mes "Dura ^FF0000" + (.Duracao / 60000) + " minutos^000000.";
+	close;
+
+OnInit:
+	// Duração de todos os efeitos, em ms. 240000 = 4 minutos.
+	// No jogo oficial o Canto de Batalha dura 60000 e é
+	// sorteado; aqui é escolhido, então dura mais de propósito.
+	.Duracao = 240000;
+
+	// Nome mostrado no menu.
+	setarray .Nome$[0],
+		"Ataque +100%",
+		"SP Máximo +100%",
+		"Habilidades Aprimoradas (+20 em todos os atributos)";
+
+	// Status principal de cada efeito.
+	setarray .Status[0],
+		SC_INCATKRATE,
+		SC_INCMSPRATE,
+		SC_INCALLSTATUS;
+
+	// Valor passado ao sc_start (val1).
+	setarray .Valor[0],
+		100,
+		100,
+		20;
+
+	// Status extra, para efeitos que precisam de dois
+	// sc_start (só "HIT e Esquiva"). 0 = não tem.
+	setarray .Status2[0],
+		0,
+		0,
+		0;
+	end;
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Status do mundo</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<!-- Este e o SEGUNDO NoticeBox (Box1 no config.ini). No design isto era um
+     painel estatico, mas assado no bg.bmp ele mentiria: diria "Online" com o
+     servidor fora do ar, e as taxas ficariam congeladas na imagem do dia em
+     que o bitmap foi gerado. Sendo HTML servido daqui, muda sem cliente novo.
+
+     As taxas vem de conf/battle/exp.conf e drops.conf:
+       base_exp_rate 50000 e job_exp_rate 50000 -> 500x
+       item_rate_common/equip/card 2000         -> 20x -->
+
+<div class="mundo">
+  <div class="titulo">Status do mundo</div>
+  <table>
+    <tr>
+      <td class="k">Servidor</td>
+      <td class="v on">Online</td>
+    </tr>
+    <tr>
+      <td class="k">Base / Job</td>
+      <td class="v">500x</td>
+    </tr>
+    <tr>
+      <td class="k">Drop</td>
+      <td class="v">20x</td>
+    </tr>
+    <tr>
+      <td class="k">Cartas</td>
+      <td class="v">20x</td>
+    </tr>
+    <tr>
+      <td class="k">Episodio</td>
+      <td class="v">Pre-Renewal</td>
+    </tr>
+    <tr>
+      <td class="k">Versao</td>
+      <td class="v">0.0.11</td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

@@ -1,23 +1,70 @@
 //===== rAthena Script =======================================
 //= Curandeira Custom
 //===== Descrição: ===========================================
-//= Cura e aplica os buffs NO CLIQUE, sem diálogo nenhum.
-//=
-//= Em servidor de rate alta o jogador passa aqui dezenas de
-//= vezes por sessão. Cada menu é um clique a mais entre ele e
-//= voltar a jogar — por isso não existe nem "next" nem
-//= "select": clicou, recebeu.
+//= Cura e aplica os buffs, sem diálogo nenhum. Chegou, clicou,
+//= recebeu.
 //=
 //= Jogador comum: Bênção e Agilidade.
 //= VIP: o pacote completo.
 //=
-//= O gate de VIP é o F_EhVip de npc/custom/vip.txt — não
+//= O gate de VIP é o F_EhVip de npc/custom/vip.txt - não
 //= duplique a checagem aqui.
+//=
+//===== POR QUE ELA NÃO TEM ÁREA DE GATILHO ==================
+//= Ela JÁ TEVE uma área "3,3" (7x7 células), para buffar quem
+//= só passasse perto. Essa área era a causa de um bug que
+//= custou três rodadas de investigação:
+//=
+//=   clicar nela fazia o personagem andar até ela e NADA
+//=   acontecia - nem diálogo, nem buff.
+//=
+//= A cadeia, confirmada no código:
+//=   1. o cliente começa a caminhar até o NPC clicado
+//=   2. ao pisar numa célula da área, npc_touch_area_allnpc
+//=      dispara o OnTouch NO MEIO da caminhada
+//=      (src/map/unit.cpp:683-685)
+//=   3. o OnTouch aplica SC_INCREASEAGI, que tem Speed: true
+//=   4. SCB_SPEED liga ud->state.change_walk_target = 1
+//=      (src/map/status.cpp:5851-5860) - incondicional, e o
+//=      comentário do Skotlex ali diz que serve para "pisou em
+//=      algo enquanto andava". Era literalmente este caso.
+//=   5. ~50 linhas depois, na MESMA chamada, unit_walktoxy_sub
+//=      RE-EMITE o movimento (src/map/unit.cpp:738-745)
+//=   6. o cliente descarta a ação enfileirada, e o pacote
+//=      CZ_CONTACTNPC nunca chega ao servidor
+//=
+//= Ou seja: o clique nunca acontecia. Por isso nem janela de
+//= diálogo renderizava.
+//=
+//= A área também engolia o Contrabandista de Visuais (148,187)
+//= e o Hunting Missions (152,187), que ficam dentro dos
+//= x147-153 / y184-190 que ela cobria - os cliques deles
+//= quebravam junto.
+//=
+//= DUAS TENTATIVAS QUE NÃO RESOLVERAM, para ninguém repetir:
+//=   1. unitstopwalk no clique (USW_FIXPOS|USW_FORCE_STOP).
+//=      Inútil: o clique não chegava, não havia o que parar.
+//=   2. dar mes/close à NPC. Inútil pelo mesmo motivo, e foi
+//=      o que provou o diagnóstico - a janela não renderizava.
+//=
+//= NÃO REINTRODUZA a área aqui. Se um dia quiser buff por
+//= proximidade, use um NPC SEPARADO, longe da fileira de
+//= NPCs clicáveis, e sem buff que mexa em velocidade
+//= (SC_INCREASEAGI e SC_WINDWALK são os dois que mexem).
 //============================================================
 
-prontera,150,187,4	script	Curandeira	909,{
+prontera,158,193,4	script	Curandeira	677,{
 	percentheal 100, 100;
 	specialeffect2 EF_HEAL2;
+
+	// Identifica o inventario inteiro. Com type ausente ele ja identifica e
+	// devolve QUANTOS estavam por identificar - por isso a contagem sai antes
+	// de ficar zero, e da para avisar so quem tinha algo.
+	.@ident = identifyall();
+	if (.@ident > 0) {
+		specialeffect2 EF_DETECT2;
+		dispbottom "[Curandeira] " + .@ident + " item(ns) identificado(s).";
+	}
 
 	// --- Buffs de todo mundo ---
 	specialeffect2 EF_BLESSING;
@@ -33,14 +80,17 @@ prontera,150,187,4	script	Curandeira	909,{
 	}
 
 	// --- Exclusivo VIP ---
-	sc_start SC_ASSUMPTIO, .Duracao, 5;
+	// FORA daqui de proposito, a pedido em 03/set/2026:
+	//   SC_ASSUMPTIO        (Assumptio)
+	//   SC_WEAPONPERFECTION (Manejo Perfeito)
+	//   SC_OVERTHRUST       (Forca Violenta)
+	// Nao reintroduza sem combinar - foram tirados por decisao de balanceamento,
+	// nao por bug.
 	sc_start SC_MAGNIFICAT, .Duracao, 5;
 	sc_start SC_GLORIA, .Duracao, 5;
 	sc_start SC_IMPOSITIO, .Duracao, 5;
 	sc_start SC_WINDWALK, .Duracao, 10;
 	sc_start SC_ADRENALINE, .Duracao, 5;
-	sc_start SC_WEAPONPERFECTION, .Duracao, 5;
-	sc_start SC_OVERTHRUST, .Duracao, 5;
 
 	dispbottom "[Curandeira VIP] Vida e SP restaurados. Pacote completo de bênçãos aplicado.";
 	end;
@@ -48,5 +98,7 @@ prontera,150,187,4	script	Curandeira	909,{
 OnInit:
 	// Duração de todos os buffs, em ms. 240000 = 4 minutos.
 	.Duracao = 240000;
+	// Rotulo flutuante: sala de chat com limite 0, ninguem entra.
+	waitingroom "Curandeira", 0;
 	end;
 }

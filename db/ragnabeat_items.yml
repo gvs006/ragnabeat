@@ -1,0 +1,452 @@
+# Itens custom e overrides do RagnaBeat
+#
+# POR QUE ESTE ARQUIVO EXISTE
+# O db/import/item_db.yml e GERADO por docs/cliente/gen-nomes-servidor.py e
+# sobrescrito inteiro a cada regeracao - qualquer edicao a mao la se perde.
+# Este arquivo e o lugar estavel para ajuste manual: e importado no rodape do
+# gerado, entao carrega POR ULTIMO e ganha de tudo, inclusive dos nomes PT-BR.
+#
+# Ordem de carga:
+#   db/item_db.yml -> db/pre-re/item_db*.yml -> db/import/item_db.yml (nomes
+#   PT-BR, gerado) -> ESTE ARQUIVO
+#
+# Encoding: cp1252, sem BOM, como todo YAML com texto que o jogador ve.
+# Ver docs/encoding.md.
+#
+# ANTES DE ADICIONAR ITEM NOVO, rode:
+#   python docs/cliente/checar-sprite.py <id>
+# Item sem sprite no cliente do build abre caixa de erro na cara do jogador.
+#
+# ATENCAO: nome e descricao do TOOLTIP vem do itemInfo do CLIENTE, nao daqui.
+# O Name abaixo e o que o servidor usa - e o que o @ii procura.
+#
+# As decisoes de balanceamento estao justificadas em docs/rebalance.md. Nao
+# mude numero aqui sem atualizar la.
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+# ---------------------------------------------------------------------------
+# Overrides de itens que ja existem em pre-renewal
+# ---------------------------------------------------------------------------
+
+  # Moeda do Mercado Negro (npc/custom/black_market.txt).
+  # Peso 0: o jogador acumula centenas de moedas e elas nao podem competir
+  # com o loot pela capacidade. Original em db/pre-re/item_db_etc.yml: 40.
+  - Id: 674
+    AegisName: Mithril_Coin
+    Weight: 0
+
+# ---------------------------------------------------------------------------
+# Trazidos do renewal (db/re/item_db_equip.yml)
+#
+# Regra geral aplicada: mexer o MINIMO. So o que impediria o item de existir
+# em pre-renewal e o que estouraria a escala do episodio.
+#
+# Duas armadilhas que aparecem em quase todo item de renewal:
+#   EquipLevelMin acima de 99  -> inalcancavel, o item entraria morto
+#   Classes: All_Third/Fourth  -> em pre-re nao ha 3a classe, ninguem equipa
+# ---------------------------------------------------------------------------
+
+  # Arco Elfico. Renewal: EquipLevelMin 100 e Classes All_Third/Fourth.
+  # ATQ 160 mantido: fica entre o Balistar_ (145, com slot) e o Bow_Of_Evil
+  # (170, sem slot), e o Nivel de Arma 3 ja o pune no refino.
+  - Id: 1746
+    AegisName: Elven_Bow
+    Name: "Arco Élfico"
+    Type: Weapon
+    SubType: Bow
+    Buy: 20
+    Weight: 1500
+    Attack: 160
+    Range: 5
+    Slots: 1
+    Jobs:
+      BardDancer: true
+      Hunter: true
+    Classes:
+      Normal: true
+      Upper: true
+      Baby: true
+    Locations:
+      Both_Hand: true
+    WeaponLevel: 3
+    EquipLevelMin: 90
+    Refineable: true
+    Script: |
+      bonus bDex,2;
+
+  # Flecha Elfica. Renewal pede nivel 100; flecha com requisito de nivel so
+  # atrapalha, entao vai a 0. ATQ 45 acima da Flecha de Aco (40) e sem o
+  # bonus elemental da de Prata.
+  - Id: 1773
+    AegisName: Arrow_Of_Elf
+    Name: "Flecha Élfica"
+    Type: Ammo
+    SubType: Arrow
+    Buy: 10
+    Sell: 0
+    Weight: 1
+    Attack: 45
+    Jobs:
+      Archer: true
+      Assassin: true
+      BardDancer: true
+      Hunter: true
+      Rogue: true
+      Thief: true
+    Locations:
+      Ammo: true
+    EquipLevelMin: 0
+
+  # Mochila da Aventura. DEF 20 -> 10: o manto com mais DEF de TODO o pre-re
+  # tem 10 (Ruffler, Capa de Freyja). 20 seria o dobro do teto do episodio.
+  # O script fica intacto - os gatilhos de atributo >=90 sao alcancaveis aqui.
+  - Id: 2576
+    AegisName: Bravery_Bag
+    Name: "Mochila da Aventura"
+    Type: Armor
+    Weight: 200
+    Defense: 10
+    Slots: 1
+    Locations:
+      Garment: true
+    ArmorLevel: 1
+    Refineable: true
+    View: 2
+    Trade:
+      NoDrop: true
+    Script: |
+      skill "BS_GREED",1;
+      .@r = getrefine();
+      if (.@r>=7) {
+         if (readparam(bStr)>=90) {
+            bonus bBaseAtk,(.@r>=9)?30:20;
+         }
+         if (readparam(bInt)>=90) {
+            bonus bMatk,(.@r>=9)?50:30;
+         }
+         if (readparam(bVit)>=90) {
+            bonus2 bSubEle,Ele_Neutral,(.@r>=9)?10:5;
+         }
+         if (readparam(bAgi)>=90) {
+            bonus bAspdRate,8;
+            if (.@r>=9) {
+               bonus bAspd,1;
+            }
+         }
+         if (readparam(bDex)>=90) {
+            bonus bLongAtkRate,(.@r>=9)?10:5;
+         }
+         if (readparam(bLuk)>=90) {
+            bonus bCritAtkRate,(.@r>=9)?15:10;
+         }
+      }
+
+  # Amplificador de Som. O script de renewal e inutilizavel aqui: usa
+  # WM_METALICSOUND (skill de 3a classe, nao existe) e bVariableCastrate.
+  # Reescrito para o que foi pedido: reduzir o pos-conjuracao do Tiro Preciso
+  # (SN_SHARPSHOOTING) em meio segundo.
+  - Id: 2899
+    AegisName: Sound_Amplifier
+    Name: "Amplificador de Som"
+    Type: Armor
+    Buy: 20
+    Weight: 100
+    Slots: 1
+    Jobs:
+      BardDancer: true
+      Hunter: true
+    Locations:
+      Both_Accessory: true
+    ArmorLevel: 1
+    EquipLevelMin: 90
+    Script: |
+      bonus2 bSkillDelay,"SN_SHARPSHOOTING",-500;
+
+  # Lendarias Asas de Demonio. Entra como veio.
+  # Os sprites nao estavam no GRF do build - foram extraidos do GRF de
+  # producao para RagnaBeat.Dev\data\sprite\ em 12/ago/2026.
+  # Ver docs/cliente/leia-me.md.
+  - Id: 5376
+    AegisName: Satanic_Chain_P
+    Name: "Lendárias Asas de Demônio"
+    Type: Armor
+    Buy: 20
+    Weight: 100
+    Defense: 6
+    Slots: 1
+    Locations:
+      Head_Top: true
+    ArmorLevel: 1
+    Refineable: true
+    View: 382
+    Script: |
+      bonus bMaxSP,120;
+      bonus2 bAddEff2,Eff_Curse,10;
+
+  # Boina Charmosa. Entra como veio - conferido que o bVariableCastrate
+  # funciona em pre-re: sem RENEWAL_CAST ele vira bCastrate
+  # (doc/item_bonus.txt:240). Com teto de refino +10, o bonus para em -5%.
+  - Id: 5468
+    AegisName: Parade_Cap
+    Name: "Boina Charmosa"
+    Type: Armor
+    Buy: 20
+    Weight: 800
+    Defense: 3
+    Slots: 1
+    Locations:
+      Head_Top: true
+    ArmorLevel: 1
+    Refineable: true
+    View: 465
+    Script: |
+      bonus bDelayrate,-5;
+      bonus bMdef,2;
+      .@r = getrefine();
+      if (.@r>5)
+         bonus bVariableCastrate,-(.@r-5);
+
+# ---------------------------------------------------------------------------
+# Visuais (Contrabandista de Visuais, npc/custom/visuais.txt)
+#
+# Costume nunca recebe bonus aleatorio - e regra do proprio rAthena, nao
+# depende do randopt_drop_helm_acc. Sao so aparencia.
+# ---------------------------------------------------------------------------
+
+  # A "asa de arcanjo" de verdade: manto com DEF, nao e visual.
+  # DEF 18 -> 10, mesmo teto que a Mochila da Aventura (o melhor manto de
+  # pre-re tem 10). Nivel 1 e sem restricao de classe, como vem.
+  - Id: 2573
+    AegisName: Archangel_Wing
+    Name: "Asas de Arcanjo"
+    Type: Armor
+    Weight: 200
+    Defense: 10
+    Slots: 1
+    Locations:
+      Garment: true
+    ArmorLevel: 1
+    Refineable: true
+    View: 1
+    Trade:
+      NoDrop: true
+
+  - Id: 20526
+    AegisName: C_BlueAngeling_Wing
+    Name: "[Visual] Asas Delicadas de Arcanjo"
+    Type: Armor
+    View: 34
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+
+  - Id: 480058
+    AegisName: C_Wing_Of_Angel_Move_GD
+    Name: "[Visual] Asas Áureas de Arcanjo"
+    Type: Armor
+    View: 75
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+
+  - Id: 480069
+    AegisName: C_Wing_Of_Angel_Move
+    Name: "[Visual] Asas Esvoaçantes de Arcanjo"
+    Type: Armor
+    View: 61
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+
+# ---------------------------------------------------------------------------
+# Itens CUSTOM do RagnaBeat - IDs 60000+
+#
+# Nao existem em kRO nem no LATAM. Isso significa que o cliente nao sabe nada
+# sobre eles: nome, descricao e sprite tem que ser dados a mao no
+# SystemEN/itemInfo_C.lua. O add-item-ptbr.py NAO serve aqui (ele copia do
+# LATAM, e nao ha o que copiar).
+#
+# O identifiedResourceName tem que ser o NOME DE RECURSO de um item que ja
+# existe no GRF do build, nao a palavra coreana para a coisa. Os dois aqui
+# usam "\xb8\xb5" (ring), que e o mesmo recurso do Anel (2601) e do Brinco
+# (2602). Copie sempre do item modelo, nunca traduza.
+#
+# Errar isso NAO da caixa de erro: o cliente FECHA ao desenhar o icone. Foi o
+# que aconteceu em 12/ago/2026, quando os dois apontavam para "\xb9\xdd\xc1\xf6"
+# e "\xb1\xcd\xb0\xc9\xc0\xcc" - nenhum dos quatro arquivos que o cliente
+# procura (o .spr e o .act em sprite\<item>, mais os dois .bmp em
+# texture\<UI>\collection\ e texture\<UI>\item\) existia.
+#
+# So aparencia: o setlook LOOK_BODY2 mexe unicamente no sprite do corpo,
+# nenhum status muda. Depende de db/import/job_stats.yml para funcionar -
+# ver o cabecalho de npc/custom/transmutador.txt.
+# ---------------------------------------------------------------------------
+
+  - Id: 60000
+    AegisName: Transmuter_Ring_4th
+    Name: "Anel Transmutador 4rd"
+    # Shadowgear e OBRIGATORIO com bit de slot sombra: itemdb.cpp:467 recusa
+    # item com bit shadow e Type diferente, e ele vira IT_ETC com warning.
+    Type: Shadowgear
+    Buy: 0
+    Weight: 0
+    Locations:
+      # Slot SOMBRA: bit independente do acessorio de combate (EQP_SHADOW_ACC_R
+      # 0x100000 vs EQP_ACC_R 0x000008), em janela separada no cliente. Nao
+      # custa slot de combate - era o pedido.
+      # E um lado so, de proposito: os dois transmutadores disputam ESTE slot,
+      # entao equipar um desloca o outro. Sem isso, com os dois vestidos ao
+      # mesmo tempo, o ultimo a rodar vencia e a aparencia ficava imprevisivel.
+      Shadow_Right_Accessory: true
+    EquipLevelMin: 1
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    # Sem campo Script: o setlook grava em char.body e ja persiste sozinho.
+    # Ver o cabecalho de npc/custom/transmutador.txt.
+    EquipScript: |
+      callfunc "F_Transmutar", 4;
+    UnEquipScript: |
+      // Desmonta ANTES de devolver o corpo. Sem isto, tirar o anel montado
+      // deixa o personagem num corpo que nao tem sprite de montaria.
+      if (ismounting()) setmounting();
+      setlook LOOK_BODY2, Class;
+
+  - Id: 60001
+    AegisName: Transmuter_Earring_3rd
+    Name: "Brinco Transmutador 3rd"
+    # Shadowgear e OBRIGATORIO com bit de slot sombra: itemdb.cpp:467 recusa
+    # item com bit shadow e Type diferente, e ele vira IT_ETC com warning.
+    Type: Shadowgear
+    Buy: 0
+    Weight: 0
+    Locations:
+      # Slot SOMBRA: bit independente do acessorio de combate (EQP_SHADOW_ACC_R
+      # 0x100000 vs EQP_ACC_R 0x000008), em janela separada no cliente. Nao
+      # custa slot de combate - era o pedido.
+      # E um lado so, de proposito: os dois transmutadores disputam ESTE slot,
+      # entao equipar um desloca o outro. Sem isso, com os dois vestidos ao
+      # mesmo tempo, o ultimo a rodar vencia e a aparencia ficava imprevisivel.
+      Shadow_Right_Accessory: true
+    EquipLevelMin: 1
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    # Sem campo Script: o setlook grava em char.body e ja persiste sozinho.
+    # Ver o cabecalho de npc/custom/transmutador.txt.
+    EquipScript: |
+      callfunc "F_Transmutar", 3;
+    UnEquipScript: |
+      // Desmonta ANTES de devolver o corpo. Sem isto, tirar o anel montado
+      // deixa o personagem num corpo que nao tem sprite de montaria.
+      if (ismounting()) setmounting();
+      setlook LOOK_BODY2, Class;
+
+  # ---------------------------------------------------------------------------
+  # 10. Anel do Mercador
+  #
+  # Da Superfaturar e Desconto no nivel 10 (MaxLevel das duas no pre-re,
+  # db/pre-re/skill_db.yml:1741-1748) para QUALQUER classe.
+  # ---------------------------------------------------------------------------
+
+  - Id: 60002
+    AegisName: Merchant_Ring
+    Name: "Anel do Mercador"
+    # Shadowgear e obrigatorio com bit de slot sombra (itemdb.cpp:467).
+    Type: Shadowgear
+    Buy: 0
+    Weight: 0
+    Locations:
+      # Lado ESQUERDO de proposito: os dois Transmutadores brigam pelo direito,
+      # entao o anel convive com qualquer um deles.
+      Shadow_Left_Accessory: true
+    EquipLevelMin: 1
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      skill "MC_DISCOUNT",10;
+      skill "MC_OVERCHARGE",10;
+
+  # ---------------------------------------------------------------------------
+  # 11. Redeas de Montaria - portadas do renewal
+  #
+  # O 12622 existe SO em db/re. O ID e obrigatorio: ITEMID_REINS_OF_MOUNT esta
+  # hardcoded em src/map/itemdb.hpp:108 e recebe tratamento especial em pc.cpp
+  # (e o unico delay-consume permitido em cima de montaria). Nao usar ID custom.
+  #
+  # Nao confundir com "Reins" (1064), Type Etc, loot de mob, sem script.
+  #
+  # O Script chama F_Montaria em vez de setmounting() direto. Motivo em
+  # npc/custom/transmutador.txt: o corpo MONTADO so tem 4 a 8 cores de roupa,
+  # contra 700 do corpo normal, e montar com cor alta trava o personagem com
+  # erro de palette no cliente. Foi o que aconteceu em 02/set/2026.
+  # ---------------------------------------------------------------------------
+
+  - Id: 12622
+    AegisName: Boarding_Halter
+    Name: "Redeas de Montaria"
+    Type: Usable
+    Weight: 0
+    Flags:
+      NoConsume: true
+    Delay:
+      Duration: 3000
+      Status: All_Riding_Reuse_Limit
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc "F_Montaria";
+    UnEquipScript: |
+      if (ismounting())
+         setmounting();
+
+  # Aluguel de 7 dias. O mecanismo e o Duration do item_group (em minutos),
+  # em db/import/item_group_db.yml - equivale a rentitem 12622.
+  - Id: 17162
+    AegisName: Boarding_Halter_Box7
+    Name: "Redeas de Montaria (7 dias)"
+    Type: Cash
+    Weight: 10
+    Flags:
+      Container: true
+      UniqueId: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      getgroupitem(IG_BOARDING_HALTER_BOX7);

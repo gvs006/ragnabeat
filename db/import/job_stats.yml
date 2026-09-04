@@ -1,0 +1,77 @@
+###########################################################################
+# Job Database - custom RagnaBeat
+###########################################################################
+#
+# POR QUE ESTE ARQUIVO EXISTE
+#
+# Este servidor e pre-renewal, entao db/pre-re/job_stats.yml e o unico
+# job_stats carregado (db/re/job_stats.yml so entra com Mode: Renewal).
+# Resultado: as classes de 3a e 4a evolucao NAO existem no job_db.
+#
+# Isso quebra o Transmutador (npc/custom/transmutador.txt), que troca a
+# APARENCIA do corpo para essas classes. Desde os clientes 20231220+ o
+# sprite do corpo vem de LOOK_BODY2, e o setlook tem um portao mudo:
+#
+#     src/map/pc.cpp:11121
+#     case LOOK_BODY2:
+#         if( !job_db.exists( val ) ){
+#             return;              // sai sem log, sem pacote
+#         }
+#
+# E ha um segundo portao no login, src/map/pc.cpp:2114, que devolve
+# status.body para class_ quando o job nao existe no job_db - ou seja,
+# sem este arquivo a aparencia tambem nao sobreviveria ao relogar.
+#
+# Registrar os jobs aqui abre os dois portoes de uma vez.
+#
+# ISTO NAO TORNA AS CLASSES JOGAVEIS. Nao ha skill tree, nao ha caminho
+# de jobchange e nao ha entrada na job_exp - sao so nomes no job_db, para
+# o servidor aceitar mandar o sprite. Todos os campos de stats sao
+# opcionais no parser (cada um e guardado por nodeExists em
+# JobDatabase::parseBodyNode), entao um bloco Jobs: sozinho basta.
+#
+# db/job_stats.yml importa este arquivo por ultimo e SEM Mode:, logo ele
+# carrega em pre-renewal tambem. As grafias abaixo foram conferidas uma a
+# uma contra db/re/job_stats.yml.
+###########################################################################
+
+Header:
+  Type: JOB_STATS
+  Version: 4
+
+Body:
+  # 3a evolucao
+  - Jobs:
+      Rune_Knight: true
+      Royal_Guard: true
+      Warlock: true
+      Sorcerer: true
+      Ranger: true
+      Minstrel: true
+      Wanderer: true
+      Arch_Bishop: true
+      Sura: true
+      Mechanic: true
+      Genetic: true
+      Guillotine_Cross: true
+      Shadow_Chaser: true
+
+  # 4a evolucao
+  - Jobs:
+      Dragon_Knight: true
+      Imperial_Guard: true
+      Arch_Mage: true
+      Elemental_Master: true
+      Windhawk: true
+      Troubadour: true
+      Trouvere: true
+      Cardinal: true
+      Inquisitor: true
+      Meister: true
+      Biolo: true
+      Shadow_Cross: true
+      Abyss_Chaser: true
+
+  # Super Aprendiz Expandido - serve de 3a E de 4a, nao ha outra forma
+  - Jobs:
+      Super_Novice_E: true

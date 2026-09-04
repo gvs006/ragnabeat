@@ -1,0 +1,156 @@
+//===== rAthena Script =======================================
+//= Transmutador - aparencia de 3a e 4a classe
+//===== Descricao: ===========================================
+//= Funcao usada pelos dois acessorios visuais custom:
+//=
+//=   60000  Anel Transmutador 4rd
+//=   60001  Brinco Transmutador 3rd
+//=
+//= Ao equipar, troca SO A APARENCIA do corpo para a classe
+//= equivalente de 3a ou 4a evolucao. Nada de status muda.
+//=
+//= Este servidor e pre-renewal: 3a e 4a classe NAO EXISTEM
+//= como classe jogavel. Sao so os sprites, que o cliente 2025
+//= tem de sobra.
+//=
+//= callfunc "F_Transmutar", <3 ou 4>;
+//=
+//===== POR QUE setlook E NAO changebase ======================
+//= A primeira versao usava changebase e NAO FUNCIONAVA - o
+//= log mostrava sucesso e a tela nao mudava.
+//=
+//= Desde os clientes 20231220+ o sprite do corpo vem do campo
+//= bodyStyle (LOOK_BODY2), nao mais de LOOK_BASE. O proprio
+//= rAthena ja trata o corte em src/map/clif.cpp:1182, 1329 e
+//= 1438, todos com "p.body = vd->look[LOOK_BODY2]" sob
+//= "#if PACKETVER >= 20231220". O nosso PACKETVER e 20250416
+//= (src/custom/defines_pre.hpp:21).
+//=
+//= O changebase (src/map/script.cpp:12978) manda LOOK_BASE,
+//= que o cliente ignora para o corpo, e no LOOK_BODY2 reenvia
+//= o valor que status_set_viewdata acabou de preencher com a
+//= CLASSE ORIGINAL. Ou seja: ele reafirma o sprite antigo.
+//=
+//= O setlook grava em sd->status.body, que PERSISTE na coluna
+//= char.body. Por isso o item so precisa de EquipScript e
+//= UnEquipScript - nao ha mais o truque do campo Script para
+//= sobreviver ao relogar, e nem os dois itens brigando entre
+//= si a cada status_calc_pc.
+//=
+//= DEPENDE de db/import/job_stats.yml. O setlook tem um portao
+//= mudo em src/map/pc.cpp:11121 - se o job nao existir no
+//= job_db ele sai sem log e sem pacote, e em pre-renewal as
+//= classes de 3a/4a nao existem. Aquele arquivo as registra.
+//= Sem ele, esta funcao volta a falhar em silencio.
+//=
+//= Referencia: Racaae (dev do rAthena),
+//= https://rathena.org/board/topic/147289-appearance-suit-or-3rd-job-suit/
+//=
+//= O mapa usa BaseJob, que ja normaliza transcendente e baby
+//= para a 2a classe correspondente - Lorde/Cavaleiro/Espadachim
+//= caem todos em Job_Knight. Menos linha, menos engano.
+//============================================================
+
+function	script	F_Transmutar	{
+	.@evo = getarg(0);
+
+	switch (BaseJob) {
+		case Job_Novice:
+		case Job_SuperNovice:
+			// Nao ha 3a nem 4a de Super Aprendiz; o Expandido e
+			// o mais proximo e serve para os dois.
+			.@c3 = JOB_SUPER_NOVICE_E;	.@c4 = JOB_SUPER_NOVICE_E;	break;
+		case Job_Swordman:
+		case Job_Knight:
+			.@c3 = JOB_RUNE_KNIGHT;		.@c4 = JOB_DRAGON_KNIGHT;	break;
+		case Job_Crusader:
+			.@c3 = JOB_ROYAL_GUARD;		.@c4 = JOB_IMPERIAL_GUARD;	break;
+		case Job_Mage:
+		case Job_Wizard:
+			.@c3 = JOB_WARLOCK;		.@c4 = JOB_ARCH_MAGE;		break;
+		case Job_Sage:
+			.@c3 = JOB_SORCERER;		.@c4 = JOB_ELEMENTAL_MASTER;	break;
+		case Job_Archer:
+		case Job_Hunter:
+			.@c3 = JOB_RANGER;		.@c4 = JOB_WINDHAWK;		break;
+		case Job_Bard:
+			.@c3 = JOB_MINSTREL;		.@c4 = JOB_TROUBADOUR;		break;
+		case Job_Dancer:
+			.@c3 = JOB_WANDERER;		.@c4 = JOB_TROUVERE;		break;
+		case Job_Acolyte:
+		case Job_Priest:
+			.@c3 = JOB_ARCH_BISHOP;		.@c4 = JOB_CARDINAL;		break;
+		case Job_Monk:
+			.@c3 = JOB_SURA;		.@c4 = JOB_INQUISITOR;		break;
+		case Job_Merchant:
+		case Job_Blacksmith:
+			.@c3 = JOB_MECHANIC;		.@c4 = JOB_MEISTER;		break;
+		case Job_Alchemist:
+			.@c3 = JOB_GENETIC;		.@c4 = JOB_BIOLO;		break;
+		case Job_Thief:
+		case Job_Assassin:
+			.@c3 = JOB_GUILLOTINE_CROSS;	.@c4 = JOB_SHADOW_CROSS;	break;
+		case Job_Rogue:
+			.@c3 = JOB_SHADOW_CHASER;	.@c4 = JOB_ABYSS_CHASER;	break;
+		default:
+			// Taekwon, Justiceiro, Ministro das Almas, Gunslinger,
+			// Ninja e afins nao tem linha de evolucao mapeada aqui.
+			dispbottom "[Transmutador] Sua classe nao tem forma evoluida. Nada mudou.";
+			return;
+	}
+
+	setlook LOOK_BODY2, ((.@evo == 4) ? .@c4 : .@c3);
+	dispbottom "[Transmutador] Aparencia de " + .@evo + "a evolucao aplicada.";
+	return;
+}
+
+//============================================================
+//= F_Montaria - guarda das Redeas de Montaria (item 12622)
+//============================================================
+//= Chamada pelo Script do item, em vez de setmounting() direto.
+//=
+//= POR QUE A GUARDA EXISTE
+//= Em 02/set/2026 uma Bruxa montou e o cliente passou a dar
+//= erro de palette, deixando a personagem inutilizavel. A
+//= causa nao era a montaria - ela existe para classe antiga
+//= (a raposa da maga, "yeou" + nome do job em coreano).
+//=
+//= A causa e o NOSSO max_cloth_color: 699. Medido nos dois
+//= GRFs do cliente (data.grf + palette.grf):
+//=
+//=   corpo NORMAL  (ex. hi-wizard)  700 cores (0..699)
+//=   corpo MONTADO (ex. yeou+hw)      4 cores (0..3)
+//=
+//= Sao 34 corpos montados no cliente, com prefixo de bicho
+//= (avestruz, leao, raposa, cerbero, peco, sapo, lobo). TODOS
+//= tem teto 3, 4 ou 7 - o palette.grf (pacote Kamishi) so
+//= estendeu os corpos normais. Montar com cor acima do teto
+//= faz o cliente procurar um .pal que nao existe.
+//=
+//= A SOLUCAO NAO E RECUSAR, E GERAR O QUE FALTA.
+//= docs/cliente/gerar-palettes-montaria.py preenche as ~41 mil
+//= palettes que faltavam, para os 34 corpos montados, nas
+//= cores 0..699. Com elas no lugar, qualquer cor monta.
+//=
+//= Houve uma versao desta funcao que RECUSAVA montar acima da
+//= cor 3. Foi retirada: bloqueava ate as cores ja geradas, e o
+//= pior caso sem palette e a montaria sair com a cor errada -
+//= nao vale trocar isso por um "nao".
+//=
+//= O que sobrou aqui e so o liga/desliga, porque setmounting
+//= alterna e devolve 1 nos DOIS casos - quem decide o ramo tem
+//= que ser o ismounting.
+//============================================================
+
+function	script	F_Montaria	{
+	// setmounting alterna, e devolve 1 nos DOIS casos - por isso
+	// quem decide o ramo e o ismounting, nao o retorno.
+	if (ismounting()) {
+		setmounting();
+		dispbottom "[Redeas] Voce desmontou.";
+		return;
+	}
+
+	setmounting();
+	return;
+}

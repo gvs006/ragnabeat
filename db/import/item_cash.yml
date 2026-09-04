@@ -1,0 +1,102 @@
+###########################################################################
+# Item Cash Database - custom RagnaBeat
+###########################################################################
+#
+# Amostra de visuais para a Loja Cash nao ficar vazia. Todos ja estao
+# registrados em db/ragnabeat_visuais.yml e todos tem View - item sem View
+# nao veste nada e nao tem o que previsualizar.
+#
+# A moeda e #CASHPOINTS, uma variavel de CONTA. Para testar:
+#     @cash 100000
+# (ou @points, conforme o grupo de GM). Nao confundir com a Moeda de Mythril
+# das lojas barter do Contrabandista - sao economias separadas.
+#
+# Abas validas: New, Hot, Limited, Rental, Permanent, Scrolls, Consumables,
+# Other, Sale.
+###########################################################################
+
+Header:
+  Type: ITEM_CASH_DB
+  Version: 1
+
+Body:
+  - Tab: New
+    Items:
+      # Asas Musicais (Costume_Garment, View 126)
+      - Item: C_Melody_Wing
+        Price: 25000
+      # Asa Mecânica (Costume_Garment, View 66)
+      - Item: C_Gimmick_One_Feather
+        Price: 23000
+      # Rabo de Ratatosk (Costume_Garment, View 195)
+      - Item: C_Rata_Tail
+        Price: 18000
+      # Chifres Majestosos do Bafomé (Costume_Head_Top, View 380)
+      - Item: C_L_Magestic_Goat
+        Price: 24000
+      # Adorno Vampiresco (Costume_Head_Top, View 1238)
+      - Item: C_Vampire_Hairband
+        Price: 16000
+      # Tiara Estelar (Costume_Head_Top, View 232)
+      - Item: C_Gold_Tiara
+        Price: 15000
+      # Orelhas Malignas (Costume_Head_Mid, View 152)
+      - Item: C_Ear_Of_Devils_Wing
+        Price: 14000
+      # Símbolo Élfico (Costume_Head_Mid, View 73)
+      - Item: C_Elven_Ears
+        Price: 10000
+
+  - Tab: Hot
+    Items:
+      # Cauda de Arbusto (Costume_Garment, View 62)
+      - Item: C_Big_Foxtail
+        Price: 21000
+      # Laço Pomposo (Costume_Garment, View 76)
+      - Item: C_Big_Ribbon_Cloak
+        Price: 19000
+      # Chapéu da Ordem Arcana (Costume_Head_Top, View 209)
+      - Item: C_Magic_Eyes_J
+        Price: 22000
+      # Chapéu Natureba (Costume_Head_Top, View 1802)
+      - Item: C_Forest_Guide
+        Price: 13000
+      # Coelho Viena (Costume_Head_Mid, View 2349)
+      - Item: C_Black_Rabbit
+        Price: 12000
+      # Tigre Branco (Costume_Head_Mid, View 2244)
+      - Item: C_Tiger_WH
+        Price: 17000
+      # Sopro do Ifrit (Costume_Head_Low, View 1050)
+      - Item: C_Ifrits_Breath
+        Price: 20000
+      # Cachecol de Lunático (Costume_Head_Low, View 1732)
+      - Item: C_LunaticMuffler_TW
+        Price: 11000
+
+  - Tab: Permanent
+    Items:
+      # Laçarote de Casamento (Costume_Garment, View 130)
+      - Item: C_Wedding_Ribbon
+        Price: 14000
+      # Cata-vento Vermelho (Costume_Head_Top, View 456)
+      - Item: C_Pinwheel_Cap
+        Price: 10000
+      # Lacinhos Monocromáticos (Costume_Head_Top, View 1466)
+      - Item: C_Monochrome_RibbonHat
+        Price: 12000
+      # Chapéu do Amor Materno (Costume_Head_Top, View 610)
+      - Item: C_Holy_Mom_Love
+        Price: 18000
+      # Porquinho (Costume_Head_Mid, View 1869)
+      - Item: C_Eat_Coin
+        Price: 11000
+      # Lenço de Rosto (Vermelho) (Costume_Head_Low, View 369)
+      - Item: C_Gang_Scarf
+        Price: 13000
+      # Galho de Cerejeiras (Costume_Head_Low, View 823)
+      - Item: C_Red_Cherry_Blossom
+        Price: 15000
+      # Rabo de Cavalo Azul (Costume_Head_Low, View 1394)
+      - Item: C_Straight_Pony_BU
+        Price: 10000

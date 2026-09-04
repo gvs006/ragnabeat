@@ -19,29 +19,576 @@
 # Barter Database
 ###########################################################################
 #
-# Barter Settings
-#
-###########################################################################
 #  - Name               NPC name.
-#    Map                Map name. (Default: not on a map)
-#    X                  Map x coordinate. (Default: 0)
-#    Y                  Map y coordinate. (Default: 0)
-#    Direction          Direction the NPC is looking. (Default: North)
-#    Sprite             Sprite name of the NPC. (Default: FakeNpc)
-#    Items:             List of sold items.
-#      - Index          Index of the item inside the shop. (0-...)
-#                       Maximum index depends on client.
-#        Item           Aegis name of the item.
-#        Stock          Amount of item in stock. 0 means unlimited. (Default: 0)
-#        Zeny           Cost of them item in Zeny. (Default: 0)
-#        Refine         Refine level of the item. (Default: 0)
-#        RequiredItems: List of required items (Optional)
-#          - Index      Index of the required item. (0-4)
-#            Item       Aegis name of required item.
-#            Amount     Amount of required item. (Default: 1)
-#            Refine     Refine level of required item. (Default: 0)
+#    Map / X / Y        Sem estes campos a loja fica flutuando (e o caso aqui).
+#    Items:             Lista do que se vende.
+#      - Index          Posicao na janela (0-...).
+#        Item           AegisName.
+#        Stock          0 = ilimitado (padrao).
+#        RequiredItems: O que o jogador paga.
 ###########################################################################
+
+# ------------------------------------------------------------------------
+# RAGNABEAT - Mercado Negro (Contrabandista, npc/custom/black_market.txt)
+#
+# Uma loja por (parte do corpo x tipo). Nenhuma tem "Map": ficam flutuando e
+# so abrem pelo callshop do Contrabandista, que e o unico NPC visivel.
+#
+# O nome segue Contra#<tipo>_<slot>, e o script monta esse nome a partir do
+# menu. Loja que nao existe aqui simplesmente nao aparece no menu de la - a
+# mascara .Tipos[] do OnInit e quem diz o que existe. Mexeu aqui, mexa la.
+#
+#   mvp   Cartas MvP      cartas de MVP e raras           100 moedas
+#   norm  Cartas Normais  as mais usadas no dia a dia      10 moedas
+#   eq    Equips          equipamento nativo de pre-re     30 moedas
+#   3rd   Equips 3rd      trazido do renewal               50 moedas
+#                         (definido em db/ragnabeat_items.yml)
+#
+# Moeda: Mithril_Coin (674), com peso zerado em db/ragnabeat_items.yml.
+#
+# Agrupado pelo slot REAL de cada item (campo Locations do db/pre-re), nao
+# por chute. Confira la antes de mover alguma coisa de lugar.
+#
+# ATENCAO - BONUS ALEATORIO: barter entrega o item CRU. Ele nao passa pelo
+# randopt_drop_* nem pelo randomoptgroup(), entao nada comprado aqui vem com
+# BA. Ver docs/rebalance.md.
+#
+# Sem Zeny, sem Refine e com um unico item exigido, o rAthena trata como
+# barter simples (nao "extended") - o que o cliente 2025 abre nativamente com
+# icone, descricao e escolha de quantidade.
+# ------------------------------------------------------------------------
 
 Header:
   Type: BARTER_DB
   Version: 2
+
+Body:
+  # Cartas MvP [elmo] - 100 moedas
+  - Name: Contra#mvp_elmo
+    Items:
+      - Index: 0
+        Item: Orc_Hero_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Kiel_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 2
+        Item: Archangeling_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 3
+        Item: Mistress_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 4
+        Item: Pharaoh_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+
+  # Cartas Normais [elmo] - 10 moedas
+  - Name: Contra#norm_elmo
+    Items:
+      - Index: 0
+        Item: Incubus_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+
+  # Equips [elmo] - 30 moedas
+  - Name: Contra#eq_elmo
+    Items:
+      - Index: 0
+        Item: Dragonhelm_Gold
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 1
+        Item: Dragonhelm_Silver
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 2
+        Item: Dragonhelm_Copper
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 3
+        Item: Super_Novice_Hat_
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 4
+        Item: Elven_Ears_
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 5
+        Item: Satanic_Chain_
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 6
+        Item: Diabolus_Helmet
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+
+  # Equips 3rd [elmo] - 50 moedas
+  - Name: Contra#3rd_elmo
+    Items:
+      - Index: 0
+        Item: Satanic_Chain_P
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 50
+      - Index: 1
+        Item: Parade_Cap
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 50
+
+  # Cartas MvP [arma] - 100 moedas
+  - Name: Contra#mvp_arma
+    Items:
+      - Index: 0
+        Item: Phreeoni_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Lord_Of_Death_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 2
+        Item: Baphomet_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 3
+        Item: Incant_Samurai_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 4
+        Item: Drake_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 5
+        Item: B_Harword_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 6
+        Item: Civil_Servant_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 7
+        Item: Thanatos_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 8
+        Item: Randgris_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+
+  # Cartas Normais [arma] - 10 moedas
+  - Name: Contra#norm_arma
+    Items:
+      - Index: 0
+        Item: Pecopeco_Egg_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+      - Index: 1
+        Item: Knight_Of_Abyss_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+      - Index: 2
+        Item: Poring__Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+
+  # Equips [arma] - 30 moedas
+  - Name: Contra#eq_arma
+    Items:
+      - Index: 0
+        Item: Lunakaligo
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 1
+        Item: Combo_Battle_Glove
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+
+  # Equips 3rd [arma] - 50 moedas
+  - Name: Contra#3rd_arma
+    Items:
+      - Index: 0
+        Item: Elven_Bow
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 50
+
+  # Cartas MvP [armadura] - 100 moedas
+  - Name: Contra#mvp_armadura
+    Items:
+      - Index: 0
+        Item: Tao_Gunka_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Orc_Load_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 2
+        Item: Garm_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 3
+        Item: Observation_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+
+  # Cartas Normais [armadura] - 10 moedas
+  - Name: Contra#norm_armadura
+    Items:
+      - Index: 0
+        Item: Porcellio_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+
+  # Equips [armadura] - 30 moedas
+  - Name: Contra#eq_armadura
+    Items:
+      - Index: 0
+        Item: Diabolus_Robe
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 1
+        Item: Diabolus_Armor
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+
+  # Cartas MvP [escudo] - 100 moedas
+  - Name: Contra#mvp_escudo
+    Items:
+      - Index: 0
+        Item: Maya_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Golden_Bug_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+
+  # Cartas Normais [escudo] - 10 moedas
+  - Name: Contra#norm_escudo
+    Items:
+      - Index: 0
+        Item: Alice_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+
+  # Cartas MvP [capa] - 100 moedas
+  - Name: Contra#mvp_capa
+    Items:
+      - Index: 0
+        Item: Deviling_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Vocal_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+
+  # Cartas Normais [capa] - 10 moedas
+  - Name: Contra#norm_capa
+    Items:
+      - Index: 0
+        Item: Isis_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+      - Index: 1
+        Item: Daydric_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+
+  # Equips [capa] - 30 moedas
+  - Name: Contra#eq_capa
+    Items:
+      - Index: 0
+        Item: Diabolus_Manteau
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+      - Index: 1
+        Item: Piece_Of_Angent_Skin
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+
+  # Equips 3rd [capa] - 50 moedas
+  - Name: Contra#3rd_capa
+    Items:
+      - Index: 0
+        Item: Bravery_Bag
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 50
+
+  # Cartas MvP [calcado] - 100 moedas
+  - Name: Contra#mvp_calcado
+    Items:
+      - Index: 0
+        Item: Dark_Lord_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Lady_Tanee_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 2
+        Item: Gajomart_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 3
+        Item: Eddga_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+
+  # Equips [calcado] - 30 moedas
+  - Name: Contra#eq_calcado
+    Items:
+      - Index: 0
+        Item: Diabolus_Boots
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+
+  # Cartas MvP [acessorio] - 100 moedas
+  - Name: Contra#mvp_acessorio
+    Items:
+      - Index: 0
+        Item: Osiris_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Wild_Ginseng_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 2
+        Item: Galapago_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 3
+        Item: Tengu_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 4
+        Item: Berzebub_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+
+  # Cartas Normais [acessorio] - 10 moedas
+  - Name: Contra#norm_acessorio
+    Items:
+      - Index: 0
+        Item: Zerom_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+      - Index: 1
+        Item: Mantis_Card
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 10
+
+  # Equips [acessorio] - 30 moedas
+  - Name: Contra#eq_acessorio
+    Items:
+      - Index: 0
+        Item: Diabolus_Ring
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 30
+
+  # Equips 3rd [acessorio] - 50 moedas
+  - Name: Contra#3rd_acessorio
+    Items:
+      - Index: 0
+        Item: Sound_Amplifier
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 50
+
+  # ----- Contrabandista de Visuais (npc/custom/visuais.txt) -----
+
+  # Visuais [capa] - 20 moedas (traje, sem atributo)
+  - Name: Visual#vis_capa
+    Items:
+      - Index: 0
+        Item: C_Wing_Of_Angel_Move_GD
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 20
+      - Index: 1
+        Item: C_Wing_Of_Angel_Move
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 20
+      - Index: 2
+        Item: C_BlueAngeling_Wing
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 20
+
+  # Equips [capa] - 50 moedas (a asa de arcanjo de verdade, com DEF)
+  - Name: Visual#eq_capa
+    Items:
+      - Index: 0
+        Item: Archangel_Wing
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 50
+
+  # Visuais [acessorio] - 100 moedas (custom, ver npc/custom/transmutador.txt)
+  - Name: Visual#vis_acessorio
+    Items:
+      - Index: 0
+        Item: Transmuter_Earring_3rd
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 100
+      - Index: 1
+        Item: Transmuter_Ring_4th
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 150
+      # Nao e visual - da Superfaturar 10 e Desconto 10 para qualquer classe.
+      # Fica aqui porque e o balcao dos acessorios custom.
+      - Index: 2
+        Item: Merchant_Ring
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 80
+      # Redeas de Montaria. So funcionam com cor de roupa 0-3 - ver a guarda
+      # F_Montaria em npc/custom/transmutador.txt.
+      - Index: 3
+        Item: Boarding_Halter
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 200
+      - Index: 4
+        Item: Boarding_Halter_Box7
+        RequiredItems:
+          - Index: 0
+            Item: Mithril_Coin
+            Amount: 40

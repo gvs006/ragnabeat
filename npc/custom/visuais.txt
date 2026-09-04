@@ -1,0 +1,88 @@
+//===== rAthena Script =======================================
+//= Contrabandista de Visuais
+//===== Descricao: ===========================================
+//= Irmao do Contrabandista de npc/custom/black_market.txt,
+//= mas so vende aparencia: itens de traje (costume), que
+//= ocupam os slots proprios e nao dao atributo nenhum.
+//=
+//= Mesma moeda e mesmo formato: menu de dois niveis
+//= (parte do corpo -> tipo) abrindo loja de troca nativa.
+//= As listas ficam em npc/custom/barters.yml, no formato
+//= Visual#<tipo>_<slot>.
+//=
+//= Costume NUNCA recebe bonus aleatorio - e regra do rAthena,
+//= nao depende da nossa conf. Aqui nao ha o que decidir.
+//=
+//= ESCOPO: hoje so os visuais ja conferidos. O cliente tem
+//= mais de 2 mil trajes (3.460 linhas de slot costume em
+//= db/re) e cada um precisa de tres coisas para entrar:
+//=   1. definicao em db/ragnabeat_items.yml
+//=   2. nome PT-BR em SystemEN/itemInfo_C.lua
+//=      (docs/cliente/add-item-ptbr.py)
+//=   3. sprite presente no GRF do build
+//=      (docs/cliente/checar-sprite.py)
+//= Sem a 3a, equipar abre caixa de erro na cara do jogador -
+//= foi o que aconteceu com as Lendarias Asas de Demonio.
+//============================================================
+
+prontera,148,187,4	script	Contrabandista de Visuais	631,{
+	mes "[Contrabandista de Visuais]";
+	mes "Poder e uma coisa. Estilo e outra.";
+	mes "So aceito " + mesitemlink(.Moeda) + ", e voce tem ^0000FF" + countitem(.Moeda) + "^000000.";
+	next;
+
+L_Slot:
+	.@menu$ = "";
+	for (.@i = 0; .@i < getarraysize(.Slot$); .@i++)
+		.@menu$ += .Slot$[.@i] + ":";
+	.@menu$ += "Ir embora";
+
+	.@s = select(.@menu$) - 1;
+	if (.@s < 0 || .@s >= getarraysize(.Slot$)) {
+		mes "[Contrabandista de Visuais]";
+		mes "Volte quando tiver bom gosto.";
+		close;
+	}
+
+	// .Tipos[] e uma mascara, ver o OnInit. Categoria vazia nao vira opcao.
+	.@m = .Tipos[.@s];
+	.@n = 0;
+	.@menu$ = "";
+	deletearray .@pref$[0];
+	for (.@i = 0; .@i < getarraysize(.Tipo$); .@i++) {
+		if (!(.@m & (1 << .@i)))
+			continue;
+		.@menu$ += .Tipo$[.@i] + " [" + .Slot$[.@s] + "]:";
+		.@pref$[.@n] = .TipoId$[.@i];
+		.@n++;
+	}
+	.@menu$ += "Voltar";
+
+	.@t = select(.@menu$) - 1;
+	if (.@t < 0 || .@t >= .@n) {
+		mes "[Contrabandista de Visuais]";
+		mes "Decida-se.";
+		next;
+		goto L_Slot;
+	}
+
+	close2;
+	callshop "Visual#" + .@pref$[.@t] + "_" + .SlotId$[.@s];
+	end;
+
+OnInit:
+	.Moeda = 674;			// Mithril Coin
+
+	setarray .Slot$[0],   "Capa", "Acessorio";
+	setarray .SlotId$[0], "capa", "acessorio";
+
+	setarray .Tipo$[0],   "Visuais", "Equips";
+	setarray .TipoId$[0], "vis",     "eq";
+
+	// 1 = Visuais (traje), 2 = Equips (asa com atributo, nao e traje).
+	// TEM QUE BATER COM npc/custom/barters.yml.
+	setarray .Tipos[0],
+		1|2,	// Capa
+		1;	// Acessorio  (so visuais)
+	end;
+}

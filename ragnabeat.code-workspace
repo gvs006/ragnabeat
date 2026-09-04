@@ -7,5 +7,45 @@
 			"path": "../../../Games/Client RagnaBeat 2026"
 		}
 	],
-	"settings": {}
+	"settings": {
+		// ------------------------------------------------------------------
+		// ENCODING - nao mexa sem ler docs/traducao.md
+		//
+		// Script de NPC (.txt) e os .yml proprios do servidor sao cp1252.
+		// Em 03/set/2026 o editor abriu cinco deles como UTF-8, nao conseguiu
+		// decodificar os acentos, trocou cada um por U+FFFD e GRAVOU assim.
+		// Resultado no jogo: "Bencao" virou "Bï¿½nï¿½ï¿½o".
+		//
+		// A perda e IRREVERSIVEL por conta propria: o U+FFFD nao guarda qual
+		// acento era. A volta foi palavra por palavra.
+		//
+		// Por que travar em windows1252 e nao adivinhar:
+		//   - cp1252 lido como UTF-8  -> U+FFFD -> DESTROI (nao tem volta)
+		//   - UTF-8 lido como cp1252  -> "Ã©"   -> feio, mas REVERSIVEL
+		// Entre os dois erros, o segundo e o unico que da para consertar.
+		// Por isso autoGuessEncoding fica DESLIGADO: adivinhar foi o que
+		// causou o estrago.
+		//
+		// Efeito colateral aceito: os poucos .txt/.yml do upstream que sao
+		// UTF-8 (ex.: npc/custom/official/GeffenMagicTournament.txt,
+		// db/re/item_db_*.yml) vao aparecer com acento errado. NAO GRAVE
+		// esses arquivos assim - reabra com "Reopen with Encoding: UTF-8".
+		//
+		// Para conferir o estado de tudo: python docs/checar-encoding.py
+		// ------------------------------------------------------------------
+		"files.autoGuessEncoding": false,
+		// Script de NPC do rAthena e indentado com TAB e o espaco no fim de
+		// linha as vezes e proposital - o editor nao deve "arrumar" nada.
+		"[plaintext]": {
+			"files.encoding": "windows1252",
+			"files.trimTrailingWhitespace": false,
+			"files.insertFinalNewline": false
+		},
+		"[yaml]": {
+			"files.encoding": "windows1252"
+		},
+		"[markdown]": {
+			"files.encoding": "utf8"
+		}
+	}
 }

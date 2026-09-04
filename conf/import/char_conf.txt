@@ -17,3 +17,19 @@
 // o botao virar o painel "Coming Soon" e nem chegar a enviar o pacote.
 // Ver docs/cliente/doram.md.
 allowed_job_flag: 1
+
+// Endereco que o LOGIN informa ao cliente para achar o char server.
+//
+// Nao confundir com o login_ip la de cima do char_athena.conf: aquele e para
+// onde o char CONECTA, e como os quatro servidores vivem no mesmo container,
+// 127.0.0.1 esta certo e continua. Este aqui e o que o cliente RECEBE, entao
+// tem que ser um endereco que a maquina do JOGADOR alcance.
+//
+// 100.76.66.99 e o IP desta maquina no Tailscale. Vantagem sobre IP publico:
+// e estavel, nao exige liberar porta no roteador e so quem esta no tailnet
+// enxerga - o MariaDB em 3307 continua fora do alcance da internet.
+//
+// Com 127.0.0.1 aqui, o jogador de fora conecta no login, recebe "o char
+// server fica em 127.0.0.1" e tenta conectar em si mesmo. Trava no
+// "Please wait" sem nada aparecer no log do servidor, porque ele nunca chega.
+char_ip: 100.76.66.99

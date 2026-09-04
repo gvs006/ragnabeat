@@ -12929,3 +12929,8 @@ Body:
   - Id: 19507
     AegisName: Fine_Sun
     Name: "[Visual] Sol Risonho"
+
+Footer:
+  Imports:
+  - Path: db/ragnabeat_items.yml
+  - Path: db/ragnabeat_visuais.yml

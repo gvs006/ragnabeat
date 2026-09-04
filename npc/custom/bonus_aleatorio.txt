@@ -1,0 +1,577 @@
+//===== rAthena Script =======================================
+//= Bônus Aleatório - roleta, injetor e catálogo
+//===== Descrição: ===========================================
+//= Três objetos neste arquivo:
+//=
+//=   BA_Catalogo      NPC flutuante, invisível. Só guarda a
+//=                    tabela id -> nome -> categoria das
+//=                    opções. É a ÚNICA cópia dela.
+//=   Roleta de Bônus  (permanente) troca os B.A. de uma peça,
+//=                    cobrando por isso.
+//=   Injetor de B.A.  (SÓ TESTE) põe B.A. numa peça que não
+//=                    tem. Some quando o teste acabar.
+//=
+//===== COMO O BÔNUS ALEATÓRIO FUNCIONA AQUI =================
+//= As opções vivem em db/import/item_randomopt_db.yml e os
+//= grupos em db/import/item_randomopt_group.yml. São três:
+//=
+//=   1  RAGNABEAT_T1  equip comum      1 a 2 bônus
+//=   2  RAGNABEAT_T2  equip intermed.  1 a 3 bônus
+//=   3  RAGNABEAT_T3  equip alto/MVP   2 a 4 bônus
+//=
+//= O tier NÃO fica gravado no item. Aqui ele é deduzido pelo
+//= nível de uso do equipamento, com os MESMOS cortes que o
+//= drop usa (conf/import/battle_conf.txt):
+//=   randopt_drop_t2_minlevel: 40
+//=   randopt_drop_t3_minlevel: 75
+//= Assim a roleta não vira um jeito de subir de tier.
+//=
+//= randomoptgroup(<id>) sorteia um resultado do grupo e enche
+//= .@opt_id[] / .@opt_value[] / .@opt_param[]. O resultado é
+//= aplicado com setrandomoption, um índice por vez.
+//=
+//===== POR QUE 5 ÍNDICES E NÃO 4 ============================
+//= MAX_ITEM_RDM_OPT é 5 (src/common/mmo.hpp:113) e vem do
+//= PROTOCOLO: o pacote do item carrega cinco trios fixos. O
+//= laço tem que varrer os cinco para limpar o que sobrou de
+//= uma rolagem anterior mais longa - senão um item que tinha
+//= 4 bônus e sorteou 2 fica com os dois antigos pendurados.
+//=
+//===== REEMBARALHAR UM SLOT SÓ ==============================
+//= O sorteio de um slot isolado usa o MESMO ÍNDICE do resultado
+//= de randomoptgroup(). Isso não é detalhe: o apply() enche os
+//= índices baixos com o pool GARANTIDO e os altos com o pool
+//= EXTRA (itemdb.cpp:4667 e 4688), e as duas listas são
+//= diferentes. Pegar o índice equivalente mantém o slot vindo
+//= do mesmo pool de onde ele veio na primeira vez - sortear um
+//= id qualquer da lista deixaria um bônus do pool extra cair
+//= num slot garantido, coisa que drop nenhum produz.
+//============================================================
+
+// --------------------------------------------------
+//	Catálogo de opções - ÚNICA cópia
+// --------------------------------------------------
+//	Não existe comando de script que enumere as opções do
+//	item_randomopt_db.yml, então esta tabela é uma cópia à mão.
+//	Acrescentou opção no YAML? Acrescente aqui também, ou ela
+//	nunca aparece no menu manual do Injetor.
+//
+//	Ela mora num NPC flutuante para existir UMA vez: a Roleta e o
+//	Injetor leem daqui com getvariableofnpc. Duas cópias
+//	dessincronizadas seriam pior que nenhuma.
+-	script	BA_Catalogo	-1,{
+	end;
+
+OnInit:
+	// Os três arrays andam juntos: id, nome no menu, categoria (1-based).
+	setarray .OptId[0],
+		 3,  4,  5,  6,  7,  8,
+		 1,  2,  9, 10, 11, 12,
+		17, 13, 19, 14, 15, 16,
+		18, 22, 23, 24,
+		20, 21,
+		25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+		49, 51, 55,
+		87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 150,
+		97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 148;
+	setarray .OptNome$[0],
+		"FOR", "AGI", "VIT", "INT", "DES", "SOR",
+		"HP máx.", "SP máx.", "HP máx. %", "SP máx. %",
+		"Regen. de HP %", "Regen. de SP %",
+		"ATQ", "ATQ %", "ATQ Mágico", "ATQ Mágico %", "Vel.Atq", "Vel.Atq %",
+		"Precisão", "Esquiva", "Esquiva perfeita", "Crítico",
+		"DEF", "MDEF",
+		"Resist. Neutro", "Resist. Água", "Resist. Terra", "Resist. Fogo",
+		"Resist. Vento", "Resist. Veneno", "Resist. Sagrado", "Resist. Sombrio",
+		"Resist. Fantasma", "Resist. Morto-Vivo",
+		"Dano vs Sagrado", "Dano vs Sombrio", "Dano vs Morto-Vivo",
+		"Resist. Amorfo", "Resist. Morto-Vivo", "Resist. Bruto", "Resist. Planta", "Resist. Inseto", "Resist. Peixe", "Resist. Demônio", "Resist. Humanoide", "Resist. Anjo", "Resist. Dragão", "Resist. Chefes",
+		"Dano vs Amorfo", "Dano vs Morto-Vivo", "Dano vs Bruto", "Dano vs Planta", "Dano vs Inseto", "Dano vs Peixe", "Dano vs Demônio", "Dano vs Humanoide", "Dano vs Anjo", "Dano vs Dragão", "Dano vs Chefes";
+	setarray .OptCat[0],
+		1, 1, 1, 1, 1, 1,
+		2, 2, 2, 2, 2, 2,
+		3, 3, 3, 3, 3, 3,
+		4, 4, 4, 4,
+		5, 5,
+		6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+		7, 7, 7,
+		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+		9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9;
+	.Total = getarraysize(.OptId);
+
+	setarray .CatNome$[0],
+		"Atributos",
+		"HP e SP",
+		"Ataque",
+		"Precisão, esquiva e crítico",
+		"Defesa",
+		"Resistência a elemento",
+		"Dano contra elemento",
+		"Resistência a raça e chefe",
+		"Dano contra raça e chefe";
+	.Cats = getarraysize(.CatNome$);
+
+	// Guarda de sanidade: os três arrays TÊM de ter o mesmo tamanho, senão o
+	// menu mostra um nome e grava outro id. Erra alto no boot em vez de errar
+	// baixo em jogo.
+	if (.Total != getarraysize(.OptNome$) || .Total != getarraysize(.OptCat))
+		debugmes "[BA_Catalogo] ERRO: .OptId/.OptNome$/.OptCat com tamanhos diferentes ("
+			+ .Total + "/" + getarraysize(.OptNome$) + "/" + getarraysize(.OptCat) + ").";
+	end;
+}
+
+//	Id da opção -> nome em português. Devolve "[id N]" quando o id não está
+//	no catálogo - é assim que se descobre que a tabela ficou para trás do YAML.
+function	script	F_BA_Nome	{
+	.@id = getarg(0);
+	.@total = getvariableofnpc(.Total, "BA_Catalogo");
+	for (.@k = 0; .@k < .@total; .@k++)
+		if (getvariableofnpc(.OptId[.@k], "BA_Catalogo") == .@id)
+			return getvariableofnpc(.OptNome$[.@k], "BA_Catalogo");
+	return "[id " + .@id + "]";
+}
+
+//===== Roleta de Bônus ======================================
+prontera,163,173,4	script	Roleta de Bônus	899,{
+	.@n$ = "[Roleta de Bônus]";
+
+	mes .@n$;
+	mes "Eu embaralho os bônus aleatórios de uma peça que você";
+	mes "esteja usando. Os novos ^FF0000nunca^000000 saem iguais aos de agora.";
+	mes " ";
+	mes "^0000FFTudo^000000 - o preço depende de quantos bônus a peça tem:";
+	mes "  2 bônus  -  " + callfunc("F_InsertComma", .Custo2) + "z";
+	mes "  3 bônus  -  " + callfunc("F_InsertComma", .Custo3) + "z";
+	mes "  4 bônus  -  " + callfunc("F_InsertComma", .Custo4) + "z";
+	mes "^0000FFUm bônus só^000000 - " + callfunc("F_InsertComma", .CustoUm) + "z. Custa mais porque";
+	mes "você escolhe ^FF0000qual^000000 troca e o resto fica de pé.";
+	mes " ";
+	mes "Sempre mais " + .Qtd + " " + getitemname(.Material) + " (o dobro no bônus único).";
+	next;
+
+	.@escolha = callfunc("F_EscolherEquipado", .@n$);
+	if (.@escolha < 1)
+		end;
+
+	// Tier pelo nivel de uso, igual ao drop. Fica fora do laco porque a peca
+	// nao muda enquanto o jogador nao pedir para trocar.
+	.@elv = getiteminfo(getequipid(.@escolha), ITEMINFO_EQUIPLEVELMIN);
+	.@grupo = 1;
+	if (.@elv >= .T2Min) .@grupo = 2;
+	if (.@elv >= .T3Min) .@grupo = 3;
+
+	// O laco existe para nao obrigar a reclicar o NPC entre uma rolagem e
+	// outra - reembaralhar costuma ser repetitivo por natureza.
+	while (1) {
+		.@quantos = 0;
+		for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++) {
+			.@atual_id[.@i]  = getequiprandomoption(.@escolha, .@i, ROA_ID);
+			.@atual_val[.@i] = getequiprandomoption(.@escolha, .@i, ROA_VALUE);
+			if (.@atual_id[.@i] > 0)
+				.@quantos++;
+		}
+
+		.@custo = .Custo2;
+		if (.@quantos == 3) .@custo = .Custo3;
+		if (.@quantos >= 4) .@custo = .Custo4;
+
+		mes .@n$;
+		mes "^0000FF" + getequipname(.@escolha) + "^000000  (T" + .@grupo + ")";
+		if (.@quantos == 0)
+			mes "Essa peça não tem bônus nenhum.";
+		for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++)
+			if (.@atual_id[.@i] > 0)
+				mes " " + (.@i + 1) + ". ^0000FF" + callfunc("F_BA_Nome", .@atual_id[.@i]) + " " + .@atual_val[.@i] + "^000000";
+		next;
+
+		.@op = select(
+			(.@quantos < 2) ? "" : "Embaralhar ^0000FFtudo^000000 - " + callfunc("F_InsertComma", .@custo) + "z",
+			(.@quantos < 1) ? "" : "Trocar ^0000FFum bônus^000000 - " + callfunc("F_InsertComma", .CustoUm) + "z",
+			"Trocar de peça",
+			"Sair");
+
+		if (.@op == 4)
+			close;
+
+		if (.@op == 3) {
+			.@escolha = callfunc("F_EscolherEquipado", .@n$);
+			if (.@escolha < 1)
+				end;
+			.@elv = getiteminfo(getequipid(.@escolha), ITEMINFO_EQUIPLEVELMIN);
+			.@grupo = 1;
+			if (.@elv >= .T2Min) .@grupo = 2;
+			if (.@elv >= .T3Min) .@grupo = 3;
+			continue;
+		}
+
+		// ------------------------------------------------ trocar um bonus so
+		if (.@op == 2) {
+			.@menu$ = "";
+			for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++) {
+				if (.@atual_id[.@i] > 0)
+					.@menu$ += (.@i + 1) + ". " + callfunc("F_BA_Nome", .@atual_id[.@i]) + " " + .@atual_val[.@i] + ":";
+				else
+					.@menu$ += ":";
+			}
+			mes .@n$;
+			mes "Qual bônus troco?";
+			next;
+			.@sel = select(.@menu$ + "Voltar");
+			if (.@sel > MAX_ITEM_RDM_OPT)
+				continue;
+			.@slot = .@sel - 1;
+
+			mes .@n$;
+			mes "Troco o ^0000FF" + callfunc("F_BA_Nome", .@atual_id[.@slot]) + " " + .@atual_val[.@slot] + "^000000.";
+			mes "Os outros ficam como estão.";
+			mes " ";
+			mes "Custa " + callfunc("F_InsertComma", .CustoUm) + "z e " + (.Qtd * 2) + " " + getitemname(.Material) + ".";
+			next;
+			if (select("Trocar:Deixa quieto") == 2)
+				continue;
+
+			if (Zeny < .CustoUm || countitem(.Material) < (.Qtd * 2)) {
+				mes .@n$;
+				mes "Falta material. Volte com tudo em mãos.";
+				close;
+			}
+
+			// Sorteia ate cair algo diferente NAQUELE indice. Ver a nota
+			// "REEMBARALHAR UM SLOT SO" no topo do arquivo.
+			.@achou = 0;
+			for (.@t = 0; .@t < .Tentativas; .@t++) {
+				randomoptgroup(.@grupo);
+				if (.@opt_id[.@slot] <= 0)
+					continue;
+				if (.@opt_id[.@slot] == .@atual_id[.@slot] && .@opt_value[.@slot] == .@atual_val[.@slot])
+					continue;
+				.@achou = 1;
+				break;
+			}
+			if (!.@achou) {
+				mes .@n$;
+				mes "Sorteei " + .Tentativas + " vezes e não saiu nada novo";
+				mes "para esse slot. Não vou cobrar. Tente de novo.";
+				close;
+			}
+
+			delitem .Material, .Qtd * 2;
+			Zeny -= .CustoUm;
+			setrandomoption(.@escolha, .@slot, .@opt_id[.@slot], .@opt_value[.@slot], .@opt_param[.@slot]);
+
+			specialeffect2 EF_REFINEOK;
+			mes .@n$;
+			mes "Agora é ^0000FF" + callfunc("F_BA_Nome", .@opt_id[.@slot]) + " " + .@opt_value[.@slot] + "^000000.";
+			next;
+			continue;
+		}
+
+		// -------------------------------------------------- embaralhar tudo
+		mes .@n$;
+		mes "^0000FF" + getequipname(.@escolha) + "^000000";
+		mes "Bônus atuais: ^0000FF" + .@quantos + "^000000";
+		mes " ";
+		mes "Custa " + callfunc("F_InsertComma", .@custo) + "z e " + .Qtd + " " + getitemname(.Material) + ".";
+		mes "Os bônus atuais ^FF0000somem^000000. Não dá para voltar atrás.";
+		next;
+		if (select("Embaralhar:Deixa quieto") == 2)
+			continue;
+
+		if (Zeny < .@custo || countitem(.Material) < .Qtd) {
+			mes .@n$;
+			mes "Falta material. Volte com tudo em mãos.";
+			close;
+		}
+
+		// Sorteia ate sair diferente do conjunto atual. O teto de tentativas
+		// existe porque um grupo pobre pode nao ter combinacao nova o bastante -
+		// sem ele o script prenderia o jogador num laco infinito.
+		.@igual = 1;
+		for (.@t = 0; .@t < .Tentativas; .@t++) {
+			randomoptgroup(.@grupo);
+			.@igual = 1;
+			for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++) {
+				if (.@opt_id[.@i] != .@atual_id[.@i] || .@opt_value[.@i] != .@atual_val[.@i]) {
+					.@igual = 0;
+					break;
+				}
+			}
+			if (!.@igual)
+				break;
+		}
+		if (.@igual) {
+			mes .@n$;
+			mes "Sorteei " + .Tentativas + " vezes e sempre deu o mesmo.";
+			mes "Não vou cobrar por isso. Tente de novo.";
+			close;
+		}
+
+		delitem .Material, .Qtd;
+		Zeny -= .@custo;
+
+		// Varre os CINCO indices, nao so os sorteados - ver o comentario no topo.
+		for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++)
+			setrandomoption(.@escolha, .@i, .@opt_id[.@i], .@opt_value[.@i], .@opt_param[.@i]);
+
+		specialeffect2 EF_REFINEOK;
+		mes .@n$;
+		mes "Pronto. Confira a peça.";
+		next;
+	}
+
+OnInit:
+	.Material = 7619;          // Elunium Enriquecido
+	.Qtd = 5;
+	.Custo2 = 3000000;
+	.Custo3 = 6000000;
+	.Custo4 = 12000000;
+	// Trocar UM bonus custa mais que embaralhar tudo de proposito: mirar vale
+	// mais que sorte. Sai mais caro que o pacote de 4 e leva o dobro de
+	// material - senao ninguem usaria o embaralho completo.
+	.CustoUm = 20000000;
+	// Mesmos cortes de conf/import/battle_conf.txt
+	.T2Min = 40;
+	.T3Min = 75;
+	.Tentativas = 30;
+	// Sala de chat com limite 0 = ninguem entra. E o jeito conhecido de por um
+	// rotulo flutuando sobre o NPC: o cliente desenha o titulo da sala, e a
+	// entrada e recusada porque nao ha vaga.
+	waitingroom "Roleta de Bônus", 0;
+	end;
+}
+
+//===== Função comum: escolher uma peça equipada =============
+//= Devolve o EQI_* escolhido, ou -1 se desistir.
+function	script	F_EscolherEquipado	{
+	.@n$ = getarg(0);
+	setarray .@pos[0], EQI_HEAD_TOP, EQI_HEAD_MID, EQI_HEAD_LOW,
+	                   EQI_ARMOR, EQI_HAND_R, EQI_HAND_L,
+	                   EQI_GARMENT, EQI_SHOES, EQI_ACC_L, EQI_ACC_R;
+	setarray .@nome$[0], "Topo", "Meio", "Baixo", "Armadura", "Mão direita",
+	                     "Mão esquerda", "Capa", "Sapato", "Acessório 1",
+	                     "Acessório 2";
+	.@menu$ = "";
+	.@n = 0;
+	for (.@i = 0; .@i < getarraysize(.@pos); .@i++) {
+		if (getequipisequiped(.@pos[.@i])) {
+			// O menu mantem UMA entrada por posicao, mesmo vazia: e isso que
+			// deixa .@sel mapear direto em .@pos[.@sel-1]. Compactar a lista
+			// exigiria um indice paralelo e nao ganharia nada.
+				// NAO use ":" dentro do rotulo - ele e o SEPARADOR do menu.
+				// "Armadura: Espada" virava DUAS opcoes e deslocava todos os
+				// indices, fazendo .@pos[.@sel-1] devolver a peca errada. No
+				// log aparecia "No item equipped at pos 3".
+			.@menu$ += .@nome$[.@i] + " - " + getequipname(.@pos[.@i]) + ":";
+			.@n++;
+		} else {
+			.@menu$ += ":";
+		}
+	}
+	if (.@n == 0) {
+		mes .@n$;
+		mes "Você não está usando nada.";
+		close;
+	}
+	.@sel = select(.@menu$ + "Cancelar");
+	if (.@sel > getarraysize(.@pos))
+		return -1;
+	return .@pos[.@sel - 1];
+}
+
+//===== INJETOR DE B.A. - SÓ TESTE ===========================
+//= Ferramenta de teste. Põe bônus aleatório numa peça equipada
+//= sem depender de drop. Três modos:
+//=
+//=   1. Sortear por tier  - roda o grupo T1/T2/T3 igual ao drop
+//=   2. Montar na mão     - escolhe opção e valor, slot a slot
+//=   3. Limpar            - zera os cinco índices da peça
+//=
+//= O MODO MANUAL É SÓ PARA GM (.GmManual, no OnInit). Sem isso
+//= qualquer jogador poria SP máx. 9999 em si mesmo. O modo por
+//= tier continua aberto porque é o que os testers precisam.
+//=
+//===== POR QUE COMPACTAR ANTES DE GRAVAR ====================
+//= O cliente não aceita buraco no meio dos cinco índices - o
+//= próprio apply() do servidor tem um passo de compactação com
+//= o comentário "Fix any gaps, the client cannot handle this"
+//= (itemdb.cpp:4703). No modo manual dá para deixar o slot 1
+//= vazio e o 3 cheio, então a compactação é feita aqui, na
+//= hora de aplicar, e não a cada escolha.
+//=
+//===== POSIÇÃO =============================================
+//= Esteve em 40,171 por um pedido, e de lá NÃO APARECEU. O
+//= servidor carregou o NPC sem reclamar - não há aviso no log -
+//= mas nenhum outro NPC de prontera fica perto dali (os de x<60
+//= estão todos em y>=200), o que sugere terreno fora da área
+//= andável. Voltou para 156,189, ao lado da Roleta, onde é
+//= sabido que renderiza. Para tentar outra coordenada, confirme
+//= antes no jogo que dá para pisar nela.
+//=
+//= PARA DESLIGAR: os NPCs deste arquivo moram juntos, então
+//= comentar a linha do scripts_custom.conf leva a Roleta junto.
+//= Apague deste comentário até o FIM DO INJETOR.
+prontera,156,189,4	script	Injetor de B.A.	899,{
+	.@n$ = "[Injetor de B.A.]";
+	.@gm = getgmlevel();
+
+	mes .@n$;
+	mes "^FF0000Ferramenta de teste.^000000 Eu ponho bônus aleatórios";
+	mes "numa peça sua, de graça, para você poder testar a Roleta.";
+	mes "Sumo quando o teste acabar.";
+	next;
+
+	.@modo = select(
+		"Sortear por tier",
+		(.@gm < .GmManual) ? "" : "^FF0000[GM]^000000 Montar na mão",
+		(.@gm < .GmManual) ? "" : "^FF0000[GM]^000000 Limpar os bônus da peça",
+		"Sair");
+	if (.@modo == 4)
+		close;
+
+	.@escolha = callfunc("F_EscolherEquipado", .@n$);
+	if (.@escolha < 1)
+		end;
+
+	// ---------------------------------------------- 1. sortear por tier
+	if (.@modo == 1) {
+		mes .@n$;
+		mes "Qual tier?";
+		next;
+		.@grupo = select("T1 - comum (1 a 2):T2 - intermediário (1 a 3):T3 - alto (2 a 4)");
+
+		randomoptgroup(.@grupo);
+		for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++)
+			setrandomoption(.@escolha, .@i, .@opt_id[.@i], .@opt_value[.@i], .@opt_param[.@i]);
+
+		specialeffect2 EF_REFINEOK;
+		mes .@n$;
+		mes "Feito em ^0000FF" + getequipname(.@escolha) + "^000000.";
+		close;
+	}
+
+	// ---------------------------------------------------- 3. limpar tudo
+	if (.@modo == 3) {
+		for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++)
+			setrandomoption(.@escolha, .@i, 0, 0, 0);
+		specialeffect2 EF_REFINEOK;
+		mes .@n$;
+		mes "^0000FF" + getequipname(.@escolha) + "^000000 está limpa.";
+		close;
+	}
+
+	// -------------------------------------------------- 2. montar na mao
+	// Le o estado atual para um rascunho. Nada e gravado na peca ate o
+	// jogador escolher "Aplicar" - assim da para desistir no meio.
+	.@total = getvariableofnpc(.Total, "BA_Catalogo");
+	.@cats = getvariableofnpc(.Cats, "BA_Catalogo");
+	.@catmenu$ = "";
+	for (.@i = 0; .@i < .@cats; .@i++)
+		.@catmenu$ += getvariableofnpc(.CatNome$[.@i], "BA_Catalogo") + ":";
+	.@catmenu$ += "^FF0000Esvaziar este slot^000000:Voltar";
+
+	for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++) {
+		.@id[.@i]  = getequiprandomoption(.@escolha, .@i, ROA_ID);
+		.@val[.@i] = getequiprandomoption(.@escolha, .@i, ROA_VALUE);
+		.@par[.@i] = getequiprandomoption(.@escolha, .@i, ROA_PARAM);
+	}
+
+	while (1) {
+		mes .@n$;
+		mes "^0000FF" + getequipname(.@escolha) + "^000000 - rascunho:";
+		.@menu$ = "";
+		for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++) {
+			.@rot$ = "Slot " + (.@i + 1) + " - ";
+			if (.@id[.@i] > 0)
+				.@rot$ += callfunc("F_BA_Nome", .@id[.@i]) + " " + .@val[.@i];
+			else
+				.@rot$ += "vazio";
+			mes " " + .@rot$;
+			.@menu$ += .@rot$ + ":";
+		}
+		next;
+
+		.@sel = select(.@menu$ + "^0000FFAplicar na peça^000000:Cancelar");
+		if (.@sel == MAX_ITEM_RDM_OPT + 2)
+			close;
+		if (.@sel == MAX_ITEM_RDM_OPT + 1)
+			break;
+
+		.@slot = .@sel - 1;
+
+		// Categoria -> opcao. A lista e quebrada em categorias porque um menu
+		// unico com as 37 opcoes fica ilegivel na janela do cliente.
+		mes .@n$;
+		mes "Slot ^0000FF" + (.@slot + 1) + "^000000. O que entra?";
+		next;
+		.@cat = select(.@catmenu$);
+		if (.@cat == .@cats + 1) {          // esvaziar este slot
+			.@id[.@slot] = 0;
+			.@val[.@slot] = 0;
+			.@par[.@slot] = 0;
+			continue;
+		}
+		if (.@cat > .@cats + 1)             // voltar
+			continue;
+
+		// Monta o menu da categoria e um indice paralelo, porque as opcoes
+		// nao estao agrupadas por categoria dentro do catalogo.
+		.@menu$ = "";
+		.@n = 0;
+		deletearray .@idx[0], getarraysize(.@idx);
+		for (.@i = 0; .@i < .@total; .@i++) {
+			if (getvariableofnpc(.OptCat[.@i], "BA_Catalogo") != .@cat)
+				continue;
+			.@menu$ += getvariableofnpc(.OptNome$[.@i], "BA_Catalogo") + ":";
+			.@idx[.@n] = .@i;
+			.@n++;
+		}
+		mes .@n$;
+		mes "Escolha:";
+		next;
+		.@op = select(.@menu$ + "Voltar");
+		if (.@op > .@n)
+			continue;
+		.@i = .@idx[.@op - 1];
+
+		mes .@n$;
+		mes "^0000FF" + getvariableofnpc(.OptNome$[.@i], "BA_Catalogo") + "^000000";
+		mes "Valor? O servidor guarda em smallint, então -32768 a 32767";
+		mes "cabe - mas valor absurdo faz o cliente desenhar torto.";
+		input .@valor, -9999, 9999;
+
+		.@id[.@slot] = getvariableofnpc(.OptId[.@i], "BA_Catalogo");
+		.@val[.@slot] = .@valor;
+		.@par[.@slot] = 0;
+	}
+
+	// Compacta: os cheios vao para o inicio, o resto e zerado. Ver o
+	// comentario "POR QUE COMPACTAR" no topo.
+	.@n = 0;
+	for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++) {
+		if (.@id[.@i] <= 0)
+			continue;
+		.@cid[.@n] = .@id[.@i];
+		.@cval[.@n] = .@val[.@i];
+		.@cpar[.@n] = .@par[.@i];
+		.@n++;
+	}
+	for (.@i = 0; .@i < MAX_ITEM_RDM_OPT; .@i++) {
+		if (.@i < .@n)
+			setrandomoption(.@escolha, .@i, .@cid[.@i], .@cval[.@i], .@cpar[.@i]);
+		else
+			setrandomoption(.@escolha, .@i, 0, 0, 0);
+	}
+
+	specialeffect2 EF_REFINEOK;
+	mes .@n$;
+	mes "^0000FF" + getequipname(.@escolha) + "^000000 - " + .@n + " bônus gravado(s).";
+	close;
+
+OnInit:
+	// Nivel de GM para o modo manual. 0 abre para todos - NAO faca isso num
+	// servidor com jogador de verdade: o manual poe qualquer valor.
+	.GmManual = 80;
+	waitingroom "Injetor de B.A. (teste)", 0;
+	end;
+}
+//===== FIM DO INJETOR =======================================
