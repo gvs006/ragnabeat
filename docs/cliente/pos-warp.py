@@ -116,9 +116,20 @@ SLOT_MINIMO = 16
 #
 # TESTE OBRIGATORIO depois de ligar:
 #   1. entrar no jogo e conferir acento no bloco de mensagens da entrada
-#   2. @item 5376 e passar o mouse - e um item com resourceName coreano
-#      (sa-ta-nik-che-in). Se abrir "Cannot find File", reverta.
-#   3. conferir que os sprites de mapa e mob continuam carregando
+#   2. andar por um mapa e olhar mob, textura de chao e botao de interface.
+#      QUASE TODO caminho dentro da data.grf e coreano - data\sprite\<mob>\,
+#      data\texture\<ui>\. Se a conversao quebrar nome de arquivo, o sintoma e
+#      EM MASSA: mob sem sprite, mapa sem textura, interface sem botao. Nao
+#      precisa de item especifico, e jogar cinco minutos ja cobre.
+#
+# O "@item 5376" da versao anterior CONTINUA VALIDO como teste - conferido em
+# 04/set/2026, o identifiedResourceName dele no SystemEN/itemInfo_C.lua tem
+# bytes altos (cp949) mesmo o nome exibido sendo "Lendarias Asas de Demonio".
+#
+# Mas ele cobre pouco. Um item testa um nome de arquivo; andar pelo mapa testa
+# milhares. E o teste so importa para o --setmbcp: a troca da tabela de idioma
+# (passo 7) NAO passa perto de nome de arquivo, entao passar nele nao diz nada
+# sobre o passo 7, e falhar nele nao acusa o passo 7.
 #
 # Para reverter: rebuild no WARP a partir do BASE e rodar o pos-warp sem a
 # opcao. Ver docs/cliente/acentuacao.md.
