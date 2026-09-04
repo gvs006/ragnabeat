@@ -2142,6 +2142,16 @@ ACMD_FUNC(go)
 		{ MAP_MANUK,       282, 138 }, // 27=Manuk
 		{ MAP_SPLENDIDE,   201, 147 }, // 28=Splendide
 		{ MAP_BRASILIS,    182, 239 }, // 29=Brasilis
+// [Midgard Eternal] Daqui para baixo sao cidades de renewal. Elas existem no
+// map_cache e o @go levava o jogador ate lá, mas estao vazias neste servidor:
+// sem NPC, sem loja, sem quest. Por isso ficam fora do build pre-renewal.
+//
+// Nao basta tirar do array: os "else if" de nome no final desta funcao
+// atribuem town = 30..36 direto, e tem o mesmo #ifdef por isso. Com o array
+// menor, o limite "town >= ARRAYLENGTH(data)" ja recusa @go 30 em diante.
+//
+// A lista que o jogador ve vem de conf/import/atcommands.yml.
+#ifdef RENEWAL
 		{ MAP_DICASTES,    198, 187 }, // 30=El Dicastes
 		{ MAP_MORA,         44, 151 }, // 31=Mora
 		{ MAP_DEWATA,      200, 180 }, // 32=Dewata
@@ -2149,6 +2159,7 @@ ACMD_FUNC(go)
 		{ MAP_MALAYA,      242, 211 }, // 34=Malaya Port
 		{ MAP_ECLAGE,      110,  39 }, // 35=Eclage
 		{ MAP_LASAGNA,     193, 182 }, // 36=Lasagna
+#endif
 	};
 
 	nullpo_retr(-1, sd);
@@ -2256,6 +2267,9 @@ ACMD_FUNC(go)
 		town = 28;
 	} else if (strncmp(map_name, "brasilis", 3) == 0) {
 		town = 29;
+// [Midgard Eternal] Mesmo motivo do #ifdef no array data[] la em cima: sem
+// isto, "@go dewata" ainda cairia em town = 32 e estouraria o array.
+#ifdef RENEWAL
 	} else if (strncmp(map_name, "dicastes01", 3) == 0) {
 		town = 30;
 	} else if (strcmp(map_name,  "mora") == 0) {
@@ -2270,6 +2284,7 @@ ACMD_FUNC(go)
 		town = 35;
 	} else if (strncmp(map_name, "lasagna", 2) == 0) {
 		town = 36;
+#endif
 	}
 
 	if (town >= 0 && town < ARRAYLENGTH(data))

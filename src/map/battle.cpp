@@ -3375,13 +3375,25 @@ static bool attack_ignores_def(Damage* wd, block_list *src, const block_list *ta
  */
 static bool battle_skill_stacks_masteries_vvs(uint16 skill_id, e_bonus_chk_flag chk_flag)
 {
+	// [Midgard Eternal] MO_EXTREMITYFIST (Explosao de Energia) e AM_ACIDTERROR
+	// (Terror Acido) FORAM TIRADOS desta lista de proposito.
+	//
+	// Estar aqui significa perder, de uma vez so, cinco grupos de bonus:
+	// Star Crumb (3821), esferas espirituais (3826), maestria (3907), todo o
+	// grupo ATKpercent (4469) e o bonus de refino (5016). O ATKpercent e o que
+	// carrega SC_INCATKRATE - o buff de ataque do Canto de Batalha (Gospel).
+	//
+	// Resultado no oficial: as duas unicas skills de dano que Champion e
+	// Criador realmente usam ignoravam o Gospel por completo, enquanto todas
+	// as outras classes aproveitavam. Aqui elas passam a receber.
+	//
+	// MO_INVESTIGATE e as de Paladino/Cruzado seguem excluidas - a decisao foi
+	// so para essas duas. Ver docs/skills.md.
 	switch (skill_id) {
 		// PC skills that are unaffected
 		case PA_SHIELDCHAIN:
 		case CR_SHIELDBOOMERANG:
-		case AM_ACIDTERROR:
 		case MO_INVESTIGATE:
-		case MO_EXTREMITYFIST:
 		case PA_SACRIFICE:
 		case RK_DRAGONBREATH:
 		case RK_DRAGONBREATH_WATER:

@@ -9966,6 +9966,24 @@ void clif_name( const block_list* src, const block_list* bl, send_target target 
 				// Will get the position of the guild the player is in
 				position = guild_getposition(*sd);
 
+				// [Midgard Eternal] DE VOLTA AO PADRAO DE PROPOSITO.
+				//
+				// O pedido era "Guilda [Cargo]" em vez de "Guilda (Cargo)".
+				// Duas tentativas por aqui falharam, e as duas ensinaram algo:
+				//
+				//   1. colchetes no slot de cargo  -> o jogador ve "([Cargo])",
+				//      porque o cliente poe os parenteses por fora
+				//   2. tudo no slot de guilda, cargo vazio -> ve
+				//      "Guilda [Cargo] ()", porque o cliente desenha os
+				//      parenteses INCONDICIONALMENTE, mesmo com campo vazio
+				//
+				// Ou seja: o formato e do cliente, nao do pacote. Quem decide e
+				// a string '%s (%s)' em 0x00C03AC8 do exe, trocada para
+				// '%s [%s]' pelo pos-warp.py (passo 6, mesmo tamanho em bytes).
+				//
+				// Por isso o servidor volta a mandar os campos crus. Se algum
+				// dia o formato voltar a ter parenteses, o lugar de olhar e o
+				// exe, nao este arquivo.
 				safestrncpy( packet.guild_name, sd->guild->guild.name, NAME_LENGTH );
 				safestrncpy( packet.position_name, sd->guild->guild.position[position].name, NAME_LENGTH );
 			}else if( sd->clan ){

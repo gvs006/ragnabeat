@@ -175,7 +175,27 @@ generated
 !/conf/import/login_conf.txt
 !/conf/import/packet_conf.txt
 !/conf/import/char_conf.txt
+!/conf/import/map_conf.txt
+# Lista de destinos do @go, cortada em 29. Precisa vir versionada junto do
+# #ifdef RENEWAL em src/map/atcommand.cpp que desliga os destinos 30 a 36:
+# se so o C++ viajar, o menu volta a anunciar sete cidades que dao erro.
+!/conf/import/atcommands.yml
 !/db/import/item_db.yml
+# So um rodape que puxa db/ragnabeat_mobs.yml (os champion mobs). O arquivo de
+# verdade fica fora de import/ porque e gerado e nao e config local.
+!/db/import/mob_db.yml
+# Registra as 27 classes de 3a/4a no job_db para o setlook LOOK_BODY2 aceitar
+# mandar o sprite (o Transmutador). Sem ele o item volta a falhar EM SILENCIO -
+# src/map/pc.cpp:11121 sai com return mudo. Ver docs/rebalance.md secao 11.
+!/db/import/job_stats.yml
+# Os itens da Loja Cash. Sem ele a loja abre vazia.
+!/db/import/item_cash.yml
+# Grupo das Redeas de Montaria (7 dias), portado do renewal.
+!/db/import/item_group_db.yml
 
 # cache do Python
 __pycache__/
+
+# Log do servidor HTTP do patcher (patcher/servir.py). E ruido local:
+# muda a cada request e nao diz nada sobre o estado do projeto.
+/patcher/_servir.log

@@ -1,0 +1,51 @@
+###########################################################################
+# Atcommand Database - Midgard Eternal
+###########################################################################
+#
+# Sobrescreve entradas de conf/atcommands.yml. O parser mescla por Command:
+# quando o comando ja existe, o campo Help e SUBSTITUIDO
+# (src/map/atcommand.cpp:144-152). Entao aqui so entra o que muda.
+#
+###########################################################################
+
+Header:
+  Type: ATCOMMAND_DB
+  Version: 1
+
+Body:
+# ---------------------------------------------------------------------------
+# @go - a lista de destinos
+#
+# Os destinos 30 a 36 - El Dicastes, Mora, Dewata, Malangdo, Malaya, Eclage
+# e Lasagna - sao cidades de renewal. Elas existem no map_cache e o @go
+# levava o jogador ate lah, mas estao VAZIAS neste servidor: sem NPC, sem
+# loja, sem quest. Warpar para lah nao servia para nada.
+#
+# ONDE ELES FORAM DESLIGADOS DE VERDADE: src/map/atcommand.cpp. As sete
+# entradas do array data[] e os sete "else if" que reconhecem o nome estao
+# dentro de #ifdef RENEWAL, e RENEWAL nao esta definido neste build
+# (src/config/renewal.hpp linha 8 faz #define PRERE). Com o array menor, o
+# proprio limite "town >= ARRAYLENGTH(data)" recusa @go 30 em diante e
+# devolve "Invalid location number, or name.".
+#
+# Este arquivo NAO desliga nada - ele so acerta a lista que o jogador ve.
+# Sem ele, o menu continuaria anunciando sete destinos que dao erro.
+#
+# Se um dia o servidor virar renewal: apague esta entrada e a lista completa
+# volta sozinha do conf/atcommands.yml.
+# ---------------------------------------------------------------------------
+  - Command: go
+    Help: |
+      Params: <cidade|numero>
+      Warpa voce para uma cidade.
+      -3: (memo 2)         8: comodo           19: einbroch
+      -2: (memo 1)         9: yuno             20: lighthalzen
+      -1: (memo 0)        10: amatsu           21: einbech
+       0: prontera        11: gonryun          22: hugel
+       1: morocc          12: umbala           23: rachel
+       2: geffen          13: niflheim         24: veins
+       3: payon           14: louyang          25: moscovia
+       4: alberta         15: ponto inicial    26: midgard camp
+       5: izlude          16: prisao           27: manuk
+       6: aldebaran       17: jawaii           28: splendide
+       7: xmas (lutie)    18: ayothaya         29: brasilis

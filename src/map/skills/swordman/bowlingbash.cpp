@@ -94,7 +94,28 @@ void SkillBowlingBash::castendDamageId(block_list* src, block_list* target, uint
 		// If target cell is a wall then break
 		if(map_getcell(target->m,tx,ty,CELL_CHKWALL))
 			break;
-		skill_blown(src,target,1,dir,BLOWN_NONE);
+		// [Midgard Eternal] O empurrao oficial fica DESLIGADO aqui.
+		//
+		// NAO adianta mexer em Knockback no skill_db: o modifyDamageData
+		// logo acima ja zera dmg.blewcount no pre-renewal, e quem empurra
+		// de verdade e esta chamada, com o 1 escrito na mao.
+		//
+		// POR QUE TIRAR: o cursor (tx,ty) anda em -dir e o empurrao levava
+		// o alvo em +dir. Os dois se afastavam DUAS celulas por iteracao,
+		// entao o splash 3x3 em volta do cursor nunca mais alcancava o
+		// alvo. Sem alcance nao ha count, sem count nao ha a auto-colisao
+		// da linha de baixo - e o alvo levava UM golpe em vez de dois.
+		// Metade do dano do Bowling Bash classico.
+		//
+		// Com bowling_bash_area em 2 (caixa 5x5) ficava pior ainda: o
+		// alvo saia da caixa em uma iteracao e passava a ser ignorado
+		// logo na entrada da funcao.
+		//
+		// Desligado, o alvo fica a 1 celula do cursor na primeira volta,
+		// o splash o alcanca, a auto-colisao dispara e o dano volta ao
+		// que era. Ver docs/skills.md.
+		//
+		// skill_blown(src,target,1,dir,BLOWN_NONE);
 
 		int32 count;
 
