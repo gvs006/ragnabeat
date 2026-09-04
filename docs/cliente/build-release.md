@@ -30,6 +30,48 @@ consome número de versão.
 > `Path(__file__).parent`. Renomear a pasta não quebra o builder. O que *não* é
 > imune ao rename está em [Ao renomear a pasta](#ao-renomear-a-pasta-de-desenvolvimento).
 
+## Builds 0.0.5, 0.0.6 e 0.0.7 estão contaminados — não distribua
+
+Em 12/ago/2026 a sonda de diagnóstico `docs/cliente/sonda-acento.py` vazou para
+três builds. Ela troca a mensagem "Permite todos os pedidos de Grupo." por
+`SONDA U=ação C=a??o A=acao`; o build foi rodado justamente para testá-la
+in-game e ninguém a removeu antes.
+
+Os três continuam no disco. **O bom é o 0.0.10.**
+
+O `build.py` agora **barra o build** se o `msgstringtable.csv` ainda tiver a
+sonda, apontando o comando que a remove. Foi a lição: ferramenta de diagnóstico
+que escreve em arquivo entregue precisa de guarda no empacotador, porque
+"lembrar de tirar" não é um mecanismo.
+
+## O que mudou no 0.0.9 e no 0.0.10
+
+| | |
+|---|---|
+| `itemInfo_C.lua` | 5.296 → **6.327** itens (1.020 visuais + os importados) |
+| `data\sprite\` | 6 arquivos das Lendárias Asas de Demônio, que não existiam no GRF |
+| `msgstringtable.csv` | limpo, sem a sonda |
+| `RagnaBeat.exe` | **inalterado** (6 constantes) — ver abaixo |
+
+No **0.0.10** entrou o `palette.grf` (112 MB, entrada 2 do `DATA.ini`): 699
+cores de roupa e 127 de cabelo, com o NPC Estilista habilitado do lado do
+servidor. O GRF vai por hardlink como os outros, então não pesa no disco do
+build — mas **pesa no download do jogador**, é o primeiro arquivo grande que
+entra desde o começo.
+
+O **0.0.8 existiu e foi descartado**: saiu com a 7ª constante trocada
+(`pos-warp --setmbcp`), na tentativa de acentuar as mensagens do sistema. O teste
+in-game mostrou que **não resolve**, o exe foi revertido e o 0.0.9 saiu com o
+binário de sempre. Não distribua o 0.0.8 — ele carrega uma alteração de CRT que
+não entrega nada. Ver [acentuacao.md](acentuacao.md).
+
+O `ITENS_ESPERADOS` fixo virou `ITENS_MINIMO`: com lotes de mil itens, manter o
+total exato na mão era ritual, e ritual quebrado vira aviso ignorado. O que a
+checagem quer pegar é arquivo truncado, e um piso resolve isso sozinho.
+
+O build também passou a **informar** em qual estado o `_setmbcp` está, em vez de
+exigir um deles — os dois são válidos e a diferença é visível para o jogador.
+
 ## O que ele faz — e o que não faz
 
 **Faz:** seleciona arquivos, copia, cria três pastas vazias, verifica o resultado.

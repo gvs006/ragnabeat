@@ -28,12 +28,20 @@ import sys
 from pathlib import Path
 
 BS = chr(92)
+REPO = Path(__file__).resolve().parent.parent.parent
 LATAM = Path(r'C:/RagnaClient/RagnaBeat.Dev/DEVTOOLS/PTBR/iteminfo_ptBR.lua')
 ALVO = Path(r'C:/RagnaClient/RagnaBeat.Dev/SystemEN/itemInfo_C.lua')
 
 RE_ESC = re.compile(re.escape(BS) + r'(\d{1,3})')
 RE_BLOCO_LATAM = re.compile(r'\[(\d+)\]\s*=\s*\{(.*?)\n  \}', re.S)
-RE_STR = r'"([^"]*)"'
+# A regex ingenua '"([^"]*)"' nao conhece aspa escapada e PARTE a string no
+# meio. Em 12/ago/2026 isso gerou 10 descricoes truncadas no itemInfo_C.lua -
+# o texto entre as aspas sumia e sobrava uma string que nunca fecha, com o
+# cliente abortando em "unfinished string near". Ver docs/traducao.md.
+#
+# Esta versao consome ou um caractere comum, ou uma barra invertida mais o
+# que vier depois dela - que e como o Lua le.
+RE_STR = r'"((?:[^"\\]|\\.)*)"'
 
 # ---------------------------------------------------------------------------
 # Correcoes de descricao, por item.
@@ -113,6 +121,33 @@ def aplicar_ajustes(oid, linhas):
     return saida, list(pendentes)
 
 
+RE_ID = r'(?m)^  - Id: %d\s*$'
+
+
+def eh_traje(oid):
+    """O item ocupa slot de traje? Descobre olhando o Locations no db.
+
+    Ate 12/ago/2026 este campo saia "false" fixo, o que marcava traje como
+    equipamento comum no cliente - os tres primeiros visuais entraram errados
+    assim. Com uma leva de mais de mil visuais pela frente, o campo passa a ser
+    derivado do db em vez de chutado.
+    """
+    for rel in ('db/ragnabeat_items.yml', 'db/ragnabeat_visuais.yml',
+                'db/pre-re/item_db_equip.yml', 'db/re/item_db_equip.yml'):
+        arq = REPO / rel
+        if not arq.exists():
+            continue
+        txt = arq.read_bytes().decode('latin-1')
+        m = re.search(RE_ID % oid, txt)
+        if not m:
+            continue
+        # o bloco vai ate o proximo "  - Id:"
+        fim = txt.find('\n  - Id: ', m.end())
+        bloco = txt[m.start():fim if fim > 0 else len(txt)]
+        return 'Costume_' in bloco
+    return False
+
+
 def montar(oid, bloco):
     """Devolve a entrada pronta, em bytes, no formato do itemInfo_C."""
     def cp(s):
@@ -151,7 +186,7 @@ def montar(oid, bloco):
     out += b'\t\t},\n'
     out += b'\t\tslotCount = %d,\n' % numero(bloco, 'slotCount')
     out += b'\t\tClassNum = %d,\n' % numero(bloco, 'ClassNum')
-    out += b'\t\tcostume = false\n'
+    out += b'\t\tcostume = ' + (b'true' if eh_traje(oid) else b'false') + b'\n'
     out += b'\t},\n'
     return bytes(out), nome_i
 
